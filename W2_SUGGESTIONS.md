@@ -19,7 +19,7 @@ DomainError::UserAlreadyExists(user.email.clone())
 ```
 (and change the variant to carry a `String` instead of `i64`).
 
-Ties into #20/#23: switching `id` to `UUID`/`UserId` doesn't fix this on its own — a random/nil UUID generated before insert is just as meaningless in the error as `0` is today. Same fix applies regardless: report email/username, not the id.
+Ties into #19/#22: switching `id` to `UUID`/`UserId` doesn't fix this on its own — a random/nil UUID generated before insert is just as meaningless in the error as `0` is today. Same fix applies regardless: report email/username, not the id.
 
 ---
 
@@ -195,7 +195,7 @@ Browsers refuse to send a `Secure` cookie over plain `http://`. Fine in producti
 
 **Fix:** derive from config/environment instead of hardcoding:
 ```rust
-cookie.set_secure(!app_config.run_locally); // ties into #11
+cookie.set_secure(!app_config.run_locally);
 ```
 
 ---
@@ -225,34 +225,7 @@ VarError(String),
 
 ## Style
 
-### 11. Misleading boolean name in config
-
-`infrastructure/config.rs:17-19`:
-
-```rust
-let docker_container = env::var("DOCKER_CONTAINER")
-    .unwrap_or("false".to_owned())
-    .eq("false");
-if docker_container {
-    dotenvy::dotenv()?;
-}
-```
-
-`docker_container` is `true` exactly when the app is **not** running in Docker (`DOCKER_CONTAINER == "false"`). The name says the opposite of what the value means — next person reading this will misread it.
-
-**Fix:** rename to what it actually represents:
-```rust
-let run_locally = env::var("DOCKER_CONTAINER")
-    .unwrap_or("false".to_owned())
-    .eq("false");
-if run_locally {
-    dotenvy::dotenv()?;
-}
-```
-
----
-
-### 12. Manual header split instead of `split_once`
+### 11. Manual header split instead of `split_once`
 
 `presentation/middleware.rs:28-41`:
 
@@ -278,7 +251,7 @@ fn get_token(headers: &HeaderMap) -> Option<&str> {
 
 ---
 
-### 13. Email lowercased twice
+### 12. Email lowercased twice
 
 `application/auth_service.rs`:
 
@@ -300,7 +273,7 @@ pub async fn get_by_email(&self, email: &str) -> Result<User, ApplicationError> 
 
 ---
 
-### 14. Duplicated response-building code
+### 13. Duplicated response-building code
 
 `presentation/auth.rs` — `login` and `register` both end with the identical block:
 
@@ -330,7 +303,7 @@ then both handlers just call `build_auth_response(authenticated_user, token)`.
 
 ---
 
-### 15. CORS header hardcoded in handlers
+### 14. CORS header hardcoded in handlers
 
 Same block above also sets:
 ```rust
@@ -342,7 +315,7 @@ by hand, per handler, as a raw string. Confirmed 100% redundant: `infrastructure
 
 ---
 
-### 16. Silent `.unwrap()` on time arithmetic
+### 15. Silent `.unwrap()` on time arithmetic
 
 `infrastructure/jwt.rs:38-41`:
 
@@ -361,7 +334,7 @@ exp: chrono::Utc::now()
 
 ---
 
-### 17. `register` redundantly re-runs `login` after already creating the user
+### 16. `register` redundantly re-runs `login` after already creating the user
 
 `presentation/auth.rs:71-74`:
 
@@ -383,7 +356,7 @@ let token = app_state.auth_service.jwt_service
 
 ---
 
-### 18. Auth cookie is set but never read anywhere
+### 17. Auth cookie is set but never read anywhere
 
 `login`/`register` set a `SET_COOKIE` header via `get_auth_cookie`, but `presentation/middleware.rs get_token()` only ever reads the `Authorization` header — nothing in the codebase parses the cookie back out. The cookie is dead weight: written on every login, never consumed.
 
@@ -395,7 +368,7 @@ Side note if you go the "keep cookie-based auth" route: the cookie is set to liv
 
 ## Migration SQL
 
-### 19. Column definitions not aligned
+### 18. Column definitions not aligned
 
 Current:
 ```sql
@@ -428,7 +401,7 @@ CREATE TABLE IF NOT EXISTS users
 
 ---
 
-### 20. `id` is BIGSERIAL but gets exposed to clients
+### 19. `id` is BIGSERIAL but gets exposed to clients
 
 `id` ends up as `user_id` in JWT claims (`infrastructure/jwt.rs`) and in API responses (`AuthenticatedUser`) — so it's client-visible. BIGSERIAL is sequential: user 1, 2, 3... anyone can guess/enumerate other users' ids just by trying numbers.
 
@@ -446,7 +419,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
 ## Cargo.toml
 
-### 21. Inconsistent version pin: `cookie = "0.18.1"`
+### 20. Inconsistent version pin: `cookie = "0.18.1"`
 
 Every other dependency pins `"major.minor"` only:
 ```toml
@@ -455,11 +428,13 @@ tower = { version = "0.5", ... }
 ```
 `cookie` alone adds a patch digit. Not wrong, just inconsistent style in the same file.
 
-**Fix:** `cookie = "0.18"`.
+Same issue now also on `utoipa = "5.5.0"` (added since this doc was written) — another full `major.minor.patch` pin among `"major.minor"` siblings.
+
+**Fix:** `cookie = "0.18"`, `utoipa = "5.5"`.
 
 ---
 
-### 22. Dependency list isn't alphabetized
+### 21. Dependency list isn't alphabetized
 
 ```toml
 anyhow = "1.0"
@@ -478,11 +453,11 @@ Not a bug, just makes it slightly harder to scan for a dep or spot a duplicate a
 
 ## Easy wins
 
-### 23. Typed id instead of raw `i64`
+### 22. Typed id instead of raw `i64`
 
 Right now `User::id: i64` is just a plain integer — nothing stops passing a `PostId` (once that entity exists) where a `UserId` is expected; the compiler can't catch it, only a runtime bug or a test would.
 
-**Fix:** a small newtype, ties in with #20 (id becoming a UUID):
+**Fix:** a small newtype, ties in with #19 (id becoming a UUID):
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, sqlx::Type, Serialize, Deserialize)]
 #[sqlx(transparent)]
@@ -492,7 +467,7 @@ Now `fn get(&self, id: UserId)` can never accidentally be called with a `PostId`
 
 ---
 
-### 24. Pure helper functions with zero test coverage
+### 23. Pure helper functions with zero test coverage
 
 `get_token()` (`presentation/middleware.rs`) and the env parsing in `AppConfig::from_env()` are both plain, deterministic functions (no I/O beyond reading env vars) — cheap to unit test, currently untested.
 
@@ -524,4 +499,4 @@ mod tests {
 }
 ```
 
-**Why it matters:** this is exactly the kind of function a refactor (like #12 above) can silently break — a couple of cheap tests catch that immediately instead of at runtime in prod.
+**Why it matters:** this is exactly the kind of function a refactor (like #11 above) can silently break — a couple of cheap tests catch that immediately instead of at runtime in prod.
