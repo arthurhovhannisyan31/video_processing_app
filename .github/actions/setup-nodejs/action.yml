@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: corepack enable
     - name: Install NodeJS
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: 24.13.1
     - name: Restore dependencies

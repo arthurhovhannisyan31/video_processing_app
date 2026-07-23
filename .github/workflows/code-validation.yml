@@ -12,6 +12,9 @@ jobs:
   code-validation:
     name: Code validation
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      SQLX_OFFLINE: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -31,4 +34,4 @@ jobs:
           make format-check
       - name: Validate unit tests
         run: |
-          make test
+          make test-ci

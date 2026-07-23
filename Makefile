@@ -25,6 +25,9 @@ format-check:
 test:
 	#cd modules/backend && cargo test && cargo test -- --ignored # add virtual postgres for stable API tests
 	cd modules/backend && cargo test
+test-ci:
+	# reduce number of tests run in parallel to avoid DB pool exhaustion
+	cd modules/backend && cargo test -- --test-threads=1
 audit:
 	cd modules/backend && cargo audit
 	cd modules/frontend && yarn npm audit
