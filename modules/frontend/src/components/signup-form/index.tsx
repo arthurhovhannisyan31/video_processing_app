@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { PasswordStrength } from "components/signup-form/components/password-strength";
 import {
+  getPasswordStrength,
   type SignupSchema,
   signupSchema,
 } from "components/signup-form/constants";
@@ -42,7 +44,9 @@ export function SignupForm({
   const {
     register,
     handleSubmit,
-    formState: { errors, dirtyFields },
+    formState: { errors, dirtyFields, touchedFields },
+    watch,
+    setError,
   } = useForm<SignupSchema>({
     defaultValues: {
       username: "",
@@ -54,11 +58,26 @@ export function SignupForm({
     resolver: zodResolver(signupSchema),
   });
 
+  const passwordValue = watch("password");
+  const passwordStrengths = useMemo(
+    () => getPasswordStrength(passwordValue),
+    [passwordValue],
+  );
+
   const onSubmit: SubmitHandler<SignupSchema> = async ({
     email,
     password,
     username,
   }) => {
+    if (!passwordStrengths.allValid) {
+      setError("password", {
+        type: "manual",
+        message: "Password is not strong enough",
+      });
+
+      return;
+    }
+
     await authClient.signUp.email(
       {
         email,
@@ -71,14 +90,12 @@ export function SignupForm({
           setIsLoading(true);
         },
         onSuccess: () => {
-          // TODO Store token in some store to use in axios
-          // Set user data to store, test if several calls to session cause several api calls
           router.push("/");
         },
         onError: (ctx) => {
           setIsLoading(false);
           toast.error(
-            (ctx.error.message || ctx.response.statusText).toString(),
+            (ctx.error.error.message || ctx.response.statusText).toString(),
           );
         },
       },
@@ -138,6 +155,15 @@ export function SignupForm({
                 <FieldDescription>
                   Must be at least 8 characters long.
                 </FieldDescription>
+              </Field>
+              <Field>
+                <PasswordStrength
+                  hasDigits={passwordStrengths.hasDigits}
+                  hasLowercase={passwordStrengths.hasLowercase}
+                  hasSpecial={passwordStrengths.hasSpecial}
+                  hasUppercase={passwordStrengths.hasUppercase}
+                  touched={touchedFields.password}
+                />
               </Field>
               <Field>
                 <FieldLabel htmlFor="confirm-password">

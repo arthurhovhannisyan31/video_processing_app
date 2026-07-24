@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - '*'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,6 +13,24 @@ jobs:
   code-validation:
     name: Code validation
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: video_processing_app
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
+      BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
+      CONTAINER: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -19,12 +38,18 @@ jobs:
         uses: ./.github/actions/setup-cargo
       - name: Setup NodeJS
         uses: ./.github/actions/setup-nodejs
+      - name: Run Database Migrations
+        run: cd modules/backend && cargo sqlx migrate run
+      - name: Generate openapi spec and client
+        run: |
+          make generate-openapi
+          make prepare-frontend
       - name: Validate code
         run: |
-          make check-ci
+          make check
       - name: Validate linters
         run: |
           make format-check
-      - name: Validate unit tests
+      - name: Validate tests
         run: |
           make test-ci

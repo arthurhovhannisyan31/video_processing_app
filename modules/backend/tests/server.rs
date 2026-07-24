@@ -1,26 +1,26 @@
 #[cfg(test)]
 mod server_test {
   use axum::Router;
-  use axum::http::StatusCode;
+  use axum::http::{StatusCode, header};
   use axum_test::{TestServer, expect_json};
   use backend::application::auth_service::AuthService;
   use backend::data::user_repository::PostgresUserRepository;
   use backend::infrastructure::{
-    config::AppConfig, database::create_pool, error::ServerError,
-    jwt::JwtService,
+    config::AppConfig, error::ServerError, jwt::JwtService,
   };
   use backend::presentation::constants::routes;
-  use backend::presentation::dto::{AuthResponse, CreateUserRequest};
+  use backend::presentation::dto::{
+    AuthRequest, AuthResponse, CreateUserRequest,
+  };
   use backend::presentation::state::AuthState;
   use backend::presentation::{init::build_router, state::AppState};
   use serde_json::json;
+  use sqlx::PgPool;
   use std::sync::Arc;
   use uuid::{Uuid, Version};
 
-  async fn setup_router() -> Result<Router, ServerError> {
+  fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
     let app_config = AppConfig::from_env()?;
-    let pool = create_pool(&app_config.database_url, 1).await?;
-
     let jwt_service = JwtService::new(app_config.jwt_secret.clone());
     let users_repo = PostgresUserRepository::new(pool.clone());
     let auth_service = AuthService::new(users_repo, jwt_service.clone());
@@ -46,10 +46,9 @@ mod server_test {
     format!("/api/{}", path.strip_prefix("/").unwrap())
   }
 
-  #[ignore]
-  #[tokio::test]
-  async fn test_health_route() -> Result<(), ServerError> {
-    let router = setup_router().await?;
+  #[sqlx::test]
+  async fn test_health(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
     let server = TestServer::new(router);
 
     let response = server
@@ -66,10 +65,9 @@ mod server_test {
     Ok(())
   }
 
-  #[ignore]
-  #[tokio::test]
-  async fn test_openapi_route() -> Result<(), ServerError> {
-    let router = setup_router().await?;
+  #[sqlx::test]
+  async fn test_openapi(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
     let server = TestServer::new(router);
 
     let response = server
@@ -88,16 +86,15 @@ mod server_test {
     Ok(())
   }
 
-  #[ignore]
-  #[tokio::test]
-  async fn test_register_route() -> Result<(), ServerError> {
-    let router = setup_router().await?;
+  #[sqlx::test]
+  async fn test_register(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
     let server = TestServer::new(router);
 
     let create_user_request = CreateUserRequest {
-      email: "email".into(),
-      username: "username".into(),
-      password: "password".into(),
+      email: "test@test.com".into(),
+      username: "testtest".into(),
+      password: "Testtest1!".into(),
     };
     let response = server
       .post(&with_base_route(routes::REGISTER))
@@ -110,6 +107,62 @@ mod server_test {
     assert_eq!(auth_response.user.username, create_user_request.username);
     assert_eq!(auth_response.user.email, create_user_request.email);
     assert!(is_valid_v4_uuid(&auth_response.user.user_id));
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_login(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+
+    let authentication_request = AuthRequest {
+      email: "test@test.com".into(),
+      password: "Testtest1!".into(),
+    };
+
+    let response = server
+      .post(&with_base_route(routes::LOGIN))
+      .json(&json!(authentication_request))
+      .expect_success()
+      .await;
+    let auth_response = response.json::<AuthResponse>();
+
+    assert_eq!(response.status_code(), StatusCode::OK);
+    assert_eq!(auth_response.user.username, "testtest");
+    assert_eq!(auth_response.user.email, "test@test.com");
+    assert!(is_valid_v4_uuid(&auth_response.user.user_id));
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_protected(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+
+    let authentication_request = AuthRequest {
+      email: "test@test.com".into(),
+      password: "Testtest1!".into(),
+    };
+
+    let response = server
+      .post(&with_base_route(routes::LOGIN))
+      .json(&json!(authentication_request))
+      .expect_success()
+      .await;
+    let auth_response = response.json::<AuthResponse>();
+
+    let response = server
+      .get(&with_base_route(routes::PROTECTED))
+      .add_header(
+        header::AUTHORIZATION,
+        format!("Bearer {}", auth_response.token),
+      )
+      .expect_success()
+      .await;
+
+    assert_eq!(response.status_code(), StatusCode::OK);
 
     Ok(())
   }

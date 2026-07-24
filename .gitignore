@@ -8,3 +8,4 @@
 # local
 **/*notes
 .env
+**/*openapi.json

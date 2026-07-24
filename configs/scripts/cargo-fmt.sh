@@ -1,6 +1,8 @@
 #!/bin/bash
 
-. "./configs/bash/colors"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+. "${REPO_ROOT}/configs/bash/colors"
 
 printf "⚠️ Run cargo fmt check\n\n"
 

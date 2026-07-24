@@ -1,3 +1,4 @@
+use sqlx::Error;
 use std::{io, net::AddrParseError, num::ParseIntError};
 use thiserror::Error;
 
@@ -17,4 +18,10 @@ pub enum ServerError {
   Dotenv(#[from] dotenvy::Error),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
+}
+
+impl From<sqlx::Error> for ServerError {
+  fn from(value: Error) -> Self {
+    ServerError::SqlxError(value.to_string())
+  }
 }

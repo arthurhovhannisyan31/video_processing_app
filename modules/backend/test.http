@@ -14,9 +14,9 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "test",
-  "password": "test",
-  "username": "test"
+  "username": "testtest",
+  "email": "test@test.com",
+  "password": "Testtest1!"
 }
 
 ### Login user

@@ -4,4 +4,4 @@
 
 printf "⚠️ Run pre-push checks\n\n"
 
-validate_commands "make check" "make format-check" "make test" "make audit"
+validate_commands "make generate-openapi" "make prepare-frontend" "make check" "make format-check" "make test" "make audit"

@@ -1,8 +1,9 @@
 use crate::data::constants::db_constraints;
-use crate::domain::error::DomainError;
-use crate::domain::user::User;
+use crate::domain::{
+  error::DomainError,
+  user::{User, UserId},
+};
 
-use crate::domain::user::UserId;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use tracing::{error, info};
@@ -54,7 +55,7 @@ impl UserRepository for PostgresUserRepository {
           })
           == Some(true)
         {
-          DomainError::UserAlreadyExists(user.email.clone())
+          DomainError::UserAlreadyExists
         } else {
           DomainError::Internal(format!("database error: {}", e))
         }
@@ -77,7 +78,7 @@ impl UserRepository for PostgresUserRepository {
       email
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e|{
+      .map_err(|e| {
         error!("Failed to find user by email {}: {}", email, e);
         DomainError::Internal(format!("database error: {}", e))
       })?;
@@ -95,7 +96,7 @@ impl UserRepository for PostgresUserRepository {
       id.0
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e|{
+      .map_err(|e| {
         error!("Failed to find user by id {}: {}", id, e);
         DomainError::Internal(format!("database error: {}", e))
       })?;

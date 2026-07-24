@@ -1,11 +1,11 @@
+use crate::domain::error::DomainError;
 use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
 use serde_json::json;
 use thiserror::Error;
-
-use crate::domain::error::DomainError;
+use validator::ValidationErrors;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -66,13 +66,19 @@ impl From<DomainError> for ApplicationError {
       DomainError::PostNotFound(id) => {
         ApplicationError::NotFound(format!("Post not found: {}", id))
       }
-      DomainError::UserAlreadyExists(id) => {
-        ApplicationError::Conflict(format!("User already exists: {}", id))
+      DomainError::UserAlreadyExists => {
+        ApplicationError::Conflict("User already exists".to_string())
       }
       DomainError::UserNotFound(id) => {
         ApplicationError::NotFound(format!("User not found: {}", id))
       }
       DomainError::Validation(msg) => ApplicationError::Validation(msg),
     }
+  }
+}
+
+impl From<ValidationErrors> for ApplicationError {
+  fn from(value: ValidationErrors) -> Self {
+    ApplicationError::BadRequest(format!(r"{value}"))
   }
 }

@@ -54,7 +54,7 @@ export function NavUser({
         onError: (ctx) => {
           setIsLoading(false);
           toast.error(
-            (ctx.error.message || ctx.response.statusText).toString(),
+            (ctx.error.error.message || ctx.response.statusText).toString(),
           );
         },
       },

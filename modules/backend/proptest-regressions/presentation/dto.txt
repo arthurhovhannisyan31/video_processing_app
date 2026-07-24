@@ -1,0 +1,15 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 9a0c7b3abcec4077d447040ed73f9e773931d6a3e85b84839532d94bcc072699 # shrinks to password = "0aA#(]]A", username = "a00a00Aa", email = "aaa@aaa.aaa"
+cc 901b5122bd96309f3ba05ae85a5e7b6e0f9668ae28a6803ffa56dc1ec985e314 # shrinks to password = "A1_aaaAa", username = "A0AAaAa0", email = "-a^@aa0.aaa"
+cc f1b0261bedde9881e09d9bca51e6fc7599181b8960c12c59cf16f674a329cd0b # shrinks to password = "A1_a0A(#", username = "a0A0a00A", email = "a00@0aa.aaa"
+cc 7325388774aaf778796158c7016a01862af1d64afce5fa35073cde2795a2c603 # shrinks to password = "A1_aA#]0", username = "Aa0Aa000", email = "0a0.@0a0.aaa"
+cc 8b44bf1483799e6305d00f872a52f7d5252d1be548b001f033fb4a09738b23b2 # shrinks to password = "A1_a#AA#", username = "a0aAAA00", email = "a0a/@aaa.aaa"
+cc b50e3b80208a4c90e1d71563c87517f20bcc5b94939e52a9cf9b6afc09af95ae # shrinks to password = "A1_a]+a#", username = "aaAA00aa", email = "00a}@0aa.aaa"
+cc b4dc648026f5b627b511e349832a438dc378c9403526f7eb444801b0d5dbc67d # shrinks to password = "A1_aA(#a", username = "0aa0a0aa", email = "aa0?@0aa.aaa"
+cc fa851ded622963a52bffa83c1bf2b15e2a0eb0ded5368f86a658aa8bf5b29d2e # shrinks to password = "A1_a0(#A", username = "aaaA0000", email = "a0a=@a0a.aaa"
+cc c31f46f645c0a4d876e2fbfb6cd710f3f71140f4cef776ecbae73a2954a3494a # shrinks to password = "A1_a0a#a", username = "000aAAaa", email = "0a0!@a00.aaa"
