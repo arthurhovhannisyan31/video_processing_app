@@ -30,6 +30,7 @@ jobs:
       DATABASE_URL: ${{ vars.DATABASE_URL }}
       BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
       BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
+      CONTAINER: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -49,12 +50,6 @@ jobs:
       - name: Validate linters
         run: |
           make format-check
-      - name: Create temp .env file for sqlx migrations
-        run: |
-          touch .env
-          echo "DATABASE_URL=${{ env.DATABASE_URL }}" > .env
-          echo "BACKEND_JWT_SECRET=${{ env.BACKEND_JWT_SECRET }}" > .env
-          echo "BACKEND_CORS_ORIGINS=${{ env.BACKEND_CORS_ORIGINS }}" > .env
-      - name: Validate unit tests
+      - name: Validate tests
         run: |
           make test-ci
