@@ -1,0 +1,43 @@
+name: Package validation
+on:
+  push:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-audit:
+    name: Cargo packages audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Setup Cargo
+        uses: ./.github/actions/setup-cargo
+      - name: Setup stable Rust version
+        run: |
+          rustup toolchain install stable --profile minimal
+      - name: Install Cargo binaries
+        run: |
+          if ! which cargo-audit; then
+            cargo install cargo-audit --locked
+          fi
+      - name: Validate packages
+        run: |
+          cd modules/backend && cargo audit
+
+  node-audit:
+    name: Node packages audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-nodejs
+      - name: Validate packages
+        run: |
+          cd modules/frontend && yarn npm audit
