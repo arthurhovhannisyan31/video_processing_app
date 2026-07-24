@@ -16,17 +16,17 @@ pub struct AppConfig {
 
 impl AppConfig {
   pub fn from_env() -> Result<Self, ServerError> {
-    let is_docker_container = env::var("DOCKER_CONTAINER")
+    let is_container = env::var("CONTAINER")
       .unwrap_or("false".to_owned())
       .eq("true");
     // Load variables when run locally
-    if !is_docker_container {
+    if !is_container {
       dotenvy::dotenv()?;
     }
 
-    let host = env::var("BACKEND_HOST").unwrap_or_else(|_| "localhost".into());
+    let host = env::var("BACKEND_HOST").unwrap_or("localhost".into());
     let http_port = env::var("BACKEND_HTTP_PORT")
-      .unwrap_or_else(|_| "8080".into())
+      .unwrap_or("8080".to_string())
       .parse()
       .map_err(|e| {
         ServerError::VarError(format!(
@@ -48,11 +48,7 @@ impl AppConfig {
       .filter(|s| !s.is_empty())
       .collect();
     let db_max_connections = env::var("BACKEND_DB_MAX_CONNECTIONS")
-      .map_err(|e| {
-        ServerError::VarError(format!(
-          "Missing BACKEND_DB_MAX_CONNECTIONS: {e}"
-        ))
-      })?
+      .unwrap_or("10".to_string())
       .parse::<u32>()
       .map_err(|e| {
         ServerError::VarError(format!(
@@ -60,9 +56,7 @@ impl AppConfig {
         ))
       })?;
     let is_production = env::var("IS_PRODUCTION")
-      .map_err(|e| {
-        ServerError::VarError(format!("Missing IS_PRODUCTION: {e}"))
-      })?
+      .unwrap_or("false".to_string())
       .eq("true");
 
     Ok(Self {
