@@ -2,7 +2,7 @@ import type { AuthResponse } from "generated/client";
 
 import axios, { type AxiosResponse } from "axios";
 import { toNextJsHandler } from "better-auth/next-js";
-import { API_BASE_URL } from "configs/constants";
+import { NEXT_PUBLIC_BACKEND_BASE_URL } from "configs/constants";
 import { auth } from "lib/auth";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       const { email, password } = await request.json();
 
       const response: AxiosAuthResponse = await axios.post<AuthResponse>(
-        `${API_BASE_URL}/auth/login`,
+        `${NEXT_PUBLIC_BACKEND_BASE_URL}/auth/login`,
         {
           email,
           password,
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       const { email, password, name } = await request.json();
 
       const response: AxiosAuthResponse = await axios.post<AuthResponse>(
-        `${API_BASE_URL}/auth/register`,
+        `${NEXT_PUBLIC_BACKEND_BASE_URL}/auth/register`,
         {
           email,
           password,
