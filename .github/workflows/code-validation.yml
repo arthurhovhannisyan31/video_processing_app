@@ -52,4 +52,4 @@ jobs:
           make format-check
       - name: Validate tests
         run: |
-          make test-ci
+          make test

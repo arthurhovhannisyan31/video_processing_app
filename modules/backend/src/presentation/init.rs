@@ -14,14 +14,14 @@ pub fn build_router(app_state: AppState) -> Router {
   let merged_router = Router::new()
     .merge(get_auth_router())
     .merge(get_utilities_router())
-    .merge(get_protected_router(app_state.clone()));
+    .merge(get_protected_router(app_state.clone()))
+    .with_state(app_state.clone());
 
   Router::new()
     .nest("/api", merged_router)
     .layer(TraceLayer::new_for_http())
     .layer(CompressionLayer::new())
     .layer(build_cors_layer(app_state.app_config.clone()))
-    .with_state(app_state.clone())
 }
 
 pub async fn init_http_server(app_state: AppState) -> Result<(), ServerError> {
