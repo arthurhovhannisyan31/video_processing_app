@@ -1,4 +1,4 @@
-use backend::infrastructure::openapi::OpenApiSpec;
+use backend::core::openapi::OpenApiSpec;
 use std::fs::File;
 use std::io::Write;
 use utoipa::OpenApi;

@@ -1,5 +1,4 @@
-use crate::domain::user::UserId;
-use crate::infrastructure::constants::TOKEN_EXPIRATION_HOURS;
+use crate::features::auth::model::UserId;
 
 use argon2::{
   Argon2,
@@ -12,6 +11,8 @@ use jsonwebtoken::{
   DecodingKey, EncodingKey, Header, Validation, decode, encode,
 };
 use serde::{Deserialize, Serialize};
+
+pub const TOKEN_EXPIRATION_HOURS: i64 = 24;
 
 #[derive(Clone)]
 pub struct JwtService {

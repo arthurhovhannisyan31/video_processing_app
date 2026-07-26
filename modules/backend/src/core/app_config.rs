@@ -1,4 +1,4 @@
-use crate::infrastructure::error::ServerError;
+use crate::core::error::ServerError;
 
 use serde::Deserialize;
 use std::env;

@@ -3,17 +3,17 @@ mod server_test {
   use axum::Router;
   use axum::http::{StatusCode, header};
   use axum_test::{TestServer, expect_json};
-  use backend::application::auth_service::AuthService;
-  use backend::data::user_repository::PostgresUserRepository;
-  use backend::infrastructure::{
-    config::AppConfig, error::ServerError, jwt::JwtService,
-  };
-  use backend::presentation::constants::routes;
-  use backend::presentation::dto::{
+  use backend::core::app_config::AppConfig;
+  use backend::core::app_state::{AppState, AuthState};
+  use backend::core::error::ServerError;
+  use backend::core::jwt::JwtService;
+  use backend::features::auth::dto::{
     AuthRequest, AuthResponse, CreateUserRequest,
   };
-  use backend::presentation::state::AuthState;
-  use backend::presentation::{init::build_router, state::AppState};
+  use backend::features::auth::repository::PostgresUserRepository;
+  use backend::features::auth::service::AuthService;
+  use backend::router::build_router;
+  use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
   use std::sync::Arc;

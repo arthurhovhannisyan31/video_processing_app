@@ -1,8 +1,6 @@
-use crate::data::constants::db_constraints;
-use crate::domain::{
-  error::DomainError,
-  user::{User, UserId},
-};
+use crate::core::error::DomainError;
+use crate::features::auth::constants::db_constraints;
+use crate::features::auth::model::{User, UserId};
 
 use async_trait::async_trait;
 use sqlx::PgPool;

@@ -1,8 +1,7 @@
-use crate::application::error::ApplicationError;
-use crate::data::user_repository::UserRepository;
-use crate::domain::user::User;
-use crate::domain::user::UserId;
-use crate::infrastructure::jwt::{JwtService, hash_password, verify_password};
+use crate::core::error::ApplicationError;
+use crate::core::jwt::{JwtService, hash_password, verify_password};
+use crate::features::auth::model::{User, UserId};
+use crate::features::auth::repository::UserRepository;
 
 #[derive(Clone)]
 pub struct AuthService<R: UserRepository + 'static> {

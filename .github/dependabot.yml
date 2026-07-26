@@ -11,7 +11,7 @@ updates:
     target-branch: "develop"
     pull-request-branch-name:
       separator: "-"
-    directory: "/"
+    directory: "modules/backend"
     schedule:
       interval: weekly
     open-pull-requests-limit: 2
@@ -20,3 +20,70 @@ updates:
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 3
+
+  - package-ecosystem: npm
+    target-branch: "develop"
+    pull-request-branch-name:
+      separator: "-"
+    registries:
+      - yarn-github
+    directory: "modules/frontend"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+    cooldown:
+      default-days: 5
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      devtools:
+        applies-to: version-updates
+        patterns:
+          - "@types/*"
+          - "typescript"
+          - "next*"
+      test:
+        applies-to: version-updates
+        patterns:
+          - "lodash"
+      lint:
+        applies-to: version-updates
+        patterns:
+          - "@biomejs/biome"
+      client-ui:
+        applies-to: version-updates
+        patterns:
+          - "@base-ui/react"
+          - "@dnd-kit/*"
+          - "@hugeicons/*"
+          - "@tailwindcss/postcss"
+          - "lucide-react"
+          - "recharts"
+          - "shadcn"
+          - "sonner"
+          - "tailwind-merge"
+          - "tailwindcss"
+          - "tw-animate-css"
+      client-core:
+        applies-to: version-updates
+        patterns:
+          - "@hookform/resolvers"
+          - "@hey-api/openapi-ts"
+          - "@tanstack/*"
+          - "axios"
+          - "better-auth"
+          - "class-variance-authority"
+          - "clsx"
+          - "date-fns"
+          - "jose"
+          - "jotai"
+          - "lodash-es"
+          - "next*"
+          - "postcss"
+          - "react*"
+          - "zod"

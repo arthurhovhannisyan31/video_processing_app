@@ -95,7 +95,7 @@ export function SignupForm({
         onError: (ctx) => {
           setIsLoading(false);
           toast.error(
-            (ctx.error.error.message || ctx.response.statusText).toString(),
+            (ctx.error?.error?.message || ctx.response.statusText).toString(),
           );
         },
       },

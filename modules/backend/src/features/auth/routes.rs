@@ -1,11 +1,10 @@
-use crate::application::error::ApplicationError;
-use crate::domain::user::User;
-use crate::presentation::constants::routes;
-use crate::presentation::{
-  dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest},
-  state::AppState,
-  state::AuthState,
+use crate::core::app_state::{AppState, AuthState};
+use crate::core::error::ApplicationError;
+use crate::features::auth::dto::{
+  AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest,
 };
+use crate::features::auth::model::User;
+use crate::router::routes;
 
 use axum::{
   Json, Router,

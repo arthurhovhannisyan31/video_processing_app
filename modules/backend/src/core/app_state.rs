@@ -1,7 +1,7 @@
-use crate::application::auth_service::AuthService;
-use crate::data::user_repository::PostgresUserRepository;
-use crate::infrastructure::config::AppConfig;
-use crate::infrastructure::jwt::JwtService;
+use crate::core::app_config::AppConfig;
+use crate::core::jwt::JwtService;
+use crate::features::auth::repository::PostgresUserRepository;
+use crate::features::auth::service::AuthService;
 
 use axum::extract::FromRef;
 use std::sync::Arc;

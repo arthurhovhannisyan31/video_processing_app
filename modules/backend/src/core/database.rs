@@ -1,7 +1,7 @@
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tracing::info;
 
-use crate::infrastructure::error::ServerError;
+use crate::core::error::ServerError;
 
 pub async fn create_pool(
   database_url: &str,
