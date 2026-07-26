@@ -1,8 +1,8 @@
-use crate::application::error::ApplicationError;
-use crate::infrastructure::openapi::OpenApiSpec;
-use crate::presentation::constants::routes;
-use crate::presentation::state::AppState;
+use crate::core::app_state::AppState;
+use crate::core::error::ApplicationError;
+use crate::core::openapi::OpenApiSpec;
 
+use crate::router::routes;
 use axum::{Router, response::Json, routing::get};
 use chrono::Utc;
 use serde_json::{Value, json};

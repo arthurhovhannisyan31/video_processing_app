@@ -1,19 +1,19 @@
-mod application;
-mod data;
-mod domain;
-mod infrastructure;
-mod presentation;
+mod core;
+mod features;
+mod http;
+mod router;
 
-use application::auth_service::AuthService;
-use data::user_repository::PostgresUserRepository;
-use infrastructure::{
-  config::AppConfig,
-  database::{create_pool, run_migrations},
-  error::ServerError,
-  jwt::JwtService,
-  logging::init_logging,
-};
-use presentation::{init::init_http_server, state::AppState, state::AuthState};
+use core::app_config::AppConfig;
+use core::app_state::AppState;
+use core::app_state::AuthState;
+use core::database::{create_pool, run_migrations};
+use core::error::ServerError;
+use core::jwt::JwtService;
+use core::logging::init_logging;
+use features::auth::repository::PostgresUserRepository;
+use features::auth::service::AuthService;
+use http::init_http_server;
+
 use std::sync::Arc;
 
 #[tokio::main]

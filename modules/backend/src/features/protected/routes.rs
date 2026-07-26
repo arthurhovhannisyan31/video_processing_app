@@ -1,6 +1,7 @@
-use crate::presentation::constants::routes;
-use crate::presentation::state::AppState;
-use crate::presentation::{dto::AuthenticatedUser, middleware::auth};
+use crate::core::app_state::AppState;
+use crate::features::auth::dto::AuthenticatedUser;
+use crate::features::auth::middleware::auth;
+use crate::router::routes;
 
 use axum::{Extension, Json, Router, middleware, routing::get};
 use chrono::Utc;

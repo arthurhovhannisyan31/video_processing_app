@@ -1,11 +1,32 @@
-use crate::domain::error::DomainError;
 use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
 use serde_json::json;
+use sqlx::Error;
+use std::io;
+use std::net::AddrParseError;
+use std::num::ParseIntError;
 use thiserror::Error;
 use validator::ValidationErrors;
+
+#[derive(Debug, Error)]
+pub enum DomainError {
+  #[error("Access is forbidden")]
+  Forbidden,
+  #[error("Invalid credentials")]
+  InvalidCredentials,
+  #[error("internal error: {0}")]
+  Internal(String),
+  #[error("Post not found: {0}")]
+  PostNotFound(u64),
+  #[error("User already exists")]
+  UserAlreadyExists,
+  #[error("User not found: {0}")]
+  UserNotFound(i64),
+  #[error("Validation failed: {0}")]
+  Validation(String),
+}
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -23,6 +44,30 @@ pub enum ApplicationError {
   Unauthorized,
   #[error("validation error: {0}")]
   Validation(String),
+}
+
+#[derive(Debug, Error)]
+pub enum ServerError {
+  #[error("Parse addr error")]
+  AddrParseError(#[from] AddrParseError),
+  #[error("IO Error")]
+  IO(#[from] io::Error),
+  #[error("Parse int error")]
+  ParseIntError(#[from] ParseIntError),
+  #[error("Sqlx error: {0}")]
+  SqlxError(String),
+  #[error("Failed to read env variable: {0}")]
+  VarError(String),
+  #[error("Failed loading .env file")]
+  Dotenv(#[from] dotenvy::Error),
+  #[error(transparent)]
+  OtherError(#[from] anyhow::Error),
+}
+
+impl From<sqlx::Error> for ServerError {
+  fn from(value: Error) -> Self {
+    ServerError::SqlxError(value.to_string())
+  }
 }
 
 impl IntoResponse for ApplicationError {

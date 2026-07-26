@@ -1,12 +1,16 @@
-use crate::infrastructure::auth::authenticate_user;
-use crate::presentation::state::AppState;
-
+use crate::core::app_state::AppState;
+use crate::core::jwt::{JwtService, TOKEN_EXPIRATION_HOURS};
+use crate::features::auth::dto::AuthenticatedUser;
+use crate::features::auth::repository::PostgresUserRepository;
+use crate::features::auth::service::AuthService;
 use axum::{
   extract::{Request, State},
   http::{HeaderMap, StatusCode, header},
   middleware::Next,
   response::Response,
 };
+use chrono::Utc;
+use cookie::{Cookie, SameSite};
 
 pub async fn auth(
   State(app_state): State<AppState>,
@@ -33,6 +37,39 @@ fn get_token(headers: &HeaderMap) -> Option<&str> {
     .and_then(|value| value.to_str().ok())?;
   let (scheme, token) = auth_header.split_once(" ")?;
   (scheme.eq_ignore_ascii_case("bearer")).then_some(token)
+}
+
+pub async fn authenticate_user(
+  token: &str,
+  jwt_service: &JwtService,
+  auth_service: &AuthService<PostgresUserRepository>,
+) -> Option<AuthenticatedUser> {
+  let claims = jwt_service.verify_token(token).ok()?;
+  let exp = chrono::DateTime::from_timestamp(claims.exp as i64, 0)?;
+
+  if Utc::now().gt(&exp) {
+    return None;
+  }
+
+  let user = auth_service.get(claims.user_id).await.ok()?;
+
+  Some(AuthenticatedUser {
+    user_id: user.id.to_string(),
+    username: user.username,
+    email: user.email,
+  })
+}
+
+#[allow(dead_code)]
+pub fn get_auth_cookie(token: &str, is_secure: bool) -> Cookie<'static> {
+  let mut cookie = Cookie::new("Authorization", format!("Bearer {token}"));
+  cookie.set_path("/");
+  cookie.set_http_only(true);
+  cookie.set_secure(is_secure);
+  cookie.set_same_site(SameSite::Strict);
+  cookie.set_max_age(cookie::time::Duration::hours(TOKEN_EXPIRATION_HOURS));
+
+  cookie
 }
 
 #[cfg(test)]
