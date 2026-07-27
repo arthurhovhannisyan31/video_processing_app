@@ -1,6 +1,8 @@
 #!/bin/bash
 
-. "./configs/bash/helpers"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+. "${REPO_ROOT}/configs/bash/helpers"
 
 printf "⚠️ Run pre-push checks\n\n"
 
