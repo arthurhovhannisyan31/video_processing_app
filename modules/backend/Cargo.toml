@@ -2,7 +2,7 @@
 version = "0.1.0"
 name = "backend"
 edition = "2024"
-description = "backend for template project"
+description = "Video processing application"
 license = "MIT OR Apache-2.0"
 authors = ["Arthur Hovhannisyan <arthurhovhannisyan31@gmail.com>"]
 repository = "https://github.com/arthurhovhannisyan31/template"

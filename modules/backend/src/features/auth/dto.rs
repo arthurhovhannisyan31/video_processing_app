@@ -19,15 +19,28 @@ use validator::{Validate, ValidationError};
 /// - Include 1 numeric character: 0-9
 /// - Include a special character: !,$,#,%, etc
 
-#[derive(Debug, Serialize, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate, ToSchema)]
 pub struct CreateUserRequest {
+  #[schema(
+    format = "base64",
+    example = "testtest",
+    min_length = 8,
+    max_length = 255
+  )]
   #[validate(
     length(min = 8, max = 255),
     custom(function = "validate_alfa_numeric_username")
   )]
   pub username: String,
+  #[schema(format = "base64", example = "test@test.com", max_length = 255)]
   #[validate(length(max = 255), email)]
   pub email: String,
+  #[schema(
+    format = "base64",
+    example = "Testtest1!",
+    min_length = 8,
+    max_length = 100
+  )]
   #[validate(
     length(min = 8, max = 100),
     custom(function = "validate_password_strength")
@@ -42,9 +55,16 @@ pub struct AuthenticatedUser {
   pub username: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
 pub struct AuthRequest {
+  #[schema(format = "base64", example = "test@test.com", max_length = 255)]
   pub email: String,
+  #[schema(
+    format = "base64",
+    example = "Testtest1!",
+    min_length = 8,
+    max_length = 100
+  )]
   pub password: String,
 }
 
