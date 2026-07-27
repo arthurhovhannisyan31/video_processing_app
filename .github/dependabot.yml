@@ -25,8 +25,6 @@ updates:
     target-branch: "develop"
     pull-request-branch-name:
       separator: "-"
-    registries:
-      - yarn-github
     directory: "modules/frontend"
     schedule:
       interval: weekly
