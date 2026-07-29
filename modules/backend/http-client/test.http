@@ -7,11 +7,13 @@ Origin: http://localhost:3000
 ### Get OpenAPI specification
 GET {{api_host}}/openapi
 Accept: application/json
+Origin: http://localhost:3000
 
 ### Register a user
 POST {{api_host}}/auth/register
 Accept: application/json
 Content-Type: application/json
+Origin: http://localhost:3000
 
 {
   "username": "testtest",

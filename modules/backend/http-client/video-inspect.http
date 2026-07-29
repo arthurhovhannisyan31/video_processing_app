@@ -1,0 +1,13 @@
+### Inspect Video
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=VideoInspectBoundary
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTQzMjk1NH0.hit0NX45lOOYl4xA_WsnYMtwakxbDRAoWSVHcsoGZVw
+
+--VideoInspectBoundary
+Content-Disposition: form-data; name="video"; filename="sample.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/dual_audio_tracks.mp4
+--VideoInspectBoundary--
