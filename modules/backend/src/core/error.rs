@@ -1,3 +1,4 @@
+use axum::extract::multipart::MultipartError;
 use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
@@ -125,5 +126,11 @@ impl From<DomainError> for ApplicationError {
 impl From<ValidationErrors> for ApplicationError {
   fn from(value: ValidationErrors) -> Self {
     ApplicationError::BadRequest(format!(r"{value}"))
+  }
+}
+
+impl From<MultipartError> for ApplicationError {
+  fn from(err: MultipartError) -> Self {
+    ApplicationError::BadRequest(err.to_string())
   }
 }

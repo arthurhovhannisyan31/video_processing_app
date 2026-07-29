@@ -8,7 +8,7 @@ use chrono::Utc;
 use serde_json::{Value, json};
 use utoipa::OpenApi;
 
-pub fn get_utilities_router() -> Router<AppState> {
+pub fn get_system_router() -> Router<AppState> {
   Router::new()
     .route(routes::HEALTH, get(health))
     .route(routes::OPENAPI, get(openapi))

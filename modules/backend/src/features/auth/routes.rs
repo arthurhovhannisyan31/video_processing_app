@@ -47,7 +47,6 @@ pub async fn login(
     .login(&payload.email, &payload.password)
     .await?;
   let user = auth_state.auth_service.get_by_email(&payload.email).await?;
-
   build_auth_response(StatusCode::OK, token.clone(), user)
 }
 
