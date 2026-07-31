@@ -1,1 +1,0 @@
-pub const DEFAULT_VIDEO_BODY_LIMIT_BYTES: usize = 20 * 1024;
