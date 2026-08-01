@@ -13,9 +13,9 @@ pub mod ffprobe {
   pub struct FormatType {
     pub filename: String,
     #[serde(
-      deserialize_with = "crate::features::video::helpers::deserialize_string_to_f64"
+      deserialize_with = "crate::features::video::helpers::deserialize_string_to_i64"
     )]
-    pub size: f64,
+    pub size: i64,
     #[serde(
       deserialize_with = "crate::features::video::helpers::deserialize_string_to_f32"
     )]
@@ -100,27 +100,3 @@ pub mod ffprobe {
 // audio codec
 // bitrate
 // aspect ratio
-
-// original_file_name,
-// file_size_bytes,
-// duration_seconds,
-// format_name,
-// video_streams,
-// audio_streams,
-// width,
-// height,
-// fps
-
-// {
-//   "format": {
-//     "duration": "0",
-//     "size": "0",
-//   },
-//   "streams": [
-//     {
-//
-//     }
-//   ]
-// }
-
-//
