@@ -3,7 +3,7 @@ POST {{api_host}}/video/inspect
 Content-Type: multipart/form-data; boundary=AudioInly
 Accept: application/json
 Origin: http://localhost:3000
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTU5MjYwOH0.8LWMfUQ1SPHamxeuCMs1bFTgINRrxyNwsTcgpmhZaII
+Authorization: Bearer {{token}}
 
 --AudioInly
 Content-Disposition: form-data; name="audio"; filename="audio_only.m4a"
@@ -17,7 +17,7 @@ POST {{api_host}}/video/inspect
 Content-Type: multipart/form-data; boundary=BrokenTruncated
 Accept: application/json
 Origin: http://localhost:3000
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTU5MjYwOH0.8LWMfUQ1SPHamxeuCMs1bFTgINRrxyNwsTcgpmhZaII
+Authorization: Bearer {{token}}
 
 --BrokenTruncated
 Content-Disposition: form-data; name="video"; filename="broken_truncated.mp4"
@@ -31,7 +31,7 @@ POST {{api_host}}/video/inspect
 Content-Type: multipart/form-data; boundary=DualAudioTracks
 Accept: application/json
 Origin: http://localhost:3000
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTU5MjYwOH0.8LWMfUQ1SPHamxeuCMs1bFTgINRrxyNwsTcgpmhZaII
+Authorization: Bearer {{token}}
 
 --DualAudioTracks
 Content-Disposition: form-data; name="video"; filename="dual_audio_tracks.mp4"
@@ -45,7 +45,7 @@ POST {{api_host}}/video/inspect
 Content-Type: multipart/form-data; boundary=SampleAv
 Accept: application/json
 Origin: http://localhost:3000
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTU5MjYwOH0.8LWMfUQ1SPHamxeuCMs1bFTgINRrxyNwsTcgpmhZaII
+Authorization: Bearer {{token}}
 
 --SampleAv
 Content-Disposition: form-data; name="video"; filename="sample_av.mp4"
@@ -59,7 +59,7 @@ POST {{api_host}}/video/inspect
 Content-Type: multipart/form-data; boundary=VerticalNoAudio
 Accept: application/json
 Origin: http://localhost:3000
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTU5MjYwOH0.8LWMfUQ1SPHamxeuCMs1bFTgINRrxyNwsTcgpmhZaII
+Authorization: Bearer {{token}}
 
 --VerticalNoAudio
 Content-Disposition: form-data; name="video"; filename="vertical_no_audio.mp4"

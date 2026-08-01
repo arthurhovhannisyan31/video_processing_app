@@ -1,12 +1,15 @@
 use crate::core::error::ApplicationError;
 
+use axum::extract::multipart::Field;
 use serde_json::Value;
-use std::process::Command;
+use std::process::Stdio;
+use tokio::io::AsyncWriteExt;
+use tokio::process::Command;
 
-pub async fn ffprobe_runner(
-  file_path: String,
+pub async fn ffprobe_runner<'a>(
+  mut video_field: Field<'a>,
 ) -> Result<Value, ApplicationError> {
-  let probe_result = tokio::task::spawn_blocking(move || {
+  let mut ffprobe_process = tokio::task::spawn_blocking(move || {
     Command::new("ffprobe")
       .args([
         "-v",
@@ -15,15 +18,48 @@ pub async fn ffprobe_runner(
         "-show_streams",
         "-of",
         "json",
-        &file_path,
+        "-",
       ])
-      .output()
+      .stdin(Stdio::piped())
+      .stdout(Stdio::piped())
+      .stderr(Stdio::piped())
+      .spawn()
   })
-  .await;
+  .await
+  .map_err(|err| {
+    ApplicationError::Internal(format!("Failed to spawn ffprobe: {err}"))
+  })?
+  .map_err(|err| {
+    ApplicationError::Internal(format!(
+      "Failed executing ffprobe binary: {err}"
+    ))
+  })?;
 
-  let output = match probe_result {
-    Ok(Ok(out)) if out.status.success() => out,
-    Ok(Ok(out)) => {
+  let mut stdin =
+    ffprobe_process
+      .stdin
+      .take()
+      .ok_or(ApplicationError::Internal(
+        "Failed to open stdin".to_string(),
+      ))?;
+
+  while let Some(chunk) = video_field.chunk().await? {
+    if stdin.write_all(&chunk).await.is_err() {
+      break;
+    }
+  }
+
+  stdin.flush().await.map_err(|err| {
+    ApplicationError::BadRequest(format!(
+      "Failed flushing data to stdin: {err}"
+    ))
+  })?;
+
+  drop(stdin);
+
+  let output = match ffprobe_process.wait_with_output().await {
+    Ok(out) if out.status.success() => out,
+    Ok(out) => {
       let err_msg = String::from_utf8_lossy(&out.stderr).into_owned();
       return Err(ApplicationError::BadRequest(format!(
         "ffprobe error: {err_msg}"
