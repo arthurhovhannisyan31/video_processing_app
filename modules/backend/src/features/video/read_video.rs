@@ -1,35 +1,67 @@
 use crate::core::error::ApplicationError;
-use crate::features::video::configs::ffprobe::FfprobeType;
-use crate::features::video::ffprobe_mapper::ffprobe_mapper;
-use crate::features::video::ffprobe_runner::ffprobe_runner;
 
 use axum::extract::Multipart;
+use std::path::Path;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 pub async fn read_video(
   mut media_data: Multipart,
-) -> Result<FfprobeType, ApplicationError> {
-  while let Some(field) = media_data.next_field().await? {
-    let file_name = field
-      .file_name()
+  temp_dir: &Path,
+) -> Result<String, ApplicationError> {
+  let mut file_path = String::new();
+
+  while let Some(mut field) = media_data.next_field().await? {
+    let field_name = field
+      .name()
       .ok_or(ApplicationError::BadRequest(
-        "Missing file_name".to_string(),
+        "Missing field name".to_string(),
       ))?
       .to_string();
 
-    if field.name() == Some("video") {
-      let ffprobe_output = ffprobe_runner(field).await?;
-      println!("json_data: {ffprobe_output:#?}");
-      let mut ffprobe_mapped_data = ffprobe_mapper(ffprobe_output)?;
+    if field_name == "video" {
+      let file_name = field
+        .file_name()
+        .ok_or(ApplicationError::BadRequest(
+          "Missing file_name".to_string(),
+        ))?
+        .to_string();
+      let path = temp_dir.join(file_name);
 
-      if let Some(format) = ffprobe_mapped_data.format.as_mut() {
-        format.filename = file_name;
+      // create local file only when needed
+      let mut created_file = File::create(&path).await.map_err(|err| {
+        ApplicationError::Internal(format!(
+          "Failed to create temp file name: {err}"
+        ))
+      })?;
+      file_path = path.to_string_lossy().to_string();
+
+      // Stream chunks directly from the request network buffer into the file
+      while let Some(chunk) = field.chunk().await? {
+        created_file.write_all(&chunk).await.map_err(|err| {
+          ApplicationError::Internal(format!(
+            "Failed writing video chunk: {:?}",
+            err
+          ))
+        })?;
       }
 
-      return Ok(ffprobe_mapped_data);
+      // Ensure all data chunks are flushed to file
+      created_file.flush().await.map_err(|err| {
+        ApplicationError::BadRequest(format!(
+          "Failed flushing data to file: {err}"
+        ))
+      })?;
+
+      break;
     }
   }
 
-  Err(ApplicationError::BadRequest(
-    "Missing 'video' field".to_string(),
-  ))
+  if file_path.is_empty() {
+    return Err(ApplicationError::BadRequest(
+      "Missing 'video' field".to_string(),
+    ));
+  }
+
+  Ok(file_path)
 }

@@ -13,5 +13,7 @@ pub fn ffprobe_mapper(
       ))
     })?;
 
+  // TODO map data to VideoInspectionResponse
+
   Ok(data)
 }
