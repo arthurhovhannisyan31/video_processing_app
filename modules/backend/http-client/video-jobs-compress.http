@@ -1,0 +1,89 @@
+### Inspect Video AudioInly
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=AudioInly
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--AudioInly
+Content-Disposition: form-data; name="audio"; filename="audio_only.m4a"
+Content-Type: audio/x-m4a
+
+< ../tests/fixtures/media/audio_only.m4a
+--AudioInly
+Content-Disposition: form-data; name="operation";
+
+compress
+--AudioInly--
+
+### Inspect Video BrokenTruncated.mp4
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=BrokenTruncated
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--BrokenTruncated
+Content-Disposition: form-data; name="video"; filename="broken_truncated.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/broken_truncated.mp4
+--BrokenTruncated
+Content-Disposition: form-data; name="operation";
+
+compress
+--BrokenTruncated--
+
+### Process Video DualAudioTracks with compress argument
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=DualAudioTracks
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--DualAudioTracks
+Content-Disposition: form-data; name="video"; filename="dual_audio_tracks.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/dual_audio_tracks.mp4
+--DualAudioTracks
+Content-Disposition: form-data; name="operation";
+
+compress
+--DualAudioTracks--
+
+### Process Video SampleAv
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=SampleAv
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--SampleAv
+Content-Disposition: form-data; name="video"; filename="sample_av.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/sample_av.mp4
+--SampleAv
+Content-Disposition: form-data; name="operation";
+
+compress
+--SampleAv--
+
+### Process Video VerticalNoAudio
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="vertical_no_audio.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/vertical_no_audio.mp4
+--VerticalNoAudio
+Content-Disposition: form-data; name="operation";
+
+compress
+--VerticalNoAudio--
