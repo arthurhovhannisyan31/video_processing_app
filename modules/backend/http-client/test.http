@@ -7,11 +7,13 @@ Origin: http://localhost:3000
 ### Get OpenAPI specification
 GET {{api_host}}/openapi
 Accept: application/json
+Origin: http://localhost:3000
 
 ### Register a user
 POST {{api_host}}/auth/register
 Accept: application/json
 Content-Type: application/json
+Origin: http://localhost:3000
 
 {
   "username": "testtest",
@@ -33,4 +35,4 @@ Origin: some
 ### Get data from protected route
 GET {{api_host}}/protected
 Content-Type: application/json
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiNDUwNWY5NTYtNTBkMC00ZTdjLWE1NzItYjNkNWVhOWFjZGM4IiwidXNlcm5hbWUiOiJ0ZXN0dGVzdCIsImV4cCI6MTc4NTE4Mzg5Nn0.pOB7eNwbNAOzU0TR4Zoa1y7DX1tXY4fNGAag5gFXGPI
+Authorization: Bearer {{token}}

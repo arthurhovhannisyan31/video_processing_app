@@ -1,7 +1,7 @@
 #[cfg(test)]
-mod server_test {
+mod test_public_api {
   use axum::Router;
-  use axum::http::{StatusCode, header};
+  use axum::http::StatusCode;
   use axum_test::{TestServer, expect_json};
   use backend::core::app_config::AppConfig;
   use backend::core::app_state::{AppState, AuthState};
@@ -132,37 +132,6 @@ mod server_test {
     assert_eq!(auth_response.user.username, "testtest");
     assert_eq!(auth_response.user.email, "test@test.com");
     assert!(is_valid_v4_uuid(&auth_response.user.user_id));
-
-    Ok(())
-  }
-
-  #[sqlx::test(fixtures("create_user"))]
-  async fn test_protected(pool: PgPool) -> Result<(), ServerError> {
-    let router = setup_router(pool)?;
-    let server = TestServer::new(router);
-
-    let authentication_request = AuthRequest {
-      email: "test@test.com".into(),
-      password: "Testtest1!".into(),
-    };
-
-    let response = server
-      .post(&with_base_route(routes::LOGIN))
-      .json(&json!(authentication_request))
-      .expect_success()
-      .await;
-    let auth_response = response.json::<AuthResponse>();
-
-    let response = server
-      .get(&with_base_route(routes::PROTECTED))
-      .add_header(
-        header::AUTHORIZATION,
-        format!("Bearer {}", auth_response.token),
-      )
-      .expect_success()
-      .await;
-
-    assert_eq!(response.status_code(), StatusCode::OK);
 
     Ok(())
   }
