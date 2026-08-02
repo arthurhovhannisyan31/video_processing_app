@@ -1,21 +1,15 @@
 use serde::{Deserialize, Deserializer};
+use std::fmt::Display;
+use std::str::FromStr;
 
-pub fn deserialize_string_to_f32<'de, D>(
+pub fn deserialize_string_to_type<'de, D, T>(
   deserializer: D,
-) -> Result<f32, D::Error>
+) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
+  T: FromStr,
+  T::Err: Display,
 {
   let s = String::deserialize(deserializer)?;
-  s.parse::<f32>().map_err(serde::de::Error::custom)
-}
-
-pub fn deserialize_string_to_i64<'de, D>(
-  deserializer: D,
-) -> Result<i64, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let s = String::deserialize(deserializer)?;
-  s.parse::<i64>().map_err(serde::de::Error::custom)
+  s.parse::<T>().map_err(serde::de::Error::custom)
 }

@@ -35,10 +35,15 @@
       "Bash(date:*)",
       "Bash(node --version)",
       "Bash(yarn --version)",
+      "Bash(cargo --version)",
       "Bash(gh:*)",
       "mcp__context7"
     ],
-    "deny": ["Bash(sudo:*)", "Edit(.git/**)", "Read(**/*.env*)"],
+    "deny": [
+      "Bash(sudo:*)",
+      "Edit(.git/**)",
+      "Read(**/*.env*)"
+    ],
     "ask": [
       "Bash(rm:*)",
       "Bash(docker:*)",
@@ -63,7 +68,10 @@
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
-    "excludedCommands": ["git", "gh"]
+    "excludedCommands": [
+      "git",
+      "gh"
+    ]
   },
   "includeCoAuthoredBy": false
 }
