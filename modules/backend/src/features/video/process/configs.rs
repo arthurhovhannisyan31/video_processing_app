@@ -1,5 +1,7 @@
 use crate::core::error::ApplicationError;
 
+pub const OUTPUT_PATH_SUFFIX: &str = "_output";
+
 pub mod operation {
   pub const COMPRESS: &str = "compress";
 }
