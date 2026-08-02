@@ -29,10 +29,9 @@ pub async fn inspect_video(
       "Failed to create temp directory: {err}"
     ))
   })?;
-
-  let file_path = read_video(media_data, temp_dir.path()).await?;
-  let inspection_data = ffprobe_runner(file_path).await?;
-  println!("inspection_data: {inspection_data:#?}");
+  let file_path =
+    inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let inspection_data = ffprobe_runner(&file_path).await?;
   let mapped_data = ffprobe_mapper(inspection_data)?;
 
   Ok(Json(json!(mapped_data)))
