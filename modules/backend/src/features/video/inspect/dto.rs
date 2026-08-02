@@ -1,7 +1,7 @@
-use crate::features::video::configs::ffprobe::FfprobeType;
+use serde::Serialize;
 use std::path::Path;
 
-use serde::Serialize;
+use crate::features::video::configs::ffprobe::FfprobeType;
 
 #[derive(Serialize)]
 pub struct VideoInspectionResponse {
@@ -29,8 +29,6 @@ impl From<FfprobeType> for VideoInspectionResponse {
       .unwrap_or_default()
       .to_string_lossy()
       .to_string();
-
-    println!("streams: {streams:#?}");
 
     let mut response = Self {
       original_file_name,

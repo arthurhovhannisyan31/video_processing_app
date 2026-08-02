@@ -15,9 +15,8 @@ pub mod routes {
   pub const OPENAPI: &str = "/openapi";
   pub const VIDEO_INSPECT: &str = "/video/inspect";
   pub const VIDEO_JOBS: &str = "/video/jobs";
-  pub const VIDEO_JOBS_COMPRESS: &str = "/video/jobs/compress";
-  pub const VIDEO_JOB_BY_ID: &str = "/video/jobs/{id}";
-  pub const VIDEO_JOB_LOGS_BY_ID: &str = "/video/jobs/{id}/logs";
+  pub const VIDEO_JOBS_BY_ID: &str = "/video/jobs/{id}";
+  pub const VIDEO_JOBS_BY_ID_LOGS: &str = "/video/jobs/{id}/logs";
 }
 
 pub fn build_router(app_state: AppState) -> Router {
