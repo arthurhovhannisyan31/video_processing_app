@@ -23,5 +23,11 @@ pub async fn read(
     }
   }
 
+  if file_path.is_empty() {
+    return Err(ApplicationError::BadRequest(
+      "Missing 'video' field".to_string(),
+    ));
+  }
+
   Ok(file_path)
 }
