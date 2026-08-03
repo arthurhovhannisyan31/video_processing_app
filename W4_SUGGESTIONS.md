@@ -256,7 +256,7 @@ Naming it `id` reads like a plain auto-increment integer PK, which this isn't �
 **Fix:**
 
 ```sql
-uuid          UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+unid          UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
 ```
 
 ---
@@ -403,7 +403,23 @@ pub async fn process_video(
 
 `TempDir` deletes its directory (and everything in it) on `Drop`. Since `temp_dir` is a local variable in `process_video`, it drops at the end of the function — after `ffmpeg_runner` has finished but before/as the response is sent. The processed file is deleted immediately and is never returned to the caller. As it stands, the endpoint does real work (transcodes the video) and then discards the only copy of the result.
 
-**Fix:** either stream `output_path`'s bytes back in the response body (e.g. `axum::body::Body::from_stream` reading the file, or read it fully into a `Vec<u8>` for smaller outputs) before `temp_dir` is dropped, or move the output file to persistent/object storage and return a reference to it instead of `"Success"`.
+**Fix:** read `output_path` bytes back into the response before `temp_dir` drops, no storage needed:
+
+```rust
+let output_bytes = tokio::fs::read(&output_path).await.map_err(|err| {
+  ApplicationError::Internal(format!("Failed to read compressed output: {err}"))
+})?;
+
+Ok((
+  [
+    (header::CONTENT_TYPE, "video/mp4".to_string()),
+    (header::CONTENT_DISPOSITION, format!("attachment; filename=\"{}_output.mp4\"", command)),
+  ],
+  output_bytes,
+))
+```
+
+Fix #16 first (ffmpeg exit status), otherwise this reads a garbage/missing file on failed runs. Also add `> ./output.mp4` (or your client's save-response option) on the `.http` request — without it you'll just see raw bytes in the response panel, not a playable file.
 
 ---
 
@@ -442,14 +458,26 @@ pub async fn ffmpeg_runner(
 
 ---
 
-### 17. `inspect/form_data_reader.rs` silently succeeds with an empty file path
+### 17. `form_data_reader.rs` silently succeeds with an empty file path
+
+**Status: fixed in `inspect/`, still open in `process/`.** Commit `1693814` ("Fix empty video field bug and correct .http test field names") added the missing-field check to `inspect/form_data_reader.rs`:
+
+```rust
+if file_path.is_empty() {
+  return Err(ApplicationError::BadRequest(
+    "Missing 'video' field".to_string(),
+  ));
+}
+```
+
+`process/form_data_reader.rs` was not updated the same way and still has the original bug:
 
 ```rust
 pub async fn read(
   mut media_data: Multipart,
   temp_dir: &Path,
-) -> Result<String, ApplicationError> {
-  let mut file_path = String::new();
+) -> Result<ProcessVideoMeta, ApplicationError> {
+  let mut meta = ProcessVideoMeta::default();
 
   while let Some(mut field) = media_data.next_field().await? {
     let field_name = field
@@ -459,16 +487,132 @@ pub async fn read(
       ))?
       .to_string();
 
-    if field_name == "video" {
-      file_path = read_video_to_file(&mut field, temp_dir).await?;
-      break;
+    match field_name.as_str() {
+      "video" => {
+        meta.file_path = read_video_to_file(&mut field, temp_dir).await?;
+      }
+      "operation" => {
+        meta.command = field.text().await?;
+      }
+      _ => {}
     }
   }
 
-  Ok(file_path)
+  Ok(meta)
 }
 ```
 
-If the multipart payload has no `"video"` field, the `while let` loop finishes without ever assigning `file_path`, and the function returns `Ok(String::new())` instead of an error. The caller then proceeds with an empty path.
+If the multipart payload has no `"video"` field, `meta.file_path` stays `""` and the function returns `Ok(meta)` instead of an error — same silent-empty-path issue, just not yet ported to this file.
 
-**Fix:** compare with `process/form_data_reader.rs` — same missing-field problem there. Return an explicit `ApplicationError::BadRequest("Missing 'video' field")` when the field was never found, instead of relying on the caller to notice an empty string.
+**Fix:** apply the same `if meta.file_path.is_empty() { return Err(...) }` check here. Also reinforces suggestion #6 (deduplicate the shared multipart-walk loop) — a single shared implementation would have fixed both call sites at once instead of only one.
+
+---
+
+### 18. `VideoInspectionResponse` overwrites width/height/fps on multi-video-stream files
+
+`features/video/inspect/dto.rs::From<FfprobeType>`:
+
+```rust
+for stream in streams {
+  match stream.codec_type.as_str() {
+    "audio" => { /* ... push ... */ }
+    "video" => {
+      response.video_streams.push(stream.id);
+      response.codecs.push(stream.codec_long_name);
+      response.width = stream.width.unwrap_or_default();
+      response.height = stream.height.unwrap_or_default();
+      response.fps = stream.r_frame_rate;
+    }
+    _ => {}
+  }
+}
+```
+
+`video_streams`/`audio_streams`/`codecs` are accumulated (`push`) across every matching stream, but `width`/`height`/`fps` are plain scalar fields that get reassigned on each video stream — a file with more than one video stream (e.g. a picture-in-picture track, or a video with an embedded thumbnail stream, which ffprobe reports as a second "video" stream) silently ends up with the last stream's dimensions/fps, and no way for the client to know a mismatch happened. None of the current `.http` fixtures (`dual_audio_tracks.mp4` covers dual *audio*, not dual *video*) exercise this path.
+
+**Fix:** either nest per-stream data (see #19) so each video stream keeps its own width/height/fps, or, if only the "primary" video stream is meant to be reported, pick it deliberately (e.g. first stream, or largest resolution) instead of implicitly "whichever came last."
+
+---
+
+### 19. `VideoInspectionResponse` shape makes codec-to-stream correlation fragile for clients
+
+`features/video/inspect/dto.rs`:
+
+```rust
+pub struct VideoInspectionResponse {
+  pub video_streams: Vec<String>,
+  pub width: i32,
+  pub height: i32,
+  pub fps: String,
+  pub codecs: Vec<String>,
+  pub audio_streams: Vec<String>,
+  pub audio_stream_count: usize,
+  // ...
+}
+```
+
+`codecs` is a single flat `Vec<String>` filled from both video and audio streams, in ffprobe's stream order, with no field tying a given codec entry back to the specific `video_streams`/`audio_streams` id it belongs to. A client that wants "codec for stream X" has to reconstruct the correlation by assuming stream order lines up with array index — brittle, and breaks entirely once #18's multi-video-stream case is hit.
+
+**Fix:** nest per-stream info instead of parallel flat arrays, e.g.:
+
+```rust
+pub struct VideoStreamInfo {
+  pub id: String,
+  pub codec: String,
+  pub width: i32,
+  pub height: i32,
+  pub fps: String,
+}
+
+pub struct AudioStreamInfo {
+  pub id: String,
+  pub codec: String,
+}
+
+pub struct VideoInspectionResponse {
+  // ...
+  pub video_streams: Vec<VideoStreamInfo>,
+  pub audio_streams: Vec<AudioStreamInfo>,
+}
+```
+
+This also removes the need for `audio_stream_count` (`audio_streams.len()` covers it) and makes #18 impossible to hit silently — every video stream keeps its own dimensions instead of sharing scalar fields.
+
+---
+
+### 20. `video-inspect.http` has no negative-path or size-limit test cases
+
+`http-client/video-inspect.http` has 5 requests, all happy-path uploads (`audio_only.m4a`, `broken_truncated.mp4`, `dual_audio_tracks.mp4`, `sample_av.mp4`, `vertical_no_audio.mp4`) — good coverage of malformed *media*, but nothing exercises the request-shape errors the handler code explicitly guards against:
+
+- Missing `"video"` field entirely (the case #17 fixes for `inspect/`, but nothing in this file asserts the resulting 400)
+- Wrong field name (e.g. `name="file"` instead of `name="video"`)
+- Upload exceeding `DEFAULT_VIDEO_BODY_LIMIT_BYTES` (`features/video/configs.rs`) — never observed, so the actual `413`/error shape returned by axum's `DefaultBodyLimit` layer is unverified
+
+**Fix:** add a couple of requests like:
+
+```http
+### Inspect Video - missing video field
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=MissingField
+Accept: application/json
+Authorization: Bearer {{token}}
+
+--MissingField
+Content-Disposition: form-data; name="not_video"; filename="sample_av.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/sample_av.mp4
+--MissingField--
+```
+
+plus one oversized-file request, to pin down what the client actually receives on both failure paths.
+
+---
+
+### 21. No fixture with 2+ video streams to catch #18
+
+`tests/fixtures/media/*` are all real, valid media (checked with `ffprobe`: real h264/aac codecs, real resolutions, `dual_audio_tracks.mp4` genuinely has 2 audio streams) — not synthetic/fake, and `broken_truncated.mp4` is intentionally corrupt (missing `moov` atom) to test the error path. So the fixtures are fine as-is for what they cover.
+
+The actual gap: every fixture has exactly **one** video stream. #18's bug (width/height/fps silently overwritten when a file has 2+ video streams — e.g. a PiP track, or a thumbnail stream ffprobe reports as a second "video" stream) has no fixture to reproduce or regression-test it.
+
+**Fix:** add one fixture with 2 video streams (e.g. `ffmpeg -i sample_av.mp4 -i vertical_no_audio.mp4 -map 0:v -map 1:v -c copy dual_video_streams.mp4`), plus a matching `.http` request, so #18's fix (once applied) has something to verify against.
