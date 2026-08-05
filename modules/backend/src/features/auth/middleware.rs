@@ -1,5 +1,5 @@
 use crate::core::app_state::AppState;
-use crate::core::jwt::{JwtService, TOKEN_EXPIRATION_HOURS};
+use crate::core::jwt::JwtService;
 use crate::features::auth::dto::AuthenticatedUser;
 use crate::features::auth::repository::PostgresUserRepository;
 use crate::features::auth::service::AuthService;
@@ -10,7 +10,6 @@ use axum::{
   response::Response,
 };
 use chrono::Utc;
-use cookie::{Cookie, SameSite};
 
 pub async fn auth(
   State(app_state): State<AppState>,
@@ -58,18 +57,6 @@ pub async fn authenticate_user(
     username: user.username,
     email: user.email,
   })
-}
-
-#[allow(dead_code)]
-pub fn get_auth_cookie(token: &str, is_secure: bool) -> Cookie<'static> {
-  let mut cookie = Cookie::new("Authorization", format!("Bearer {token}"));
-  cookie.set_path("/");
-  cookie.set_http_only(true);
-  cookie.set_secure(is_secure);
-  cookie.set_same_site(SameSite::Strict);
-  cookie.set_max_age(cookie::time::Duration::hours(TOKEN_EXPIRATION_HOURS));
-
-  cookie
 }
 
 #[cfg(test)]

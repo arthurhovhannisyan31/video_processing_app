@@ -19,8 +19,6 @@ pub enum DomainError {
   InvalidCredentials,
   #[error("internal error: {0}")]
   Internal(String),
-  #[error("Post not found: {0}")]
-  PostNotFound(u64),
   #[error("User already exists")]
   UserAlreadyExists,
   #[error("User not found: {0}")]
@@ -109,9 +107,6 @@ impl From<DomainError> for ApplicationError {
       DomainError::Forbidden => ApplicationError::Forbidden,
       DomainError::InvalidCredentials => ApplicationError::Unauthorized,
       DomainError::Internal(msg) => ApplicationError::Internal(msg),
-      DomainError::PostNotFound(id) => {
-        ApplicationError::NotFound(format!("Post not found: {}", id))
-      }
       DomainError::UserAlreadyExists => {
         ApplicationError::Conflict("User already exists".to_string())
       }
