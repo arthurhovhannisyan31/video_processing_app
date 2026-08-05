@@ -6,6 +6,11 @@ pub mod operation {
   pub const COMPRESS: &str = "compress";
 }
 
+enum FieldName {
+  Video,
+  Operation,
+}
+
 pub mod preset {
   pub fn compress<'a>() -> Vec<&'a str> {
     vec![

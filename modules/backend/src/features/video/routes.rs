@@ -1,10 +1,3 @@
-use axum::extract::{DefaultBodyLimit, Multipart};
-use axum::response::IntoResponse;
-use axum::routing::post;
-use axum::{Json, Router, middleware};
-use serde_json::json;
-use tempfile::TempDir;
-
 use crate::core::app_state::AppState;
 use crate::core::error::ApplicationError;
 use crate::features::auth::middleware::auth;
@@ -20,6 +13,13 @@ use crate::features::video::process::configs::{
 use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
 use crate::features::video::process::types::ProcessVideoMeta;
 use crate::router::routes;
+use axum::extract::{DefaultBodyLimit, Multipart};
+use axum::response::IntoResponse;
+use axum::routing::post;
+use axum::{Json, Router, middleware};
+use serde_json::json;
+use tempfile::TempDir;
+use utoipa::ToSchema;
 
 pub fn get_video_router(app_state: AppState) -> Router<AppState> {
   Router::new()
@@ -29,6 +29,25 @@ pub fn get_video_router(app_state: AppState) -> Router<AppState> {
     .layer(middleware::from_fn_with_state(app_state, auth))
 }
 
+#[derive(ToSchema)]
+pub struct InspectVideoPayload {
+  #[schema(value_type = String, format = Binary)]
+  pub file: Vec<u8>,
+}
+
+#[utoipa::path(
+  post,
+  path = routes::VIDEO_INSPECT,
+  request_body(
+      content = InspectVideoPayload,
+      content_type = "multipart/form-data"
+  ),
+  responses(
+    (status = OK, description = "Success", body = Object, content_type = "application/json"),
+    (status = UNAUTHORIZED, description = "Unauthorized"),
+    (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
+  )
+)]
 pub async fn inspect_video(
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
@@ -45,6 +64,26 @@ pub async fn inspect_video(
   Ok(Json(json!(mapped_data)))
 }
 
+#[derive(ToSchema)]
+pub struct ProcessVideoPayload {
+  pub operation: String,
+  #[schema(value_type = String, format = Binary)]
+  pub file: Vec<u8>,
+}
+
+#[utoipa::path(
+  post,
+  path = routes::VIDEO_JOBS,
+  request_body(
+      content = ProcessVideoPayload,
+      content_type = "multipart/form-data"
+  ),
+  responses(
+    (status = OK, description = "Success", body = Object, content_type = "application/json"),
+    (status = UNAUTHORIZED, description = "Unauthorized"),
+    (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
+  )
+)]
 pub async fn process_video(
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {

@@ -27,14 +27,13 @@ pub fn get_auth_router() -> Router<AppState> {
 
 #[utoipa::path(
   post,
+  path = routes::LOGIN,
   request_body = AuthRequest,
   responses(
-    (status = OK,description = "Success",body = AuthResponse),
-    (status = UNAUTHORIZED,description = "User not found or credentials are invalid"),
-    (status = INTERNAL_SERVER_ERROR,description = "Server internal error",body = Object,content_type = "application/json")
-  ),
-  path = routes::LOGIN,
-  responses((status = OK, body = AuthResponse))
+    (status = OK,description = "Success", body = AuthResponse),
+    (status = UNAUTHORIZED, description = "User not found or credentials are invalid"),
+    (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
+  )
 )]
 pub async fn login(
   State(auth_state): State<Arc<AuthState>>,
@@ -52,14 +51,13 @@ pub async fn login(
 
 #[utoipa::path(
   post,
+  path = routes::REGISTER,
   request_body = CreateUserRequest,
   responses(
-    (status = OK,description = "Success",body = AuthResponse),
-    (status = BAD_REQUEST,description = "Credentials requirements are not met",body = Object,content_type = "application/json"),
-    (status = INTERNAL_SERVER_ERROR,description = "Server internal error",body = Object,content_type = "application/json")
-  ),
-  path = routes::REGISTER,
-  responses((status = OK, body = AuthResponse))
+    (status = OK,description = "Success", body = AuthResponse),
+    (status = BAD_REQUEST, description = "Credentials requirements are not met", body = Object,content_type = "application/json"),
+    (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
+  )
 )]
 async fn register(
   State(auth_state): State<Arc<AuthState>>,
