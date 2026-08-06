@@ -91,7 +91,7 @@ impl UserRepository for PostgresUserRepository {
         FROM users
         WHERE users.id = $1
       "#,
-      id.0
+      id as _
     ).fetch_optional(&self.pool)
       .await
       .map_err(|e| {
