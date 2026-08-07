@@ -1,0 +1,11 @@
+name: "Setup system dependencies"
+description: Install system dependencies required for workspace crates
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install systemwide packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ffmpeg -y
+      shell: bash
