@@ -4,6 +4,7 @@ use crate::features::auth::middleware::auth;
 use crate::features::video::constants::DEFAULT_VIDEO_BODY_LIMIT_BYTES;
 use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect;
+use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
 use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
 use crate::features::video::process;
@@ -29,6 +30,7 @@ pub fn get_video_router(app_state: AppState) -> Router<AppState> {
     .layer(middleware::from_fn_with_state(app_state, auth))
 }
 
+#[allow(unused)]
 #[derive(ToSchema)]
 pub struct InspectVideoPayload {
   #[schema(value_type = String, format = Binary)]
@@ -61,9 +63,10 @@ pub async fn inspect_video(
   let inspection_data = ffprobe_runner(&file_path).await?;
   let mapped_data = ffprobe_mapper(inspection_data)?;
 
-  Ok(Json(json!(mapped_data)))
+  Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
 }
 
+#[allow(unused)]
 #[derive(ToSchema)]
 pub struct ProcessVideoPayload {
   pub operation: String,

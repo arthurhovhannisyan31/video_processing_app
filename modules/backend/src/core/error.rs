@@ -140,3 +140,15 @@ impl From<ServerError> for ApplicationError {
     ApplicationError::Internal(value.to_string())
   }
 }
+
+impl From<io::Error> for ApplicationError {
+  fn from(value: io::Error) -> Self {
+    ApplicationError::Internal(value.to_string())
+  }
+}
+
+impl From<tokio::task::JoinError> for ApplicationError {
+  fn from(value: tokio::task::JoinError) -> Self {
+    ApplicationError::Internal(value.to_string())
+  }
+}
