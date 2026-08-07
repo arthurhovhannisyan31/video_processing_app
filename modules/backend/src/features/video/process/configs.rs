@@ -14,8 +14,20 @@ enum FieldName {
 pub mod preset {
   pub fn compress<'a>() -> Vec<&'a str> {
     vec![
-      "-vcodec", "libx264", "-crf", "23", "-preset", "medium", "-acodec",
-      "aac", "-b:a", "128k",
+      "-y",
+      "-nostdin",
+      "-vcodec",
+      "libx264",
+      "-crf",
+      "23",
+      "-preset",
+      "medium",
+      "-acodec",
+      "aac",
+      "-b:a",
+      "128k",
+      "-progress",
+      "pipe:1",
     ]
   }
 }
