@@ -35,7 +35,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "chrono", "time"] }
 utoipa = { version = "5.5", features = ["yaml"] }
 uuid = { version = "1.23", features = ["v4", "serde"] }
-validator = { version = "0.20.0", features = ["derive"] }
+validator = { version = "0.21.0", features = ["derive"] }
 
 [dev-dependencies]
 axum-test = "21.0"
