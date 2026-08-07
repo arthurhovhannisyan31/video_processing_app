@@ -1,8 +1,8 @@
 use crate::features::video::model::MediaMetadata;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VideoInspectionResponse {
   pub original_file_name: String,
   pub file_size_bytes: i64,
