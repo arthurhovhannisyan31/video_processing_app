@@ -1,5 +1,5 @@
 ### Inspect Video AudioInly
-POST {{api_host}}/video/inspect
+POST {{api_host}}/video/jobs
 Content-Type: multipart/form-data; boundary=AudioInly
 Accept: application/json
 Origin: http://localhost:3000
@@ -17,7 +17,7 @@ compress
 --AudioInly--
 
 ### Inspect Video BrokenTruncated.mp4
-POST {{api_host}}/video/inspect
+POST {{api_host}}/video/jobs
 Content-Type: multipart/form-data; boundary=BrokenTruncated
 Accept: application/json
 Origin: http://localhost:3000
