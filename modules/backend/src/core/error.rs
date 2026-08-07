@@ -7,7 +7,7 @@ use serde_json::json;
 use sqlx::Error;
 use std::io;
 use std::net::AddrParseError;
-use std::num::ParseIntError;
+use std::num::{ParseFloatError, ParseIntError};
 use thiserror::Error;
 use validator::ValidationErrors;
 
@@ -25,6 +25,8 @@ pub enum DomainError {
   UserNotFound(i64),
   #[error("Validation failed: {0}")]
   Validation(String),
+  #[error("Media data not found: {0}")]
+  MissingMediaData(String),
 }
 
 #[derive(Debug, Error)]
@@ -53,6 +55,8 @@ pub enum ServerError {
   IO(#[from] io::Error),
   #[error("Parse int error")]
   ParseIntError(#[from] ParseIntError),
+  #[error("Parse int error")]
+  ParseFloatError(#[from] ParseFloatError),
   #[error("Sqlx error: {0}")]
   SqlxError(String),
   #[error("Failed to read env variable: {0}")]
@@ -114,6 +118,7 @@ impl From<DomainError> for ApplicationError {
         ApplicationError::NotFound(format!("User not found: {}", id))
       }
       DomainError::Validation(msg) => ApplicationError::Validation(msg),
+      DomainError::MissingMediaData(msg) => ApplicationError::Internal(msg),
     }
   }
 }
@@ -127,5 +132,11 @@ impl From<ValidationErrors> for ApplicationError {
 impl From<MultipartError> for ApplicationError {
   fn from(err: MultipartError) -> Self {
     ApplicationError::BadRequest(err.to_string())
+  }
+}
+
+impl From<ServerError> for ApplicationError {
+  fn from(value: ServerError) -> Self {
+    ApplicationError::Internal(value.to_string())
   }
 }
