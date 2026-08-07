@@ -3080,7 +3080,7 @@ __metadata:
     jotai: "npm:^2.20.1"
     lodash: "npm:^4.18.1"
     lodash-es: "npm:^4.18.1"
-    lucide-react: "npm:^1.25.0"
+    lucide-react: "npm:^1.28.0"
     next: "npm:16.2.11"
     next-themes: "npm:^0.4.6"
     postcss: "npm:^8.5.25"
@@ -3088,8 +3088,8 @@ __metadata:
     react-dom: "npm:19.2.8"
     react-hook-form: "npm:^7.83.0"
     react-is: "npm:^19.2.8"
-    recharts: "npm:3.9.2"
-    shadcn: "npm:^4.13.1"
+    recharts: "npm:3.10.1"
+    shadcn: "npm:^4.16.1"
     sonner: "npm:^2.0.7"
     tailwind-merge: "npm:^3.6.0"
     tailwindcss: "npm:^4.3.3"
@@ -3862,12 +3862,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react@npm:^1.25.0":
-  version: 1.25.0
-  resolution: "lucide-react@npm:1.25.0"
+"lucide-react@npm:^1.28.0":
+  version: 1.28.0
+  resolution: "lucide-react@npm:1.28.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/1daf7f596692714f43e252a5ddcc2e4f278f979c767ab13420a5b720e1334ae94f1f2f4d249df9bb51aa06b3c12f14d86ff574597620368a5a56dd37953329c3
+  checksum: 10/8797d879a4a7767565807333b430bda73d935274fd8ec9fe6f2d6932bb973085684bbf305f03c74aab8ba9732ae2c699868a0d109874be55a2bbc36d8c100dec
   languageName: node
   linkType: hard
 
@@ -4588,9 +4588,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recharts@npm:3.9.2":
-  version: 3.9.2
-  resolution: "recharts@npm:3.9.2"
+"recharts@npm:3.10.1":
+  version: 3.10.1
+  resolution: "recharts@npm:3.10.1"
   dependencies:
     "@reduxjs/toolkit": "npm:^1.9.0 || 2.x.x"
     clsx: "npm:^2.1.1"
@@ -4607,7 +4607,7 @@ __metadata:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-is: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/c34cd9358e6ba71505389b1a06a274a5eb58cab293d0c3f636ef3c07190164e65e48196ea54adafd0b2ec22515cec5a2a146b51237429dc221290771997cf987
+  checksum: 10/866c02fac2afcecdd59d3bafdf486229138b4d0704d989fd51f3e8ae00995161488a75a3c330115fb39724bd93875883138b900abb5937d970057ea5436e00d9
   languageName: node
   linkType: hard
 
@@ -4794,9 +4794,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shadcn@npm:^4.13.1":
-  version: 4.13.1
-  resolution: "shadcn@npm:4.13.1"
+"shadcn@npm:^4.16.1":
+  version: 4.16.1
+  resolution: "shadcn@npm:4.16.1"
   dependencies:
     "@babel/core": "npm:^7.28.0"
     "@babel/parser": "npm:^7.28.0"
@@ -4832,7 +4832,7 @@ __metadata:
     zod-to-json-schema: "npm:^3.24.6"
   bin:
     shadcn: dist/index.js
-  checksum: 10/7a6e65096630df5001a0bc1777687a7e0e6617b763e799da4ce3b805a36549184c46bdc3d820d03ba1cd0bd71eba6ff344a6ac5317016090485609d816ff56c0
+  checksum: 10/e6c351630ac44090f559f06711b766e59787d66b26106037e2be8af5d6a884c574febecd59739435a043fc6de7f0625a09f59af14738c7c81ab9d43de40726a7
   languageName: node
   linkType: hard
 
