@@ -1,5 +1,5 @@
 use crate::core::app_state::{AppState, AuthState};
-use crate::core::error::ApplicationError;
+use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::dto::{
   AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest,
 };
@@ -46,7 +46,7 @@ pub async fn login(
     .login(&payload.email, &payload.password)
     .await?;
   let user = auth_state.auth_service.get_by_email(&payload.email).await?;
-  build_auth_response(StatusCode::OK, token.clone(), user)
+  Ok(build_auth_response(StatusCode::OK, token.clone(), user)?)
 }
 
 #[utoipa::path(
@@ -77,17 +77,20 @@ async fn register(
 
   let token = auth_state
     .jwt_service
-    .generate_token(user.id.clone(), user.username.clone())
-    .map_err(|err| ApplicationError::Internal(err.to_string()))?;
+    .generate_token(user.id.clone(), user.username.clone())?;
 
-  build_auth_response(StatusCode::CREATED, token.clone(), user)
+  Ok(build_auth_response(
+    StatusCode::CREATED,
+    token.clone(),
+    user,
+  )?)
 }
 
 fn build_auth_response(
   status: StatusCode,
   token: String,
   user: User,
-) -> Result<impl IntoResponse, ApplicationError> {
+) -> Result<impl IntoResponse, ServerError> {
   let authenticated_user = AuthenticatedUser {
     user_id: user.id.to_string(),
     email: user.email,
@@ -99,8 +102,10 @@ fn build_auth_response(
   })
   .to_string();
 
-  Response::builder()
-    .status(status)
-    .body(Body::from(response_body))
-    .map_err(|err| ApplicationError::Internal(err.to_string()))
+  Ok(
+    Response::builder()
+      .status(status)
+      .body(Body::from(response_body))
+      .map_err(|err| ApplicationError::Internal(err.to_string())),
+  )
 }

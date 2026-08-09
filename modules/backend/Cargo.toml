@@ -14,7 +14,7 @@ path = "src/bin/openapi_generator.rs"
 
 [dependencies]
 anyhow = "1.0"
-argon2 = "0.5"
+argon2 = { version = "0.5", features = ["std"] }
 async-trait = "0.1"
 axum = { version = "0.8", features = ["macros", "multipart"] }
 axum-extra = { version = "0.12", features = ["typed-header", "cookie"] }

@@ -1,5 +1,5 @@
 use crate::core::app_state::AppState;
-use crate::core::error::ApplicationError;
+use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::middleware::auth;
 use crate::features::video::constants::DEFAULT_VIDEO_BODY_LIMIT_BYTES;
 use crate::features::video::helpers::append_path_suffix;
@@ -30,6 +30,7 @@ pub fn get_video_router(app_state: AppState) -> Router<AppState> {
     .layer(middleware::from_fn_with_state(app_state, auth))
 }
 
+// Struct used for openapi schema typings
 #[allow(unused)]
 #[derive(ToSchema)]
 pub struct InspectVideoPayload {
@@ -66,6 +67,7 @@ pub async fn inspect_video(
   Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
 }
 
+// Struct used for openapi schema typings
 #[allow(unused)]
 #[derive(ToSchema)]
 pub struct ProcessVideoPayload {
@@ -90,11 +92,7 @@ pub struct ProcessVideoPayload {
 pub async fn process_video(
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
-  let temp_dir = TempDir::new().map_err(|err| {
-    ApplicationError::Internal(format!(
-      "Failed to create temp directory: {err}"
-    ))
-  })?;
+  let temp_dir = TempDir::new().map_err(ServerError::IO)?;
   let ProcessVideoMeta { command, file_path } =
     process::form_data_reader::read(media_data, temp_dir.path()).await?;
   let output_path = append_path_suffix(&file_path, OUTPUT_PATH_SUFFIX)?;

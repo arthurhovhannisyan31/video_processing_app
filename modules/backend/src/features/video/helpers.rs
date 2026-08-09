@@ -1,4 +1,5 @@
-use crate::core::error::ApplicationError;
+use crate::core::error::{ApplicationError, ServerError};
+use anyhow::anyhow;
 use axum::extract::multipart::Field;
 use serde::{Deserialize, Deserializer};
 use std::fmt::Display;
@@ -56,42 +57,28 @@ pub fn append_path_suffix(
 pub async fn read_video_to_file(
   field: &mut Field<'_>,
   temp_dir: &Path,
-) -> Result<String, ApplicationError> {
+) -> Result<String, ServerError> {
   let file_name = field
     .file_name()
-    .ok_or(ApplicationError::BadRequest(
-      "Missing file_name".to_string(),
-    ))?
-    .to_string();
+    .ok_or(ServerError::DataError("Missing file_name".to_string()))?;
   let path = temp_dir.join(file_name);
 
   // create local file only when needed
-  let mut created_file = File::create(&path).await.map_err(|err| {
-    ApplicationError::Internal(format!(
-      "Failed to create temp file name: {err}"
-    ))
-  })?;
+  let mut created_file = File::create(&path).await?;
   let file_path = path.to_string_lossy().to_string();
 
   // Stream chunks directly from the request network buffer into the file
   while let Some(chunk) = field.chunk().await? {
-    created_file.write_all(&chunk).await.map_err(|err| {
-      ApplicationError::Internal(format!(
-        "Failed writing video chunk: {:?}",
-        err
-      ))
-    })?;
+    created_file.write_all(&chunk).await?;
   }
 
   // Ensure all data chunks are flushed to file
-  created_file.flush().await.map_err(|err| {
-    ApplicationError::BadRequest(format!("Failed flushing data to file: {err}"))
-  })?;
+  created_file.flush().await?;
 
   if file_path.is_empty() {
-    return Err(ApplicationError::BadRequest(
-      "Missing 'video' field".to_string(),
-    ));
+    return Err(ServerError::OtherError(anyhow!(
+      "Missing 'video' field".to_string()
+    )));
   }
 
   Ok(file_path)

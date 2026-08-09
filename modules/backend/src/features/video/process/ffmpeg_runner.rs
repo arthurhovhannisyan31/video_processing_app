@@ -1,4 +1,5 @@
-use crate::core::error::ApplicationError;
+use crate::core::error::ServerError;
+use anyhow::anyhow;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -7,7 +8,7 @@ pub async fn ffmpeg_runner(
   input: &str,
   output: &str,
   preset: Vec<&str>,
-) -> Result<(), ApplicationError> {
+) -> Result<(), ServerError> {
   let mut args: Vec<&str> = vec!["-i", input];
   args.extend(preset);
   args.extend([output]);
@@ -19,25 +20,19 @@ pub async fn ffmpeg_runner(
     .stderr(Stdio::piped())
     .spawn()
     .map_err(|err| {
-      ApplicationError::Internal(format!(
+      ServerError::OtherError(anyhow!(
         "Failed to spawn 'ffmpeg' process: {err:?}"
       ))
     })?;
 
-  let stdout =
-    child_process
-      .stdout
-      .take()
-      .ok_or(ApplicationError::Internal(
-        "Missing ffmpeg stdout".to_string(),
-      ))?;
-  let stderr =
-    child_process
-      .stderr
-      .take()
-      .ok_or(ApplicationError::Internal(
-        "Missing ffmpeg stderr".to_string(),
-      ))?;
+  let stdout = child_process
+    .stdout
+    .take()
+    .ok_or(ServerError::Processing("Missing ffmpeg stdout".to_string()))?;
+  let stderr = child_process
+    .stderr
+    .take()
+    .ok_or(ServerError::Processing("Missing ffmpeg stderr".to_string()))?;
 
   let mut progress_lines = BufReader::new(stdout).lines();
   let mut error_lines = BufReader::new(stderr).lines();
@@ -59,11 +54,11 @@ pub async fn ffmpeg_runner(
   });
 
   let status = child_process.wait().await?;
-  let _: Result<(), ApplicationError> = progress_task.await?;
-  let _: Result<(), ApplicationError> = stderr_task.await?;
+  let _: Result<(), ServerError> = progress_task.await?;
+  let _: Result<(), ServerError> = stderr_task.await?;
 
   if !status.success() {
-    return Err(ApplicationError::BadRequest(format!(
+    return Err(ServerError::Processing(format!(
       "ffmpeg error: {}",
       status.to_string()
     )));

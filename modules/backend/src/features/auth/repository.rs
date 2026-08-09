@@ -76,10 +76,10 @@ impl UserRepository for PostgresUserRepository {
       email
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e| {
-        error!("Failed to find user by email {}: {}", email, e);
-        DomainError::Internal(format!("database error: {}", e))
-      })?;
+      .inspect_err(|err| {
+        error!("Failed to find user by email {}: {}", email, err)
+        })
+      ?;
 
     Ok(row)
   }
@@ -94,10 +94,11 @@ impl UserRepository for PostgresUserRepository {
       id as _
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e| {
-        error!("Failed to find user by id {}: {}", id, e);
-        DomainError::Internal(format!("database error: {}", e))
-      })?;
+      .inspect_err(
+        |err| {
+          error!("Failed to find user by id {}: {}", id,err);
+        }
+      )?;
 
     Ok(row)
   }

@@ -1,5 +1,6 @@
 use crate::features::auth::model::UserId;
 
+use crate::core::error::ServerError;
 use argon2::{
   Argon2,
   password_hash::{
@@ -35,7 +36,7 @@ impl JwtService {
     &self,
     user_id: UserId,
     username: String,
-  ) -> Result<String, jsonwebtoken::errors::Error> {
+  ) -> Result<String, ServerError> {
     let claims = Claims {
       user_id,
       username,
@@ -44,17 +45,14 @@ impl JwtService {
         .expect("token expiration duration does not overflow")
         .timestamp() as usize,
     };
-    encode(
+    Ok(encode(
       &Header::default(),
       &claims,
       &EncodingKey::from_secret(self.secret.as_bytes()),
-    )
+    )?)
   }
 
-  pub fn verify_token(
-    &self,
-    token: &str,
-  ) -> Result<Claims, jsonwebtoken::errors::Error> {
+  pub fn verify_token(&self, token: &str) -> Result<Claims, ServerError> {
     let data = decode::<Claims>(
       token,
       &DecodingKey::from_secret(self.secret.as_bytes()),
@@ -64,9 +62,7 @@ impl JwtService {
   }
 }
 
-pub fn hash_password(
-  password: &str,
-) -> Result<String, argon2::password_hash::Error> {
+pub fn hash_password(password: &str) -> Result<String, ServerError> {
   let salt = SaltString::generate(&mut OsRng);
   let argon2 = Argon2::default();
   let hash = argon2

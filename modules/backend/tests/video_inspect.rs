@@ -6,7 +6,7 @@ mod test_video_inspect_api {
   use axum::http::{StatusCode, header};
   use axum_test::multipart::{MultipartForm, Part};
   use axum_test::{TestServer, expect_json};
-  use backend::core::error::ApplicationError;
+  use backend::core::error::{ApplicationError, ServerError};
   use backend::features::video::inspect::dto::VideoInspectionResponse;
   use backend::router::routes;
   use serde_json::json;
@@ -26,7 +26,7 @@ mod test_video_inspect_api {
     token: String,
     file_name: &str,
     size: u64,
-  ) -> Result<(), ApplicationError> {
+  ) -> Result<(), ServerError> {
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
       .multipart(form)
@@ -37,8 +37,7 @@ mod test_video_inspect_api {
     assert_eq!(response.status_code(), StatusCode::OK);
 
     let video_inspection_response =
-      serde_json::from_str::<VideoInspectionResponse>(&response.text())
-        .map_err(|err| ApplicationError::Internal(err.to_string()))?;
+      serde_json::from_str::<VideoInspectionResponse>(&response.text())?;
     assert_eq!(video_inspection_response.original_file_name, file_name);
     assert_eq!(video_inspection_response.file_size_bytes as u64, size);
 
@@ -105,7 +104,7 @@ mod test_video_inspect_api {
   #[sqlx::test(fixtures("create_user"))]
   async fn test_video_inspect_dual_audio_tracks(
     pool: PgPool,
-  ) -> Result<(), ApplicationError> {
+  ) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "dual_audio_tracks.mp4";
@@ -134,7 +133,7 @@ mod test_video_inspect_api {
   #[sqlx::test(fixtures("create_user"))]
   async fn test_video_inspect_sample_av(
     pool: PgPool,
-  ) -> Result<(), ApplicationError> {
+  ) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "sample_av.mp4";
@@ -161,7 +160,7 @@ mod test_video_inspect_api {
   #[sqlx::test(fixtures("create_user"))]
   async fn test_video_inspect_vertical_no_audio(
     pool: PgPool,
-  ) -> Result<(), ApplicationError> {
+  ) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "vertical_no_audio.mp4";

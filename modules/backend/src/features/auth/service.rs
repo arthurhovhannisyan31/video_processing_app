@@ -42,8 +42,7 @@ where
     password: String,
     username: String,
   ) -> Result<User, ApplicationError> {
-    let hash = hash_password(&password)
-      .map_err(|err| ApplicationError::Internal(err.to_string()))?;
+    let hash = hash_password(&password)?;
     let user = User::new(email.to_lowercase(), hash, username);
 
     self.repo.create(user).await.map_err(ApplicationError::from)

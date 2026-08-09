@@ -1,20 +1,21 @@
-use crate::core::error::ApplicationError;
+use crate::core::error::ServerError;
 use crate::features::video::helpers::read_video_to_file;
+use anyhow::anyhow;
 use axum::extract::Multipart;
 use std::path::Path;
 
 pub async fn read(
   mut media_data: Multipart,
   temp_dir: &Path,
-) -> Result<String, ApplicationError> {
+) -> Result<String, ServerError> {
   let mut file_path = String::new();
 
   while let Some(mut field) = media_data.next_field().await? {
     let field_name = field
       .name()
-      .ok_or(ApplicationError::BadRequest(
+      .ok_or(ServerError::OtherError(anyhow!(
         "Missing field name".to_string(),
-      ))?
+      )))?
       .to_string();
 
     if field_name == "video" {
