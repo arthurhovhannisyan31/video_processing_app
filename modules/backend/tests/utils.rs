@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::Router;
 use axum_test::TestServer;
 use backend::core::app_config::AppConfig;
@@ -10,7 +12,6 @@ use backend::features::auth::service::AuthService;
 use backend::router::{build_router, routes};
 use serde_json::json;
 use sqlx::PgPool;
-use std::sync::Arc;
 
 #[cfg(test)]
 pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {

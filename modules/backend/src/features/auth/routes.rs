@@ -1,23 +1,20 @@
-use crate::core::app_state::{AppState, AuthState};
-use crate::core::error::{ApplicationError, ServerError};
-use crate::features::auth::dto::{
-  AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest,
-};
-use crate::features::auth::model::User;
-use crate::router::routes;
-
-use axum::{
-  Json, Router,
-  body::Body,
-  extract::State,
-  http::{Response, StatusCode},
-  response::IntoResponse,
-  routing::post,
-};
-use serde_json::json;
 use std::sync::Arc;
+
+use axum::body::Body;
+use axum::extract::State;
+use axum::http::{Response, StatusCode};
+use axum::response::IntoResponse;
+use axum::routing::post;
+use axum::{Json, Router};
+use serde_json::json;
 use tracing::info;
 use validator::Validate;
+
+use crate::core::app_state::{AppState, AuthState};
+use crate::core::error::{ApplicationError, ServerError};
+use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
+use crate::features::auth::model::User;
+use crate::router::routes;
 
 pub fn get_auth_router() -> Router<AppState> {
   Router::new()

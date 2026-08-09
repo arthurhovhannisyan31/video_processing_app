@@ -1,6 +1,8 @@
-use crate::features::video::model::MediaMetadata;
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+
+use crate::features::video::model::MediaMetadata;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VideoInspectionResponse {

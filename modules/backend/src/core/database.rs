@@ -1,4 +1,5 @@
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use tracing::{error, info};
 
 use crate::core::error::ServerError;

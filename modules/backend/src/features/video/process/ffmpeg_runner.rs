@@ -1,8 +1,10 @@
-use crate::core::error::ServerError;
-use anyhow::anyhow;
 use std::process::Stdio;
+
+use anyhow::anyhow;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+
+use crate::core::error::ServerError;
 
 pub async fn ffmpeg_runner(
   input: &str,
@@ -19,11 +21,7 @@ pub async fn ffmpeg_runner(
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
     .spawn()
-    .map_err(|err| {
-      ServerError::OtherError(anyhow!(
-        "Failed to spawn 'ffmpeg' process: {err:?}"
-      ))
-    })?;
+    .map_err(|err| ServerError::OtherError(anyhow!("Failed to spawn 'ffmpeg' process: {err:?}")))?;
 
   let stdout = child_process
     .stdout

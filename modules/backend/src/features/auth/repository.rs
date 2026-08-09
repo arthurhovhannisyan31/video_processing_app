@@ -1,18 +1,15 @@
-use crate::core::error::DomainError;
-use crate::features::auth::constants::db_constraints;
-use crate::features::auth::model::{User, UserId};
-
 use async_trait::async_trait;
 use sqlx::PgPool;
 use tracing::{error, info};
 
+use crate::core::error::DomainError;
+use crate::features::auth::constants::db_constraints;
+use crate::features::auth::model::{User, UserId};
+
 #[async_trait]
 pub trait UserRepository: Send + Sync {
   async fn create(&self, user: User) -> Result<User, DomainError>;
-  async fn find_by_email(
-    &self,
-    email: &str,
-  ) -> Result<Option<User>, DomainError>;
+  async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError>;
   async fn find_by_id(&self, id: UserId) -> Result<Option<User>, DomainError>;
 }
 
@@ -62,10 +59,7 @@ impl UserRepository for PostgresUserRepository {
     info!(user_id = %user.id, email = %user.email, "user created");
     Ok(row)
   }
-  async fn find_by_email(
-    &self,
-    email: &str,
-  ) -> Result<Option<User>, DomainError> {
+  async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError> {
     let row = sqlx::query_as!(
       User,
       r#"

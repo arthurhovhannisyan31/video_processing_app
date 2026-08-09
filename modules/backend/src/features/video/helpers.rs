@@ -1,16 +1,16 @@
-use crate::core::error::{ApplicationError, ServerError};
-use anyhow::anyhow;
-use axum::extract::multipart::Field;
-use serde::{Deserialize, Deserializer};
 use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
+
+use anyhow::anyhow;
+use axum::extract::multipart::Field;
+use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
-pub fn deserialize_string_to_type<'de, D, T>(
-  deserializer: D,
-) -> Result<T, D::Error>
+use crate::core::error::{ApplicationError, ServerError};
+
+pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
   T: FromStr,
@@ -21,10 +21,7 @@ where
 }
 
 // TODO Tests
-pub fn append_path_suffix(
-  path: &str,
-  suffix: &str,
-) -> Result<String, ApplicationError> {
+pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ApplicationError> {
   let path = Path::new(path);
   let stem = path
     .file_stem()

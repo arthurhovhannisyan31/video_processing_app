@@ -32,9 +32,7 @@ pub mod preset {
   }
 }
 
-pub fn get_preset_by_name<'a>(
-  operation: &str,
-) -> Result<Vec<&'a str>, ApplicationError> {
+pub fn get_preset_by_name<'a>(operation: &str) -> Result<Vec<&'a str>, ApplicationError> {
   match operation {
     operation::COMPRESS => Ok(preset::compress()),
     _ => Err(ApplicationError::BadRequest(format!(

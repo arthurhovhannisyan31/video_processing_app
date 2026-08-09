@@ -1,17 +1,11 @@
-use crate::features::auth::model::UserId;
+use argon2::Argon2;
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use serde::{Deserialize, Serialize};
 
 use crate::core::error::ServerError;
-use argon2::{
-  Argon2,
-  password_hash::{
-    PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
-    rand_core::OsRng,
-  },
-};
-use jsonwebtoken::{
-  DecodingKey, EncodingKey, Header, Validation, decode, encode,
-};
-use serde::{Deserialize, Serialize};
+use crate::features::auth::model::UserId;
 
 pub const TOKEN_EXPIRATION_HOURS: i64 = 24;
 
@@ -32,11 +26,7 @@ impl JwtService {
     Self { secret }
   }
 
-  pub fn generate_token(
-    &self,
-    user_id: UserId,
-    username: String,
-  ) -> Result<String, ServerError> {
+  pub fn generate_token(&self, user_id: UserId, username: String) -> Result<String, ServerError> {
     let claims = Claims {
       user_id,
       username,
@@ -71,10 +61,7 @@ pub fn hash_password(password: &str) -> Result<String, ServerError> {
   Ok(hash)
 }
 
-pub fn verify_password(
-  password: &str,
-  hash: &str,
-) -> Result<bool, argon2::password_hash::Error> {
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, argon2::password_hash::Error> {
   let parsed = PasswordHash::new(hash)?;
   let argon2 = Argon2::default();
   Ok(argon2.verify_password(password.as_bytes(), &parsed).is_ok())

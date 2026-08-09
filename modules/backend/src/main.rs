@@ -4,26 +4,23 @@ mod http;
 mod router;
 
 use core::app_config::AppConfig;
-use core::app_state::AppState;
-use core::app_state::AuthState;
+use core::app_state::{AppState, AuthState};
 use core::database::{create_pool, run_migrations};
 use core::error::ServerError;
 use core::jwt::JwtService;
 use core::logging::init_logging;
+use std::sync::Arc;
+
 use features::auth::repository::PostgresUserRepository;
 use features::auth::service::AuthService;
 use http::init_http_server;
-
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
   init_logging();
 
   let app_config = AppConfig::from_env()?;
-  let pool =
-    create_pool(&app_config.database_url, app_config.db_max_connections)
-      .await?;
+  let pool = create_pool(&app_config.database_url, app_config.db_max_connections).await?;
 
   run_migrations(&pool).await?;
 

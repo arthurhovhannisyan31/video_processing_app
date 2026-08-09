@@ -1,5 +1,6 @@
-use axum::http::{HeaderValue, Method, header};
 use std::sync::Arc;
+
+use axum::http::{HeaderValue, Method, header};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use crate::core::app_config::AppConfig;
@@ -20,10 +21,6 @@ pub fn build_cors_layer(app_config: Arc<AppConfig>) -> CorsLayer {
       Method::PUT,
       Method::DELETE,
     ])
-    .allow_headers([
-      header::AUTHORIZATION,
-      header::CONTENT_TYPE,
-      header::ACCEPT,
-    ])
+    .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT])
     .allow_credentials(true)
 }

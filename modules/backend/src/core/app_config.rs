@@ -1,7 +1,8 @@
-use crate::core::error::ServerError;
+use std::env;
 
 use serde::Deserialize;
-use std::env;
+
+use crate::core::error::ServerError;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
@@ -28,21 +29,13 @@ impl AppConfig {
     let http_port = env::var("BACKEND_HTTP_PORT")
       .unwrap_or("8080".to_string())
       .parse()
-      .map_err(|e| {
-        ServerError::VarError(format!(
-          "Invalid BACKEND_HTTP_PORT variable: {e}"
-        ))
-      })?;
-    let database_url = env::var("DATABASE_URL").map_err(|e| {
-      ServerError::VarError(format!("Missing DATABASE_URL: {e}"))
-    })?;
-    let jwt_secret = env::var("BACKEND_JWT_SECRET").map_err(|e| {
-      ServerError::VarError(format!("Missing BACKEND_JWT_SECRET: {e}"))
-    })?;
+      .map_err(|e| ServerError::VarError(format!("Invalid BACKEND_HTTP_PORT variable: {e}")))?;
+    let database_url = env::var("DATABASE_URL")
+      .map_err(|e| ServerError::VarError(format!("Missing DATABASE_URL: {e}")))?;
+    let jwt_secret = env::var("BACKEND_JWT_SECRET")
+      .map_err(|e| ServerError::VarError(format!("Missing BACKEND_JWT_SECRET: {e}")))?;
     let cors_origins = env::var("BACKEND_CORS_ORIGINS")
-      .map_err(|e| {
-        ServerError::VarError(format!("Missing BACKEND_CORS_ORIGINS: {e}"))
-      })?
+      .map_err(|e| ServerError::VarError(format!("Missing BACKEND_CORS_ORIGINS: {e}")))?
       .split(',')
       .map(|s| s.trim().to_string())
       .filter(|s| !s.is_empty())
@@ -51,9 +44,7 @@ impl AppConfig {
       .unwrap_or("10".to_string())
       .parse::<u32>()
       .map_err(|e| {
-        ServerError::VarError(format!(
-          "Failed parsing BACKEND_DB_MAX_CONNECTIONS: {e}"
-        ))
+        ServerError::VarError(format!("Failed parsing BACKEND_DB_MAX_CONNECTIONS: {e}"))
       })?;
     let is_production = env::var("IS_PRODUCTION")
       .unwrap_or("false".to_string())

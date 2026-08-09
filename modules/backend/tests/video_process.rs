@@ -2,7 +2,9 @@ mod utils;
 
 #[cfg(test)]
 mod test_video_process_api {
-  use crate::utils::{get_authorization_token, setup_router, with_base_route};
+  use std::fs;
+  use std::os::unix::fs::MetadataExt;
+
   use axum::http::{StatusCode, header};
   use axum_test::multipart::{MultipartForm, Part};
   use axum_test::{TestServer, expect_json};
@@ -11,8 +13,8 @@ mod test_video_process_api {
   use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
-  use std::fs;
-  use std::os::unix::fs::MetadataExt;
+
+  use crate::utils::{get_authorization_token, setup_router, with_base_route};
 
   /// Important
   ///
@@ -45,9 +47,7 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_process_dual_audio_only(
-    pool: PgPool,
-  ) -> Result<(), ServerError> {
+  async fn test_video_process_dual_audio_only(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "audio_only.m4a";
@@ -76,15 +76,12 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_process_dual_broken_truncated(
-    pool: PgPool,
-  ) -> Result<(), ServerError> {
+  async fn test_video_process_dual_broken_truncated(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "broken_truncated.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let file_bytes: &[u8] =
-      include_bytes!("./fixtures/media/broken_truncated.mp4");
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/broken_truncated.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
       .mime_type("audio/x-m4a");
@@ -108,17 +105,13 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_process_dual_audio_tracks(
-    pool: PgPool,
-  ) -> Result<(), ServerError> {
+  async fn test_video_process_dual_audio_tracks(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "dual_audio_tracks.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let video_file_meta =
-      fs::metadata("./tests/fixtures/media/dual_audio_tracks.mp4")?;
-    let file_bytes: &[u8] =
-      include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
+    let video_file_meta = fs::metadata("./tests/fixtures/media/dual_audio_tracks.mp4")?;
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
       .mime_type("video/mp4");
@@ -139,9 +132,7 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_process_dual_sample_av(
-    pool: PgPool,
-  ) -> Result<(), ServerError> {
+  async fn test_video_process_dual_sample_av(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "sample_av.mp4";
@@ -168,17 +159,13 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_process_dual_vertical_no_audio(
-    pool: PgPool,
-  ) -> Result<(), ServerError> {
+  async fn test_video_process_dual_vertical_no_audio(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "vertical_no_audio.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let video_file_meta =
-      fs::metadata("./tests/fixtures/media/vertical_no_audio.mp4")?;
-    let file_bytes: &[u8] =
-      include_bytes!("./fixtures/media/vertical_no_audio.mp4");
+    let video_file_meta = fs::metadata("./tests/fixtures/media/vertical_no_audio.mp4")?;
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/vertical_no_audio.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
       .mime_type("video/mp4");

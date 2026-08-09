@@ -1,7 +1,8 @@
+use serde::Serialize;
+
 use crate::core::error::{ApplicationError, DomainError};
 use crate::features::video::inspect::types::FfprobeOutput;
 use crate::features::video::inspect::utils::get_r_frame_rate_from_string;
-use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct MediaMetadata {

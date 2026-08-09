@@ -1,2 +1,5 @@
 tab_spaces = 2
-max_width = 80
+edition = "2024"
+max_width = 100
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"

@@ -1,11 +1,12 @@
+use std::io;
+use std::net::AddrParseError;
+use std::num::{ParseFloatError, ParseIntError};
+
 use axum::extract::multipart::MultipartError;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
-use std::io;
-use std::net::AddrParseError;
-use std::num::{ParseFloatError, ParseIntError};
 use thiserror::Error;
 use validator::ValidationErrors;
 
@@ -89,12 +90,10 @@ impl IntoResponse for ApplicationError {
   fn into_response(self) -> Response {
     match self {
       ApplicationError::BadRequest(msg) => {
-        (StatusCode::BAD_REQUEST, json!({"message": msg}).to_string())
-          .into_response()
+        (StatusCode::BAD_REQUEST, json!({"message": msg}).to_string()).into_response()
       }
       ApplicationError::Conflict(msg) => {
-        (StatusCode::CONFLICT, json!({"message": msg}).to_string())
-          .into_response()
+        (StatusCode::CONFLICT, json!({"message": msg}).to_string()).into_response()
       }
       ApplicationError::Forbidden => StatusCode::FORBIDDEN.into_response(),
       ApplicationError::Internal(msg) => (
@@ -103,12 +102,9 @@ impl IntoResponse for ApplicationError {
       )
         .into_response(),
       ApplicationError::NotFound(msg) => {
-        (StatusCode::NOT_FOUND, json!({"message": msg}).to_string())
-          .into_response()
+        (StatusCode::NOT_FOUND, json!({"message": msg}).to_string()).into_response()
       }
-      ApplicationError::Unauthorized => {
-        StatusCode::UNAUTHORIZED.into_response()
-      }
+      ApplicationError::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
       ApplicationError::Validation(err) => (
         StatusCode::BAD_REQUEST,
         json!({"message": err.to_string()}).to_string(),
@@ -131,9 +127,7 @@ impl From<DomainError> for ApplicationError {
         ApplicationError::NotFound(format!("User not found: {}", id))
       }
       DomainError::MissingMediaData(msg) => ApplicationError::Internal(msg),
-      DomainError::SqlxError(msg) => {
-        ApplicationError::Internal(msg.to_string())
-      }
+      DomainError::SqlxError(msg) => ApplicationError::Internal(msg.to_string()),
     }
   }
 }
@@ -141,46 +135,22 @@ impl From<DomainError> for ApplicationError {
 impl From<ServerError> for ApplicationError {
   fn from(value: ServerError) -> Self {
     match value {
-      ServerError::AddrParseError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
+      ServerError::AddrParseError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::IO(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::ParseIntError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::ParseFloatError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::SqlxError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::MigrateError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
+      ServerError::ParseIntError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::ParseFloatError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::SqlxError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::MigrateError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::VarError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::Dotenv(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::TokioTaskJoinError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::Multipart(err) => {
-        ApplicationError::BadRequest(err.to_string())
-      }
-      ServerError::DataError(err) => {
-        ApplicationError::BadRequest(err.to_string())
-      }
-      ServerError::Processing(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::SerdeJson(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
+      ServerError::TokioTaskJoinError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::Multipart(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::DataError(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::Processing(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::SerdeJson(err) => ApplicationError::Internal(err.to_string()),
       ServerError::Jwt(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::PasswordHash(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
-      ServerError::OtherError(err) => {
-        ApplicationError::Internal(err.to_string())
-      }
+      ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
   }
 }

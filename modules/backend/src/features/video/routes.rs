@@ -1,19 +1,3 @@
-use crate::core::app_state::AppState;
-use crate::core::error::{ApplicationError, ServerError};
-use crate::features::auth::middleware::auth;
-use crate::features::video::constants::DEFAULT_VIDEO_BODY_LIMIT_BYTES;
-use crate::features::video::helpers::append_path_suffix;
-use crate::features::video::inspect;
-use crate::features::video::inspect::dto::VideoInspectionResponse;
-use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
-use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
-use crate::features::video::process;
-use crate::features::video::process::configs::{
-  OUTPUT_PATH_SUFFIX, get_preset_by_name,
-};
-use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
-use crate::features::video::process::types::ProcessVideoMeta;
-use crate::router::routes;
 use axum::extract::{DefaultBodyLimit, Multipart};
 use axum::response::IntoResponse;
 use axum::routing::post;
@@ -21,6 +5,20 @@ use axum::{Json, Router, middleware};
 use serde_json::json;
 use tempfile::TempDir;
 use utoipa::ToSchema;
+
+use crate::core::app_state::AppState;
+use crate::core::error::{ApplicationError, ServerError};
+use crate::features::auth::middleware::auth;
+use crate::features::video::constants::DEFAULT_VIDEO_BODY_LIMIT_BYTES;
+use crate::features::video::helpers::append_path_suffix;
+use crate::features::video::inspect::dto::VideoInspectionResponse;
+use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
+use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
+use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
+use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
+use crate::features::video::process::types::ProcessVideoMeta;
+use crate::features::video::{inspect, process};
+use crate::router::routes;
 
 pub fn get_video_router(app_state: AppState) -> Router<AppState> {
   Router::new()
@@ -51,16 +49,10 @@ pub struct InspectVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn inspect_video(
-  media_data: Multipart,
-) -> Result<impl IntoResponse, ApplicationError> {
-  let temp_dir = TempDir::new().map_err(|err| {
-    ApplicationError::Internal(format!(
-      "Failed to create temp directory: {err}"
-    ))
-  })?;
-  let file_path =
-    inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
+pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
+  let temp_dir = TempDir::new()
+    .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
+  let file_path = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
   let inspection_data = ffprobe_runner(&file_path).await?;
   let mapped_data = ffprobe_mapper(inspection_data)?;
 
@@ -89,9 +81,7 @@ pub struct ProcessVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn process_video(
-  media_data: Multipart,
-) -> Result<impl IntoResponse, ApplicationError> {
+pub async fn process_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new().map_err(ServerError::IO)?;
   let ProcessVideoMeta { command, file_path } =
     process::form_data_reader::read(media_data, temp_dir.path()).await?;

@@ -1,5 +1,6 @@
-use crate::core::error::ServerError;
 use anyhow::anyhow;
+
+use crate::core::error::ServerError;
 
 pub fn get_r_frame_rate_from_string(input: String) -> Result<f32, ServerError> {
   if let Some((val1, val2)) = input.split_once("/") {

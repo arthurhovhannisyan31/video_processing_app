@@ -2,17 +2,16 @@ mod utils;
 
 #[cfg(test)]
 mod test_public_api {
-  use crate::utils;
   use axum::http::StatusCode;
   use axum_test::{TestServer, expect_json};
   use backend::core::error::ServerError;
-  use backend::features::auth::dto::{
-    AuthRequest, AuthResponse, CreateUserRequest,
-  };
+  use backend::features::auth::dto::{AuthRequest, AuthResponse, CreateUserRequest};
   use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
   use uuid::{Uuid, Version};
+
+  use crate::utils;
 
   fn is_valid_v4_uuid(input: &str) -> bool {
     match Uuid::parse_str(input) {

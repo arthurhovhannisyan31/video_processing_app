@@ -1,7 +1,8 @@
+use std::fmt::{Display, Formatter};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Type;
-use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]

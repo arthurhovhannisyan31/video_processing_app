@@ -74,9 +74,7 @@ pub struct AuthResponse {
   pub user: AuthenticatedUser,
 }
 
-fn validate_alfa_numeric_username(
-  username: &str,
-) -> Result<(), ValidationError> {
+fn validate_alfa_numeric_username(username: &str) -> Result<(), ValidationError> {
   // String slice length in not validated since it's done in joined test validate(length(min, max))
 
   if !(username.chars().all(char::is_alphanumeric)) {
@@ -132,10 +130,11 @@ fn validate_password_strength(password: &str) -> Result<(), ValidationError> {
 
 #[cfg(test)]
 mod test_create_user_request {
-  use super::*;
   use proptest::prelude::*;
   use proptest::string::string_regex;
   use validator::Validate;
+
+  use super::*;
 
   const INVALID_REGEX_ERROR: &str = "Invalid regex pattern structure";
 
@@ -144,8 +143,7 @@ mod test_create_user_request {
   }
 
   fn valid_email() -> impl Strategy<Value = String> {
-    string_regex("[a-z0-9]{3,10}@[a-z0-9]{3,10}\\.[a-z]{3}")
-      .expect(INVALID_REGEX_ERROR)
+    string_regex("[a-z0-9]{3,10}@[a-z0-9]{3,10}\\.[a-z]{3}").expect(INVALID_REGEX_ERROR)
   }
 
   fn valid_password() -> impl Strategy<Value = String> {
@@ -155,18 +153,15 @@ mod test_create_user_request {
   }
 
   fn password_missing_uppercase() -> impl Strategy<Value = String> {
-    string_regex("[a-z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}")
-      .expect(INVALID_REGEX_ERROR)
+    string_regex("[a-z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}").expect(INVALID_REGEX_ERROR)
   }
 
   fn password_missing_lowercase() -> impl Strategy<Value = String> {
-    string_regex("[A-Z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}")
-      .expect(INVALID_REGEX_ERROR)
+    string_regex("[A-Z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}").expect(INVALID_REGEX_ERROR)
   }
 
   fn password_missing_numeric() -> impl Strategy<Value = String> {
-    string_regex("[a-zA-Z*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}")
-      .expect(INVALID_REGEX_ERROR)
+    string_regex("[a-zA-Z*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,100}").expect(INVALID_REGEX_ERROR)
   }
 
   fn password_missing_special() -> impl Strategy<Value = String> {
@@ -196,8 +191,7 @@ mod test_create_user_request {
   }
 
   fn username_is_not_alphanumeric() -> impl Strategy<Value = String> {
-    string_regex("[a-zA-Z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,255}")
-      .expect(INVALID_REGEX_ERROR)
+    string_regex("[a-zA-Z0-9*.!@#$%^&(){}\\[\\]:;<>,?~_+-\\/|=]{8,255}").expect(INVALID_REGEX_ERROR)
   }
 
   fn email_exceeds_upper_bound() -> impl Strategy<Value = String> {
@@ -209,10 +203,8 @@ mod test_create_user_request {
   }
 
   fn email_has_special_characters() -> impl Strategy<Value = String> {
-    string_regex(
-      "[a-z0-9]{3,10}[.]{0,1}[@\\s:;()<>]{1}@[a-z0-9]{3,10}\\.[a-z]{3}",
-    )
-    .expect(INVALID_REGEX_ERROR)
+    string_regex("[a-z0-9]{3,10}[.]{0,1}[@\\s:;()<>]{1}@[a-z0-9]{3,10}\\.[a-z]{3}")
+      .expect(INVALID_REGEX_ERROR)
   }
 
   // Positive tests

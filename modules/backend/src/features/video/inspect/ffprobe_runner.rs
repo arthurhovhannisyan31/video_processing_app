@@ -1,10 +1,9 @@
-use crate::core::error::ApplicationError;
 use serde_json::Value;
 use tokio::process::Command;
 
-pub async fn ffprobe_runner(
-  file_path: &str,
-) -> Result<Value, ApplicationError> {
+use crate::core::error::ApplicationError;
+
+pub async fn ffprobe_runner(file_path: &str) -> Result<Value, ApplicationError> {
   let output = Command::new("ffprobe")
     .kill_on_drop(true)
     .args([
@@ -19,9 +18,7 @@ pub async fn ffprobe_runner(
     .output()
     .await
     .map_err(|err| {
-      ApplicationError::BadRequest(format!(
-        "Failed executing ffprobe binary: {err}",
-      ))
+      ApplicationError::BadRequest(format!("Failed executing ffprobe binary: {err}",))
     })?;
 
   if !output.status.success() {
@@ -31,7 +28,6 @@ pub async fn ffprobe_runner(
     )));
   }
 
-  serde_json::from_slice(&output.stdout).map_err(|_| {
-    ApplicationError::Internal("Invalid JSON data from ffprobe".to_string())
-  })
+  serde_json::from_slice(&output.stdout)
+    .map_err(|_| ApplicationError::Internal("Invalid JSON data from ffprobe".to_string()))
 }

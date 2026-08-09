@@ -1,15 +1,14 @@
+use axum::extract::{Request, State};
+use axum::http::{HeaderMap, StatusCode, header};
+use axum::middleware::Next;
+use axum::response::Response;
+use chrono::Utc;
+
 use crate::core::app_state::AppState;
 use crate::core::jwt::JwtService;
 use crate::features::auth::dto::AuthenticatedUser;
 use crate::features::auth::repository::PostgresUserRepository;
 use crate::features::auth::service::AuthService;
-use axum::{
-  extract::{Request, State},
-  http::{HeaderMap, StatusCode, header},
-  middleware::Next,
-  response::Response,
-};
-use chrono::Utc;
 
 pub async fn auth(
   State(app_state): State<AppState>,
@@ -61,8 +60,9 @@ pub async fn authenticate_user(
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use axum::http::{HeaderMap, HeaderValue, header};
+
+  use super::*;
 
   #[test]
   fn extracts_bearer_token() {
