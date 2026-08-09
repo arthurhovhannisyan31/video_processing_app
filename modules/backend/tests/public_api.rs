@@ -72,6 +72,7 @@ mod test_public_api {
     };
     let response = server
       .post(&utils::with_base_route(routes::REGISTER))
+      .add_header("X-Forwarded-For", "127.0.0.1")
       .json(&json!(create_user_request))
       .expect_success()
       .await;
@@ -97,6 +98,7 @@ mod test_public_api {
 
     let response = server
       .post(&utils::with_base_route(routes::LOGIN))
+      .add_header("X-Forwarded-For", "127.0.0.1")
       .json(&json!(authentication_request))
       .expect_success()
       .await;

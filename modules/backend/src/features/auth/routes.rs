@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::anyhow;
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::{Response, StatusCode};
@@ -7,6 +8,9 @@ use axum::response::IntoResponse;
 use axum::routing::post;
 use axum::{Json, Router};
 use serde_json::json;
+use tower_governor::GovernorLayer;
+use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tracing::info;
 use validator::Validate;
 
@@ -16,10 +20,20 @@ use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, C
 use crate::features::auth::model::User;
 use crate::router::routes;
 
-pub fn get_auth_router() -> Router<AppState> {
-  Router::new()
+pub fn get_auth_router() -> Result<Router<AppState>, ServerError> {
+  let auth_limiter = GovernorConfigBuilder::default()
+    .key_extractor(SmartIpKeyExtractor)
+    .finish()
+    .ok_or(ServerError::OtherError(anyhow!(
+      "Wrong tower_governor configuration"
+    )))?;
+
+  let router = Router::new()
     .route(routes::LOGIN, post(login))
     .route(routes::REGISTER, post(register))
+    .layer(GovernorLayer::new(auth_limiter));
+
+  Ok(router)
 }
 
 #[utoipa::path(

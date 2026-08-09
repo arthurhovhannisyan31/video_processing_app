@@ -44,6 +44,7 @@ pub async fn get_authorization_token(server: &TestServer) -> String {
 
   let response = server
     .post(&with_base_route(routes::LOGIN))
+    .add_header("X-Forwarded-For", "127.0.0.1")
     .json(&json!(authentication_request))
     .expect_success()
     .await;

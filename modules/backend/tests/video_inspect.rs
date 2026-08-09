@@ -59,6 +59,7 @@ mod test_video_inspect_api {
     let form = MultipartForm::new().add_part("audio", part_bytes);
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
+      .add_header("X-Forwarded-For", "127.0.0.1")
       .multipart(form)
       .add_header(header::AUTHORIZATION, bearer_token)
       .expect_failure()
