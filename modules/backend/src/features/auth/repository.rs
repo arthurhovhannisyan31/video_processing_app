@@ -3,7 +3,7 @@ use sqlx::PgPool;
 use tracing::{error, info};
 
 use crate::core::error::DomainError;
-use crate::features::auth::constants::db_constraints;
+use crate::features::auth::constants::{USERS_EMAIL_CONSTRAINT, USERS_USERNAME_CONSTRAINT};
 use crate::features::auth::model::{User, UserId};
 
 #[async_trait]
@@ -46,7 +46,7 @@ impl UserRepository for PostgresUserRepository {
           .as_database_error()
           .and_then(|db| db.constraint())
           .map(|c| {
-            c.contains(db_constraints::USERS_USERNAME) || c.contains(db_constraints::USERS_EMAIL)
+            c.contains(USERS_USERNAME_CONSTRAINT) || c.contains(USERS_EMAIL_CONSTRAINT)
           })
           == Some(true)
         {

@@ -27,7 +27,7 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
     app_config: Arc::new(app_config),
   };
 
-  Ok(build_router(app_state))
+  build_router(app_state)
 }
 
 #[cfg(test)]

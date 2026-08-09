@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::http::{HeaderValue, Method, header};
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tracing::log::warn;
 
 use crate::core::app_config::AppConfig;
 
@@ -9,7 +10,11 @@ pub fn build_cors_layer(app_config: Arc<AppConfig>) -> CorsLayer {
   let origin_values: Vec<HeaderValue> = app_config
     .cors_origins
     .iter()
-    .filter_map(|el| el.parse().ok())
+    .filter_map(|el| {
+      el.parse()
+        .inspect_err(|err| warn!("Invalid cors origin {el}: {err}"))
+        .ok()
+    })
     .collect();
 
   CorsLayer::new()

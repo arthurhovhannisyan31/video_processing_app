@@ -4,6 +4,7 @@ use tower_http::trace::TraceLayer;
 
 use crate::core::app_state::AppState;
 use crate::core::cors::build_cors_layer;
+use crate::core::error::ServerError;
 use crate::features::auth::routes::get_auth_router;
 use crate::features::system::routes::get_system_router;
 use crate::features::video::routes::get_video_router;
@@ -19,16 +20,18 @@ pub mod routes {
   pub const VIDEO_JOBS_BY_ID_LOGS: &str = "/video/jobs/{id}/logs";
 }
 
-pub fn build_router(app_state: AppState) -> Router {
+pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
   let merged_router = Router::new()
-    .merge(get_auth_router())
+    .merge(get_auth_router()?)
     .merge(get_system_router())
     .merge(get_video_router(app_state.clone()))
     .with_state(app_state.clone());
 
-  Router::new()
+  let router = Router::new()
     .nest("/api", merged_router)
     .layer(TraceLayer::new_for_http())
     .layer(CompressionLayer::new())
-    .layer(build_cors_layer(app_state.app_config.clone()))
+    .layer(build_cors_layer(app_state.app_config.clone()));
+
+  Ok(router)
 }
