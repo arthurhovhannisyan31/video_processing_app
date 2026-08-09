@@ -2,5 +2,4 @@
 sqlx-prepare = "sqlx prepare --workspace"
 
 [env]
-DEFAULT_API_HOST = { value = "127.0.0.1", force = true }
-DEFAULT_API_PORT = { value = "8080", force = true }
+RUSTC_ICE = { value = "0", force = true }
