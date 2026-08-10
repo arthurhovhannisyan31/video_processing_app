@@ -36,7 +36,7 @@ mod test_video_inspect_api {
       .expect_success()
       .await;
 
-    assert_eq!(response.status_code(), StatusCode::OK);
+    response.assert_status_ok();
 
     let video_inspection_response =
       serde_json::from_str::<VideoInspectionResponse>(&response.text())?;
@@ -47,7 +47,7 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_inspect_audio_only(pool: PgPool) -> Result<(), ApplicationError> {
+  async fn test_fail_wrong_file_format(pool: PgPool) -> Result<(), ApplicationError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "audio_only.m4a";
@@ -74,7 +74,7 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_broken_truncated(pool: PgPool) -> Result<(), ApplicationError> {
+  async fn test_fail_broken_video_file(pool: PgPool) -> Result<(), ApplicationError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "broken_truncated.mp4";
@@ -100,7 +100,29 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_inspect_dual_audio_tracks(pool: PgPool) -> Result<(), ServerError> {
+  async fn test_fail_missing_video_part(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let bearer_token = get_authorization_token(&server).await;
+    let form = MultipartForm::new();
+
+    let response = server
+      .post(&with_base_route(routes::VIDEO_INSPECT))
+      .multipart(form)
+      .add_header(header::AUTHORIZATION, bearer_token)
+      .expect_failure()
+      .await;
+
+    assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
+    response.assert_json(&json!({
+      "message": expect_json::string(),
+    }));
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_success_correct_video_file_1(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "dual_audio_tracks.mp4";
@@ -125,7 +147,7 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_inspect_sample_av(pool: PgPool) -> Result<(), ServerError> {
+  async fn test_success_correct_video_file_2(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "sample_av.mp4";
@@ -150,7 +172,7 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_video_inspect_vertical_no_audio(pool: PgPool) -> Result<(), ServerError> {
+  async fn test_success_correct_video_file_3(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name: &str = "vertical_no_audio.mp4";
