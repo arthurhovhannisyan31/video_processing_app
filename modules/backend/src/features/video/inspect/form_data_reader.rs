@@ -23,5 +23,9 @@ pub async fn read(mut media_data: Multipart, temp_dir: &Path) -> Result<String, 
     }
   }
 
+  if file_path.is_empty() {
+    return Err(ServerError::DataError("Missing 'video' field".to_string()));
+  }
+
   Ok(file_path)
 }

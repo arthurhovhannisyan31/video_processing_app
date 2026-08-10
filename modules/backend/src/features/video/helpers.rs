@@ -2,7 +2,6 @@ use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
 
-use anyhow::anyhow;
 use axum::extract::multipart::Field;
 use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
@@ -73,9 +72,7 @@ pub async fn read_video_to_file(
   created_file.flush().await?;
 
   if file_path.is_empty() {
-    return Err(ServerError::OtherError(anyhow!(
-      "Missing 'video' field".to_string()
-    )));
+    return Err(ServerError::DataError("Missing 'video' field".to_string()));
   }
 
   Ok(file_path)

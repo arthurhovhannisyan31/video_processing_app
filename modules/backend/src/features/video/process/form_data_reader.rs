@@ -29,5 +29,9 @@ pub async fn read(
     }
   }
 
+  if meta.file_path.is_empty() {
+    return Err(ServerError::DataError("Missing 'video' field".to_string()));
+  }
+
   Ok(meta)
 }
