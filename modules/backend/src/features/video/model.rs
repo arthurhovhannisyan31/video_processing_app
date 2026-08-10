@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::core::error::{ApplicationError, DomainError};
 use crate::features::video::inspect::types::FfprobeOutput;
@@ -13,7 +13,7 @@ pub struct MediaMetadata {
   pub audio_streams: Vec<AudioStream>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VideoStream {
   pub id: String,
   pub bit_rate: i32,
@@ -23,7 +23,7 @@ pub struct VideoStream {
   pub width: i32,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AudioStream {
   pub id: String,
   pub bit_rate: i32,

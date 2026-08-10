@@ -100,7 +100,7 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_fail_missing_video_part(pool: PgPool) -> Result<(), ServerError> {
+  async fn test_fail_missing_video_field(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let bearer_token = get_authorization_token(&server).await;
