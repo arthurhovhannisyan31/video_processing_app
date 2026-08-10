@@ -116,7 +116,6 @@ fn build_auth_response(
   Ok(
     Response::builder()
       .status(status)
-      .body(Body::from(response_body))
-      .map_err(|err| ApplicationError::Internal(err.to_string())),
+      .body(Body::from(response_body))?,
   )
 }

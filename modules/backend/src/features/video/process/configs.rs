@@ -27,7 +27,7 @@ pub mod preset {
       "-b:a",
       "128k",
       "-progress",
-      "pipe:1",
+      "pipe:2",
     ]
   }
 }

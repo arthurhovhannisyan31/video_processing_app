@@ -14,6 +14,7 @@ use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
 use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
+use crate::features::video::process::build_response::build_response;
 use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
 use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
 use crate::features::video::process::types::ProcessVideoMeta;
@@ -89,5 +90,5 @@ pub async fn process_video(media_data: Multipart) -> Result<impl IntoResponse, A
   let preset = get_preset_by_name(&command)?;
   ffmpeg_runner(&file_path, &output_path, preset).await?;
 
-  Ok("Success")
+  Ok(build_response(&file_path, &output_path).await?)
 }

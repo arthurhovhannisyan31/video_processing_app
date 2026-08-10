@@ -3,6 +3,7 @@ use std::net::AddrParseError;
 use std::num::{ParseFloatError, ParseIntError};
 
 use axum::extract::multipart::MultipartError;
+use axum::http;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde_json::json;
@@ -82,6 +83,8 @@ pub enum ServerError {
   Jwt(#[from] jsonwebtoken::errors::Error),
   #[error("password hash error: {0}")]
   PasswordHash(#[from] argon2::password_hash::Error),
+  #[error("Http error: {0}")]
+  HttpError(#[from] http::Error),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -150,6 +153,7 @@ impl From<ServerError> for ApplicationError {
       ServerError::SerdeJson(err) => ApplicationError::Internal(err.to_string()),
       ServerError::Jwt(err) => ApplicationError::Internal(err.to_string()),
       ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
   }
