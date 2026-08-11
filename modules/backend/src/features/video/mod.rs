@@ -1,4 +1,4 @@
-pub mod configs;
+pub mod constants;
 pub mod helpers;
 pub mod inspect;
 pub mod model;

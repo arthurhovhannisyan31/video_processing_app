@@ -1,0 +1,11 @@
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+
+disallowed-macros = [
+  { path = "sqlx::query", reason = "Use query_as! or query_scalar! for compile-time type safety" },
+]
+disallowed-methods = [
+  { path = "sqlx::query_as", reason = "Use query_as! macro for compile-time type safety" },
+  { path = "sqlx::query", reason = "Use query_as! or query_scalar! macro for compile-time type safety" },
+]

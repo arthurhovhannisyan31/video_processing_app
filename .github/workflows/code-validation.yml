@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+      - name: Setup system dependencies
+        uses: ./.github/actions/setup-system-deps
       - name: Setup Cargo
         uses: ./.github/actions/setup-cargo
       - name: Setup NodeJS

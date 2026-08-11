@@ -1,68 +1,39 @@
-use serde::Serialize;
 use std::path::Path;
 
-use crate::features::video::configs::ffprobe::FfprobeType;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+use crate::features::video::model::{AudioStream, MediaMetadata, VideoStream};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VideoInspectionResponse {
   pub original_file_name: String,
   pub file_size_bytes: i64,
   pub duration_seconds: f32,
-  pub format_name: String,
-  pub video_streams: Vec<String>,
-  pub width: i32,
-  pub height: i32,
-  pub fps: String,
-  pub codecs: Vec<String>,
-  pub bitrate: i64,
-  pub audio_streams: Vec<String>,
-  pub audio_stream_count: usize,
+  pub video_streams: Vec<VideoStream>,
+  pub audio_streams: Vec<AudioStream>,
 }
 
-impl From<FfprobeType> for VideoInspectionResponse {
-  fn from(data: FfprobeType) -> Self {
-    let FfprobeType { format, streams } = data;
-    let format = format.unwrap_or_default();
-    let streams = streams.unwrap_or_default();
-    let original_file_name = Path::new(&format.filename)
+impl From<MediaMetadata> for VideoInspectionResponse {
+  fn from(data: MediaMetadata) -> Self {
+    let MediaMetadata {
+      path,
+      duration_seconds,
+      file_size_bytes,
+      video_streams,
+      audio_streams,
+    } = data;
+    let original_file_name = Path::new(&path)
       .file_name()
       .unwrap_or_default()
       .to_string_lossy()
       .to_string();
 
-    let mut response = Self {
+    Self {
       original_file_name,
-      file_size_bytes: format.size,
-      duration_seconds: format.duration,
-      format_name: format.format_name,
-      video_streams: vec![],
-      width: 0,
-      height: 0,
-      fps: "".into(),
-      codecs: vec![],
-      bitrate: format.bit_rate,
-      audio_streams: vec![],
-      audio_stream_count: 0,
-    };
-
-    for stream in streams {
-      match stream.codec_type.as_str() {
-        "audio" => {
-          response.audio_streams.push(stream.id);
-          response.codecs.push(stream.codec_long_name);
-          response.audio_stream_count += 1;
-        }
-        "video" => {
-          response.video_streams.push(stream.id);
-          response.codecs.push(stream.codec_long_name);
-          response.width = stream.width.unwrap_or_default();
-          response.height = stream.height.unwrap_or_default();
-          response.fps = stream.r_frame_rate;
-        }
-        _ => {}
-      }
+      file_size_bytes,
+      duration_seconds,
+      video_streams,
+      audio_streams,
     }
-
-    response
   }
 }

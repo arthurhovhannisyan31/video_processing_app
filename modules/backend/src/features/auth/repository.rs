@@ -1,18 +1,15 @@
-use crate::core::error::DomainError;
-use crate::features::auth::constants::db_constraints;
-use crate::features::auth::model::{User, UserId};
-
 use async_trait::async_trait;
 use sqlx::PgPool;
 use tracing::{error, info};
 
+use crate::core::error::DomainError;
+use crate::features::auth::constants::{USERS_EMAIL_CONSTRAINT, USERS_USERNAME_CONSTRAINT};
+use crate::features::auth::model::{User, UserId};
+
 #[async_trait]
 pub trait UserRepository: Send + Sync {
   async fn create(&self, user: User) -> Result<User, DomainError>;
-  async fn find_by_email(
-    &self,
-    email: &str,
-  ) -> Result<Option<User>, DomainError>;
+  async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError>;
   async fn find_by_id(&self, id: UserId) -> Result<Option<User>, DomainError>;
 }
 
@@ -49,7 +46,7 @@ impl UserRepository for PostgresUserRepository {
           .as_database_error()
           .and_then(|db| db.constraint())
           .map(|c| {
-            c.contains(db_constraints::USERS_USERNAME) || c.contains(db_constraints::USERS_EMAIL)
+            c.contains(USERS_USERNAME_CONSTRAINT) || c.contains(USERS_EMAIL_CONSTRAINT)
           })
           == Some(true)
         {
@@ -62,10 +59,7 @@ impl UserRepository for PostgresUserRepository {
     info!(user_id = %user.id, email = %user.email, "user created");
     Ok(row)
   }
-  async fn find_by_email(
-    &self,
-    email: &str,
-  ) -> Result<Option<User>, DomainError> {
+  async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError> {
     let row = sqlx::query_as!(
       User,
       r#"
@@ -76,10 +70,10 @@ impl UserRepository for PostgresUserRepository {
       email
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e| {
-        error!("Failed to find user by email {}: {}", email, e);
-        DomainError::Internal(format!("database error: {}", e))
-      })?;
+      .inspect_err(|err| {
+        error!("Failed to find user by email {}: {}", email, err)
+        })
+      ?;
 
     Ok(row)
   }
@@ -91,13 +85,14 @@ impl UserRepository for PostgresUserRepository {
         FROM users
         WHERE users.id = $1
       "#,
-      id.0
+      id as _
     ).fetch_optional(&self.pool)
       .await
-      .map_err(|e| {
-        error!("Failed to find user by id {}: {}", id, e);
-        DomainError::Internal(format!("database error: {}", e))
-      })?;
+      .inspect_err(
+        |err| {
+          error!("Failed to find user by id {}: {}", id,err);
+        }
+      )?;
 
     Ok(row)
   }

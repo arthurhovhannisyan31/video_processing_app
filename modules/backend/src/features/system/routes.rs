@@ -1,12 +1,14 @@
-use crate::core::app_state::AppState;
-use crate::core::error::ApplicationError;
-use crate::core::openapi::OpenApiSpec;
-
-use crate::router::routes;
-use axum::{Router, response::Json, routing::get};
+use axum::Router;
+use axum::response::Json;
+use axum::routing::get;
 use chrono::Utc;
 use serde_json::{Value, json};
 use utoipa::OpenApi;
+
+use crate::core::app_state::AppState;
+use crate::core::error::ApplicationError;
+use crate::core::openapi::OpenApiSpec;
+use crate::router::routes;
 
 pub fn get_system_router() -> Router<AppState> {
   Router::new()

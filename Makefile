@@ -1,4 +1,4 @@
-.PHONY: prepare prepare-backend prepare-frontend check check-ci check-quiet format format-check test test-ci audit backend frontend cargo-update generate-openapi
+.PHONY: prepare prepare-backend prepare-frontend check format format-check test audit backend frontend cargo-update generate-openapi
 
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
 

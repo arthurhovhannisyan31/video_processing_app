@@ -1,10 +1,11 @@
+use std::sync::Arc;
+
+use axum::extract::FromRef;
+
 use crate::core::app_config::AppConfig;
 use crate::core::jwt::JwtService;
 use crate::features::auth::repository::PostgresUserRepository;
 use crate::features::auth::service::AuthService;
-
-use axum::extract::FromRef;
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {

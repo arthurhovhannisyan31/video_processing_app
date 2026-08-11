@@ -1,15 +1,15 @@
-use crate::core::error::ApplicationError;
-use axum::extract::multipart::Field;
-use serde::{Deserialize, Deserializer};
 use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
+
+use axum::extract::multipart::Field;
+use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
-pub fn deserialize_string_to_type<'de, D, T>(
-  deserializer: D,
-) -> Result<T, D::Error>
+use crate::core::error::{ApplicationError, ServerError};
+
+pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
   D: Deserializer<'de>,
   T: FromStr,
@@ -20,10 +20,7 @@ where
 }
 
 // TODO Tests
-pub fn append_path_suffix(
-  path: &str,
-  suffix: &str,
-) -> Result<String, ApplicationError> {
+pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ApplicationError> {
   let path = Path::new(path);
   let stem = path
     .file_stem()
@@ -56,42 +53,26 @@ pub fn append_path_suffix(
 pub async fn read_video_to_file(
   field: &mut Field<'_>,
   temp_dir: &Path,
-) -> Result<String, ApplicationError> {
+) -> Result<String, ServerError> {
   let file_name = field
     .file_name()
-    .ok_or(ApplicationError::BadRequest(
-      "Missing file_name".to_string(),
-    ))?
-    .to_string();
+    .ok_or(ServerError::DataError("Missing file_name".to_string()))?;
   let path = temp_dir.join(file_name);
 
   // create local file only when needed
-  let mut created_file = File::create(&path).await.map_err(|err| {
-    ApplicationError::Internal(format!(
-      "Failed to create temp file name: {err}"
-    ))
-  })?;
+  let mut created_file = File::create(&path).await?;
   let file_path = path.to_string_lossy().to_string();
 
   // Stream chunks directly from the request network buffer into the file
   while let Some(chunk) = field.chunk().await? {
-    created_file.write_all(&chunk).await.map_err(|err| {
-      ApplicationError::Internal(format!(
-        "Failed writing video chunk: {:?}",
-        err
-      ))
-    })?;
+    created_file.write_all(&chunk).await?;
   }
 
   // Ensure all data chunks are flushed to file
-  created_file.flush().await.map_err(|err| {
-    ApplicationError::BadRequest(format!("Failed flushing data to file: {err}"))
-  })?;
+  created_file.flush().await?;
 
   if file_path.is_empty() {
-    return Err(ApplicationError::BadRequest(
-      "Missing 'video' field".to_string(),
-    ));
+    return Err(ServerError::DataError("Missing 'video' field".to_string()));
   }
 
   Ok(file_path)

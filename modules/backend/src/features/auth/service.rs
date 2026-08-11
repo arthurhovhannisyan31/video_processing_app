@@ -25,10 +25,7 @@ where
       .ok_or_else(|| ApplicationError::NotFound(format!("user {}", id)))
   }
 
-  pub async fn get_by_email(
-    &self,
-    email: &str,
-  ) -> Result<User, ApplicationError> {
+  pub async fn get_by_email(&self, email: &str) -> Result<User, ApplicationError> {
     match self.repo.find_by_email(&email.to_lowercase()).await {
       Ok(Some(user)) => Ok(user),
       Ok(None) => Err(ApplicationError::NotFound(format!("user {}", email))),
@@ -42,18 +39,13 @@ where
     password: String,
     username: String,
   ) -> Result<User, ApplicationError> {
-    let hash = hash_password(&password)
-      .map_err(|err| ApplicationError::Internal(err.to_string()))?;
+    let hash = hash_password(&password)?;
     let user = User::new(email.to_lowercase(), hash, username);
 
     self.repo.create(user).await.map_err(ApplicationError::from)
   }
 
-  pub async fn login(
-    &self,
-    email: &str,
-    password: &str,
-  ) -> Result<String, ApplicationError> {
+  pub async fn login(&self, email: &str, password: &str) -> Result<String, ApplicationError> {
     let user = match self.get_by_email(email).await {
       Ok(user) => user,
       Err(ApplicationError::NotFound(_)) => {

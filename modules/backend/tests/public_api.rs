@@ -1,39 +1,17 @@
+mod utils;
+
 #[cfg(test)]
 mod test_public_api {
-  use axum::Router;
   use axum::http::StatusCode;
   use axum_test::{TestServer, expect_json};
-  use backend::core::app_config::AppConfig;
-  use backend::core::app_state::{AppState, AuthState};
   use backend::core::error::ServerError;
-  use backend::core::jwt::JwtService;
-  use backend::features::auth::dto::{
-    AuthRequest, AuthResponse, CreateUserRequest,
-  };
-  use backend::features::auth::repository::PostgresUserRepository;
-  use backend::features::auth::service::AuthService;
-  use backend::router::build_router;
+  use backend::features::auth::dto::{AuthRequest, AuthResponse, CreateUserRequest};
   use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
-  use std::sync::Arc;
   use uuid::{Uuid, Version};
 
-  fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
-    let app_config = AppConfig::from_env()?;
-    let jwt_service = JwtService::new(app_config.jwt_secret.clone());
-    let users_repo = PostgresUserRepository::new(pool.clone());
-    let auth_service = AuthService::new(users_repo, jwt_service.clone());
-    let app_state = AppState {
-      auth_state: Arc::new(AuthState {
-        auth_service,
-        jwt_service,
-      }),
-      app_config: Arc::new(app_config),
-    };
-
-    Ok(build_router(app_state))
-  }
+  use crate::utils;
 
   fn is_valid_v4_uuid(input: &str) -> bool {
     match Uuid::parse_str(input) {
@@ -42,17 +20,13 @@ mod test_public_api {
     }
   }
 
-  fn with_base_route(path: &str) -> String {
-    format!("/api/{}", path.strip_prefix("/").unwrap())
-  }
-
   #[sqlx::test]
   async fn test_health(pool: PgPool) -> Result<(), ServerError> {
-    let router = setup_router(pool)?;
+    let router = utils::setup_router(pool)?;
     let server = TestServer::new(router);
 
     let response = server
-      .get(&with_base_route(routes::HEALTH))
+      .get(&utils::with_base_route(routes::HEALTH))
       .expect_success()
       .await;
 
@@ -67,11 +41,11 @@ mod test_public_api {
 
   #[sqlx::test]
   async fn test_openapi(pool: PgPool) -> Result<(), ServerError> {
-    let router = setup_router(pool)?;
+    let router = utils::setup_router(pool)?;
     let server = TestServer::new(router);
 
     let response = server
-      .get(&with_base_route(routes::OPENAPI))
+      .get(&utils::with_base_route(routes::OPENAPI))
       .expect_success()
       .await;
 
@@ -88,7 +62,7 @@ mod test_public_api {
 
   #[sqlx::test]
   async fn test_register(pool: PgPool) -> Result<(), ServerError> {
-    let router = setup_router(pool)?;
+    let router = utils::setup_router(pool)?;
     let server = TestServer::new(router);
 
     let create_user_request = CreateUserRequest {
@@ -97,7 +71,8 @@ mod test_public_api {
       password: "Testtest1!".into(),
     };
     let response = server
-      .post(&with_base_route(routes::REGISTER))
+      .post(&utils::with_base_route(routes::REGISTER))
+      .add_header("X-Forwarded-For", "127.0.0.1")
       .json(&json!(create_user_request))
       .expect_success()
       .await;
@@ -113,7 +88,7 @@ mod test_public_api {
 
   #[sqlx::test(fixtures("create_user"))]
   async fn test_login(pool: PgPool) -> Result<(), ServerError> {
-    let router = setup_router(pool)?;
+    let router = utils::setup_router(pool)?;
     let server = TestServer::new(router);
 
     let authentication_request = AuthRequest {
@@ -122,7 +97,8 @@ mod test_public_api {
     };
 
     let response = server
-      .post(&with_base_route(routes::LOGIN))
+      .post(&utils::with_base_route(routes::LOGIN))
+      .add_header("X-Forwarded-For", "127.0.0.1")
       .json(&json!(authentication_request))
       .expect_success()
       .await;
