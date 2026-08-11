@@ -9,5 +9,5 @@ pub fn ffprobe_mapper(inspection_data: Value) -> Result<MediaMetadata, Applicati
     ApplicationError::Internal(format!("Failed to deserialize 'ffprobe' output: {err}"))
   })?;
 
-  MediaMetadata::try_from(data)
+  Ok(MediaMetadata::try_from(data)?)
 }

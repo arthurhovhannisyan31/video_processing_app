@@ -8,8 +8,7 @@ mod test_video_process_api {
   use axum::http::{StatusCode, header};
   use axum_test::multipart::{MultipartForm, Part};
   use axum_test::{TestServer, expect_json};
-  use backend::core::error::{ApplicationError, ServerError};
-  use backend::features::video::inspect::dto::VideoInspectionResponse;
+  use backend::core::error::ServerError;
   use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;

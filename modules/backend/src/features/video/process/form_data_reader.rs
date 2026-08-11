@@ -1,9 +1,11 @@
 use std::path::Path;
+use std::str::FromStr;
 
 use axum::extract::Multipart;
 
 use crate::core::error::ServerError;
 use crate::features::video::helpers::read_video_to_file;
+use crate::features::video::process::configs::FieldName;
 use crate::features::video::process::types::ProcessVideoMeta;
 
 pub async fn read(
@@ -18,14 +20,15 @@ pub async fn read(
       .ok_or(ServerError::DataError("Missing field name".to_string()))?
       .to_string();
 
-    match field_name.as_str() {
-      "video" => {
+    let field_name = FieldName::from_str(&field_name)?;
+
+    match field_name {
+      FieldName::Video => {
         meta.file_path = read_video_to_file(&mut field, temp_dir).await?;
       }
-      "operation" => {
+      FieldName::Operation => {
         meta.command = field.text().await?;
       }
-      _ => {}
     }
   }
 

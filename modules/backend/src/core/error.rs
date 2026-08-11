@@ -25,8 +25,6 @@ pub enum DomainError {
   UserAlreadyExists,
   #[error("User not found: {0}")]
   UserNotFound(i64),
-  #[error("Media data not found: {0}")]
-  MissingMediaData(String),
   #[error("Sqlx error")]
   SqlxError(#[from] sqlx::Error),
 }
@@ -85,6 +83,8 @@ pub enum ServerError {
   PasswordHash(#[from] argon2::password_hash::Error),
   #[error("Http error: {0}")]
   HttpError(#[from] http::Error),
+  #[error("Media data not found: {0}")]
+  MissingMediaData(String),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -129,7 +129,6 @@ impl From<DomainError> for ApplicationError {
       DomainError::UserNotFound(id) => {
         ApplicationError::NotFound(format!("User not found: {}", id))
       }
-      DomainError::MissingMediaData(msg) => ApplicationError::Internal(msg),
       DomainError::SqlxError(msg) => ApplicationError::Internal(msg.to_string()),
     }
   }
@@ -154,6 +153,7 @@ impl From<ServerError> for ApplicationError {
       ServerError::Jwt(err) => ApplicationError::Internal(err.to_string()),
       ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
       ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
   }
