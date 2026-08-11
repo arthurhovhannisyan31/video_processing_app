@@ -2,9 +2,6 @@ mod utils;
 
 #[cfg(test)]
 mod test_video_process_api {
-  use std::fs;
-  use std::os::unix::fs::MetadataExt;
-
   use axum::http::{StatusCode, header};
   use axum_test::multipart::{MultipartForm, Part};
   use axum_test::{TestServer, expect_json};
@@ -20,13 +17,10 @@ mod test_video_process_api {
   /// fs::metadata read files relative to current working directory of running process
   ///
   /// include_bytes! reads files relative source file at compile time
-
   async fn assert_success_response(
     server: TestServer,
     form: MultipartForm,
     token: String,
-    file_name: &str,
-    size: u64,
   ) -> Result<(), ServerError> {
     let response = server
       .post(&with_base_route(routes::VIDEO_JOBS))
@@ -134,7 +128,6 @@ mod test_video_process_api {
     let server = TestServer::new(router);
     let file_name = "dual_audio_tracks.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let video_file_meta = fs::metadata("./tests/fixtures/media/dual_audio_tracks.mp4")?;
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -143,14 +136,7 @@ mod test_video_process_api {
       .add_part("video", part_bytes)
       .add_text("operation", "compress");
 
-    assert_success_response(
-      server,
-      form,
-      bearer_token,
-      file_name,
-      video_file_meta.size(),
-    )
-    .await?;
+    assert_success_response(server, form, bearer_token).await?;
 
     Ok(())
   }
@@ -161,7 +147,6 @@ mod test_video_process_api {
     let server = TestServer::new(router);
     let file_name = "sample_av.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let video_file_meta = fs::metadata("./tests/fixtures/media/sample_av.mp4")?;
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -170,14 +155,7 @@ mod test_video_process_api {
       .add_part("video", part_bytes)
       .add_text("operation", "compress");
 
-    assert_success_response(
-      server,
-      form,
-      bearer_token,
-      file_name,
-      video_file_meta.size(),
-    )
-    .await?;
+    assert_success_response(server, form, bearer_token).await?;
 
     Ok(())
   }
@@ -188,7 +166,6 @@ mod test_video_process_api {
     let server = TestServer::new(router);
     let file_name = "vertical_no_audio.mp4";
     let bearer_token = get_authorization_token(&server).await;
-    let video_file_meta = fs::metadata("./tests/fixtures/media/vertical_no_audio.mp4")?;
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/vertical_no_audio.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -197,14 +174,7 @@ mod test_video_process_api {
       .add_part("video", part_bytes)
       .add_text("operation", "compress");
 
-    assert_success_response(
-      server,
-      form,
-      bearer_token,
-      file_name,
-      video_file_meta.size(),
-    )
-    .await?;
+    assert_success_response(server, form, bearer_token).await?;
 
     Ok(())
   }

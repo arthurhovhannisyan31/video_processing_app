@@ -57,10 +57,7 @@ pub async fn ffmpeg_runner(
   let _: Result<(), ServerError> = log_task.await?;
 
   if !status.success() {
-    return Err(ServerError::Processing(format!(
-      "ffmpeg error: {}",
-      status.to_string()
-    )));
+    return Err(ServerError::Processing(format!("ffmpeg error: {}", status)));
   }
 
   Ok(())

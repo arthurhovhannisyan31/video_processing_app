@@ -21,7 +21,6 @@ mod test_video_inspect_api {
   /// fs::metadata read files relative to current working directory of running process
   ///
   /// include_bytes! reads files relative source file at compile time
-
   async fn assert_success_response(
     server: TestServer,
     form: MultipartForm,
