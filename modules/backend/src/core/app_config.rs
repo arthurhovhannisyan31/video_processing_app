@@ -13,6 +13,7 @@ pub struct AppConfig {
   pub cors_origins: Vec<String>,
   pub db_max_connections: u32,
   pub is_production: bool,
+  pub is_container: bool,
 }
 
 impl AppConfig {
@@ -58,6 +59,7 @@ impl AppConfig {
       cors_origins,
       db_max_connections,
       is_production,
+      is_container,
     })
   }
 }
