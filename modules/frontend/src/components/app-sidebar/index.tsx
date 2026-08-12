@@ -3,9 +3,9 @@
 import type * as React from "react";
 
 import {
-  CommandIcon,
   DashboardSquare01Icon,
   HelpCircleIcon,
+  LaptopVideoIcon,
   SearchIcon,
   Settings05Icon,
 } from "@hugeicons/core-free-icons";
@@ -36,6 +36,11 @@ const data = {
       title: "Dashboard",
       url: "#",
       icon: <HugeiconsIcon icon={DashboardSquare01Icon} strokeWidth={2} />,
+    },
+    {
+      title: "Video",
+      url: RootPath.Video,
+      icon: <HugeiconsIcon icon={LaptopVideoIcon} strokeWidth={2} />,
     },
   ],
   navSecondary: [
@@ -68,11 +73,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<Link href={RootPath.Dashboard} />}
             >
               <HugeiconsIcon
-                icon={CommandIcon}
+                icon={LaptopVideoIcon}
                 strokeWidth={2}
                 className="size-5!"
               />
-              <span className="text-base font-semibold">Acme Inc.</span>
+              <span className="text-base font-semibold">Video processing</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
