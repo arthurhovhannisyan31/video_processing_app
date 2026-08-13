@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: false, // Disables Turbopack's dev cache
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/video",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

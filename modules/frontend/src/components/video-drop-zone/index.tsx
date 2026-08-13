@@ -67,8 +67,8 @@ export function VideoDropZone({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-      {/** biome-ignore lint/a11y/noStaticElementInteractions: <explanation> */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: not relevant */}
+      {/** biome-ignore lint/a11y/noStaticElementInteractions: not relevant */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}

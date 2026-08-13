@@ -33,14 +33,14 @@ const data = {
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: <HugeiconsIcon icon={DashboardSquare01Icon} strokeWidth={2} />,
-    },
-    {
       title: "Video",
       url: RootPath.Video,
       icon: <HugeiconsIcon icon={LaptopVideoIcon} strokeWidth={2} />,
+    },
+    {
+      title: "Dashboard",
+      url: RootPath.Dashboard,
+      icon: <HugeiconsIcon icon={DashboardSquare01Icon} strokeWidth={2} />,
     },
   ],
   navSecondary: [

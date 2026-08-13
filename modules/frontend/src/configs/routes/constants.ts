@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/style/useLiteralEnumMembers: not relevant */
 export enum RootKeys {
-  Dashboard = "",
+  Dashboard = "dashboard",
   SignIn = "signin",
   Signup = "signup",
   Video = "video",
