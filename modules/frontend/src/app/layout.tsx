@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 
@@ -26,11 +26,7 @@ export const metadata: Metadata = {
   description: "Open cut application",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"

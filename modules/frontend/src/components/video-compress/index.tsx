@@ -13,7 +13,7 @@ export function VideoCompress({ file, isInspecting }: VideoCompressProps) {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: async (f: File) => {
       const res = await processVideo({
-        body: { file: f, operation: "compress" },
+        body: { video: f, operation: "compress" },
         responseType: "blob",
       });
       return res.data as unknown as Blob;

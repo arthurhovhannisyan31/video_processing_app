@@ -22,7 +22,7 @@ export default function VideoPage() {
     setInspectError(null);
     setIsInspecting(true);
     try {
-      const res = await inspectVideo({ body: { file: f } });
+      const res = await inspectVideo({ body: { video: f } });
       setInspectData(res.data as Record<string, unknown>);
     } catch (err) {
       setInspectError(

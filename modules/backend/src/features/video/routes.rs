@@ -34,7 +34,7 @@ pub fn get_video_router(app_state: AppState) -> Router<AppState> {
 #[derive(ToSchema)]
 pub struct InspectVideoPayload {
   #[schema(value_type = String, format = Binary)]
-  pub file: Vec<u8>,
+  pub video: Vec<u8>,
 }
 
 #[utoipa::path(
@@ -66,7 +66,7 @@ pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, A
 pub struct ProcessVideoPayload {
   pub operation: String,
   #[schema(value_type = String, format = Binary)]
-  pub file: Vec<u8>,
+  pub video: Vec<u8>,
 }
 
 #[utoipa::path(
