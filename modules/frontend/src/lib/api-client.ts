@@ -8,7 +8,7 @@ import {
 import { NEXT_PUBLIC_BACKEND_BASE_URL } from "configs/constants";
 import { RootPath } from "configs/routes/constants";
 import { client } from "generated/client/client.gen";
-import { getAuthData } from "hooks/useAuthData";
+import { getAuthData } from "lib/auth-client";
 import { isSSR } from "lib/utils";
 import Router from "next/router";
 
@@ -39,7 +39,6 @@ if (!isSSR()) {
       if (error.response) {
         switch (error.response.status as HttpStatusCode) {
           case HttpStatusCode.Unauthorized:
-            // TODO logout await signOut({ redirect: false });
             await Router.push(
               `/${RootPath.SignIn}`,
               `/${RootPath.SignIn}${window.location.search}`,
