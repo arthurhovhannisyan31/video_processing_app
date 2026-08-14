@@ -4,12 +4,12 @@ import { useMemo, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PasswordStrength } from "components/signup-form/components/password-strength";
+import { PasswordStrength } from "components/modules/auth/signup-form/components/password-strength";
 import {
   getPasswordStrength,
   type SignupSchema,
   signupSchema,
-} from "components/signup-form/constants";
+} from "components/modules/auth/signup-form/constants";
 import { Button } from "components/ui/button";
 import {
   Card,

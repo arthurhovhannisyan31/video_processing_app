@@ -20,7 +20,7 @@ use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, C
 use crate::features::auth::model::User;
 use crate::router::routes;
 
-pub fn get_auth_router() -> Result<Router<AppState>, ServerError> {
+pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let auth_limiter = GovernorConfigBuilder::default()
     .key_extractor(SmartIpKeyExtractor)
     .finish()
@@ -28,10 +28,13 @@ pub fn get_auth_router() -> Result<Router<AppState>, ServerError> {
       "Wrong tower_governor configuration"
     )))?;
 
-  let router = Router::new()
+  let mut router = Router::new()
     .route(routes::LOGIN, post(login))
-    .route(routes::REGISTER, post(register))
-    .layer(GovernorLayer::new(auth_limiter));
+    .route(routes::REGISTER, post(register));
+
+  if app_state.app_config.is_container {
+    router = router.layer(GovernorLayer::new(auth_limiter));
+  }
 
   Ok(router)
 }

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 
-import { Toaster } from "components/ui/sonner";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 
 import "./globals.css";
+import "lib/setup";
 
-import { ThemeProvider } from "components/theme-provider";
-import { TooltipProvider } from "components/ui/tooltip";
+import Providers from "app/providers";
 import { cn } from "lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -27,11 +26,7 @@ export const metadata: Metadata = {
   description: "Open cut application",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
@@ -43,17 +38,7 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TooltipProvider>
-            {children}
-            <Toaster />
-          </TooltipProvider>
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
