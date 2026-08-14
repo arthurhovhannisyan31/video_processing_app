@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type SignInSchema,
   signInSchema,
-} from "components/signin-form/constants";
+} from "components/modules/auth/signin-form/constants";
 import { Button } from "components/ui/button";
 import {
   Card,

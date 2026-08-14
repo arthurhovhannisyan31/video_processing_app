@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 
 import { Cancel01Icon, Upload01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { validate_file } from "components/modules/video/helpers";
+import { toast } from "sonner";
 
 interface VideoDropZoneProps {
   file: File | null;
@@ -22,21 +24,24 @@ export function VideoDropZone({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const showAlert = (msg: string) => {
+    toast.error(msg);
+  };
+
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDragging(false);
     if (disabled) return;
 
-    const dropped = e.dataTransfer.files[0];
-    if (!dropped) return;
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
 
-    if (!dropped.type.startsWith("video/")) {
-      setError("Please drop a video file.");
+    if (!validate_file(file, showAlert)) {
       return;
     }
 
     setError(null);
-    onFile(dropped);
+    onFile(file);
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {

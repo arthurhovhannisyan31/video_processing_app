@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-import { VideoCompress } from "components/video-compress";
-import { VideoDropZone } from "components/video-drop-zone";
-import { VideoInspectResult } from "components/video-inspect-result";
+import { VideoCompress } from "components/modules/video/video-compress";
+import { VideoDropZone } from "components/modules/video/video-drop-zone";
+import { VideoInspectResult } from "components/modules/video/video-inspect-result";
 import { inspectVideo } from "generated/client";
 
 export default function VideoPage() {
@@ -47,7 +47,6 @@ export default function VideoPage() {
         onReset={handleReset}
         disabled={isInspecting}
       />
-
       {(isInspecting || inspectData || inspectError) && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto]">
           <VideoInspectResult
