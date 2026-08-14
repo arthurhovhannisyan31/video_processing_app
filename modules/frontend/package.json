@@ -4,11 +4,11 @@
   "private": true,
   "packageManager": "yarn@4.17.1",
   "engines": {
-    "node": "^26"
+    "node": "^24"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "../../configs/scripts/build-fe.sh",
     "start": "next start",
     "lint": "biome check",
     "format": "biome check --write .",
