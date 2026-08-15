@@ -9,3 +9,5 @@
 **/*notes
 .env
 #**/*openapi.json
+**/*hints
+configs/ssh
