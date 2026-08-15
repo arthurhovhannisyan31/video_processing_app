@@ -5,10 +5,10 @@ mod test_video_process_api {
   use axum::http::{StatusCode, header};
   use axum_test::multipart::{MultipartForm, Part};
   use axum_test::{TestServer, expect_json};
-  use backend::core::error::ServerError;
-  use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
+  use video_processing_server::core::error::ServerError;
+  use video_processing_server::router::routes;
 
   use crate::utils::{get_authorization_token, setup_router, with_base_route};
 

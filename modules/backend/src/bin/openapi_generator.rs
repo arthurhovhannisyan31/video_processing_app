@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::Write;
 
-use backend::core::openapi::OpenApiSpec;
 use utoipa::OpenApi;
+use video_processing_server::core::openapi::OpenApiSpec;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let spec = OpenApiSpec::openapi().to_pretty_json()?;
