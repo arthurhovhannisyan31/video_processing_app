@@ -4,12 +4,14 @@ mod utils;
 mod test_public_api {
   use axum::http::StatusCode;
   use axum_test::{TestServer, expect_json};
-  use backend::core::error::ServerError;
-  use backend::features::auth::dto::{AuthRequest, AuthResponse, CreateUserRequest};
-  use backend::router::routes;
   use serde_json::json;
   use sqlx::PgPool;
   use uuid::{Uuid, Version};
+  use video_processing_server::core::error::ServerError;
+  use video_processing_server::features::auth::dto::{
+    AuthRequest, AuthResponse, CreateUserRequest,
+  };
+  use video_processing_server::router::routes;
 
   use crate::utils;
 

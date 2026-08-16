@@ -1,0 +1,58 @@
+services:
+  db:
+    container_name: app_db
+    image: postgres:18.4
+    env_file:
+      - .env.container
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.50'
+        reservations:
+          memory: 256M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+  #================================================
+  backend:
+    container_name: app_server
+    build:
+      dockerfile: ./configs/docker/backend.dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    ports:
+      - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
+    environment:
+      - CONTAINER=true
+    env_file:
+      - .env.container
+    healthcheck:
+      test: [ "CMD-SHELL", "./backend-healthcheck.sh" ]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.50'
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"

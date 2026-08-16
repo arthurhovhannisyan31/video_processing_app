@@ -1,0 +1,1 @@
+create SCHEMA IF NOT EXISTS video_processing_app;

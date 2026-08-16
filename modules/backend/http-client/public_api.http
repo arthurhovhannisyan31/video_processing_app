@@ -33,8 +33,3 @@ Origin: some
   "email": "test@test.com",
   "password": "Testtest1!"
 }
-
-### Get data from protected route
-GET {{api_host}}/protected
-Content-Type: application/json
-Authorization: Bearer {{token}}
