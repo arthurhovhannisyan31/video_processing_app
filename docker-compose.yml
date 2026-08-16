@@ -3,7 +3,7 @@ services:
     container_name: app_db
     image: postgres:18.4
     env_file:
-      - .env
+      - .env.container
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1
       interval: 10s
@@ -36,7 +36,7 @@ services:
     environment:
       - CONTAINER=true
     env_file:
-      - .env
+      - .env.container
     healthcheck:
       test: [ "CMD-SHELL", "./backend-healthcheck.sh" ]
       interval: 10s
