@@ -25,7 +25,7 @@ services:
   #================================================
   backend:
     container_name: app_server
-    image: arthurhovhannisyan31/video-processing-app:latest
+    image: arthurhovhannisyan31/video-processing-app:${IMAGE_TAG:-latest}
     env_file:
       - .env
     depends_on:
@@ -33,9 +33,10 @@ services:
         condition: service_healthy
         restart: true
     ports:
-      - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
+      - "127.0.0.1:${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
     environment:
       - CONTAINER=true
+      - IS_PRODUCTION=true
     healthcheck:
       test: [ "CMD-SHELL", "./backend-healthcheck.sh" ]
       interval: 10s

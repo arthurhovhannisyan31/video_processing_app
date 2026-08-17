@@ -1,6 +1,15 @@
 name: Server build and deploy
 on:
   workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip build/push and redeploy the current image tag'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,10 +37,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Generate image tag
+        id: tag
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Setup system dependencies
+        if: github.event.inputs.skip_build != 'true'
         uses: ./.github/actions/setup-system-deps
 
       - name: Setup Cargo
+        if: github.event.inputs.skip_build != 'true'
         uses: ./.github/actions/setup-cargo
 
       - name: Log in to Docker Hub
@@ -41,34 +56,23 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: github.event.inputs.skip_build != 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Build and Push Docker Image
+        if: github.event.inputs.skip_build != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./configs/docker/backend.dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/video-processing-app:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/video-processing-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/video-processing-app:${{ steps.tag.outputs.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Write env variables to file
-        run: |
-          touch .env
-          echo "BACKEND_CORS_ORIGINS=${{ vars.BACKEND_CORS_ORIGINS }}" >> .env
-          echo "BACKEND_DB_MAX_CONNECTIONS=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}" >> .env
-          echo "BACKEND_HOST=${{ vars.BACKEND_HOST }}" >> .env
-          echo "BACKEND_HTTP_PORT=${{ vars.BACKEND_HTTP_PORT }}" >> .env
-          echo "BACKEND_JWT_SECRET=${{ vars.BACKEND_JWT_SECRET }}" >> .env
-          echo "DATABASE_URL=${{ vars.DATABASE_URL }}" >> .env
-          echo "POSTGRES_DB=${{ vars.POSTGRES_DB }}" >> .env
-          echo "POSTGRES_HOST=${{ vars.POSTGRES_HOST }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}" >> .env
-          echo "POSTGRES_PORT=${{ vars.POSTGRES_PORT }}" >> .env
-          echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}" >> .env
-          echo "IS_PRODUCTION=${{ vars.IS_PRODUCTION }}" >> .env
-
+      - name: Fix permissions for upload
+        run: chmod +r ./docker-compose.prod.yml
       - name: Upload files to ssh server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -78,6 +82,26 @@ jobs:
           passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
           source: ".env,docker-compose.prod.yml"
           target: "/root/server/"
+
+      - name: Upload nginx config
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
+          source: "./configs/nginx/backend.conf"
+          target: "~/"
+      - name: Update nginx config on host
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
+          script: |
+            cp ~/backend.conf /etc/nginx/conf.d/backend.conf
+            nginx -t && nginx -s reload
 
       - name: Upload files to ssh server
         uses: appleboy/scp-action@v0.1.7
@@ -90,8 +114,35 @@ jobs:
           target: "/root/server/"
           strip_components: 3
 
-      - name: Cleanup .env file
-        run: rm .env
+      - name: Write env variables to file
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
+          script: |
+            CURRENT_TAG=$(grep '^IMAGE_TAG=' /root/server/.env 2>/dev/null | cut -d= -f2- || true)
+            NEW_TAG='${{ github.event.inputs.skip_build == 'true' && '' || steps.tag.outputs.sha }}'
+            IMAGE_TAG=${NEW_TAG:-${CURRENT_TAG:-latest}}
+            touch /root/server/.env
+            {
+              echo "BACKEND_CORS_ORIGINS=${{ vars.BACKEND_CORS_ORIGINS }}"
+              echo "BACKEND_DB_MAX_CONNECTIONS=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}"
+              echo "BACKEND_HOST=${{ vars.BACKEND_HOST }}"
+              echo "BACKEND_HTTP_PORT=${{ vars.BACKEND_HTTP_PORT }}"
+              echo "BACKEND_JWT_SECRET=${{ vars.BACKEND_JWT_SECRET }}"
+              echo "DATABASE_URL=${{ vars.DATABASE_URL }}"
+              echo "POSTGRES_DB=${{ vars.POSTGRES_DB }}"
+              echo "POSTGRES_HOST=${{ vars.POSTGRES_HOST }}"
+              echo "POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}"
+              echo "POSTGRES_PORT=${{ vars.POSTGRES_PORT }}"
+              echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}"
+              echo "IMAGE_TAG=$IMAGE_TAG"
+            } > /root/server/.env.new
+            mv /root/server/.env.new /root/server/.env
+            chmod 600 /root/server/.env
+
 
       - name: Pull docker image and restart server
         uses: appleboy/ssh-action@v1.0.3
@@ -105,3 +156,24 @@ jobs:
             cd /root/server
             docker compose --file ./docker-compose.prod.yml pull
             docker compose --file ./docker-compose.prod.yml up -d --remove-orphans
+
+      - name: Smoke test
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
+          script: |
+            sleep 5
+            curl -sf http://127.0.0.1:${{ vars.BACKEND_HTTP_PORT }}/api/health \
+              || (cd /root/server && docker compose logs backend --tail=20 && exit 1)
+
+      - name: Cleanup old images
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
+          script: docker image prune -af
