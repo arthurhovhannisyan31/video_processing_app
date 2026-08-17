@@ -32,7 +32,7 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
     .route(routes::LOGIN, post(login))
     .route(routes::REGISTER, post(register));
 
-  if app_state.app_config.is_container {
+  if app_state.app_config.is_production {
     router = router.layer(GovernorLayer::new(auth_limiter));
   }
 

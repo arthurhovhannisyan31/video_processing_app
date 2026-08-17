@@ -12,7 +12,7 @@ RUN cargo build --release
 FROM debian:trixie-slim
 
 RUN apt-get update \
-    && apt-get install ffmpeg -y \
+    && apt-get install -y ffmpeg \
     && apt-get install -y curl \
     && apt-get install -y bash \
     && rm -rf /var/lib/apt/lists/*
