@@ -10,4 +10,4 @@
 .env
 #**/*openapi.json
 **/*hints
-configs/ssh
+configs/.ssh
