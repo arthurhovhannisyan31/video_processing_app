@@ -43,9 +43,8 @@ jobs:
         uses: ./.github/actions/setup-nodejs
       - name: Run Database Migrations
         run: cd modules/backend && cargo sqlx migrate run
-      - name: Generate openapi spec and client
+      - name: Generate openapi client
         run: |
-          make generate-openapi
           make prepare-frontend
       - name: Validate code
         run: |
