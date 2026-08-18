@@ -23,6 +23,7 @@ jobs:
       POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
       POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
       POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+      IS_PRODUCTION: ${{ vars.IS_PRODUCTION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -66,6 +67,7 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}" >> .env
           echo "POSTGRES_PORT=${{ vars.POSTGRES_PORT }}" >> .env
           echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}" >> .env
+          echo "IS_PRODUCTION=${{ vars.IS_PRODUCTION }}" >> .env
 
       - name: Upload files to ssh server
         uses: appleboy/scp-action@v0.1.7
