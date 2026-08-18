@@ -2,6 +2,8 @@
 
 import type { PropsWithChildren } from "react";
 
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "components/theme-provider";
 import { Toaster } from "components/ui/sonner";
 import { TooltipProvider } from "components/ui/tooltip";
@@ -24,6 +26,8 @@ export default function Providers({ children }: PropsWithChildren) {
           <Toaster />
         </TooltipProvider>
       </ThemeProvider>
+      <Analytics />
+      <SpeedInsights />
     </QueryClientProvider>
   );
 }
