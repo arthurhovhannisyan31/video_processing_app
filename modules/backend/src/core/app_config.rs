@@ -3,6 +3,7 @@ use std::env;
 use serde::Deserialize;
 
 use crate::core::error::ServerError;
+use crate::features::video::constants::DEFAULT_MAX_BODY_SIZE;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
@@ -14,6 +15,7 @@ pub struct AppConfig {
   pub db_max_connections: u32,
   pub is_production: bool,
   pub is_container: bool,
+  pub max_body_size: usize,
 }
 
 impl AppConfig {
@@ -50,6 +52,9 @@ impl AppConfig {
     let is_production = env::var("IS_PRODUCTION")
       .unwrap_or("false".to_string())
       .eq("true");
+    let max_body_size = env::var("BACKEND_MAX_BODY_SIZE")
+      .unwrap_or(DEFAULT_MAX_BODY_SIZE.to_string())
+      .parse::<usize>()?;
 
     Ok(Self {
       host,
@@ -60,6 +65,7 @@ impl AppConfig {
       db_max_connections,
       is_production,
       is_container,
+      max_body_size,
     })
   }
 }
