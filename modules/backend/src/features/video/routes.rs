@@ -9,7 +9,6 @@ use utoipa::ToSchema;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::middleware::auth;
-use crate::features::video::constants::DEFAULT_VIDEO_BODY_LIMIT_BYTES;
 use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
@@ -25,7 +24,7 @@ pub fn get_video_router(app_state: AppState) -> Router<AppState> {
   Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
-    .layer(DefaultBodyLimit::max(DEFAULT_VIDEO_BODY_LIMIT_BYTES))
+    .layer(DefaultBodyLimit::max(app_state.app_config.max_body_size))
     .layer(middleware::from_fn_with_state(app_state, auth))
 }
 

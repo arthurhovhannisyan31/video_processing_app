@@ -22,8 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Open cut App",
-  description: "Open cut application",
+  title: "Video processing",
+  description: "Open video processing application",
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {
