@@ -27,6 +27,8 @@ services:
     container_name: app_server
     build:
       dockerfile: ./configs/docker/backend.dockerfile
+    env_file:
+      - .env.container
     depends_on:
       db:
         condition: service_healthy
@@ -35,8 +37,7 @@ services:
       - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
     environment:
       - CONTAINER=true
-    env_file:
-      - .env.container
+      - IS_PRODUCTION=true
     healthcheck:
       test: [ "CMD-SHELL", "./backend-healthcheck.sh" ]
       interval: 10s
@@ -56,3 +57,14 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
+  #================================================
+  nginx:
+    image: nginx:stable-alpine
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./configs/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/.ssh/cloudflare:/etc/nginx/certs:ro
+    restart: unless-stopped
