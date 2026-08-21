@@ -74,7 +74,7 @@ jobs:
         run: chmod +r ./docker-compose.prod.yml
 
       - name: Upload files to ssh server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -84,7 +84,7 @@ jobs:
           target: "/root/server/"
 
       - name: Upload files to ssh server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
