@@ -48,18 +48,18 @@ jobs:
         uses: ./.github/actions/setup-cargo
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         if: ${{ !inputs.skip_build }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and Push Docker Image
         if: ${{ !inputs.skip_build }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./configs/docker/backend.dockerfile
@@ -74,7 +74,7 @@ jobs:
         run: chmod +r ./docker-compose.prod.yml
 
       - name: Upload files to ssh server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -84,7 +84,7 @@ jobs:
           target: "/root/server/"
 
       - name: Upload files to ssh server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -95,7 +95,7 @@ jobs:
           strip_components: 3
 
       - name: Write env variables to host
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -124,7 +124,7 @@ jobs:
             chmod 600 /root/server/.env
 
       - name: Pull docker image and restart server
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -137,7 +137,7 @@ jobs:
             docker compose --file ./docker-compose.prod.yml up -d --remove-orphans
 
       - name: Cleanup old images
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
