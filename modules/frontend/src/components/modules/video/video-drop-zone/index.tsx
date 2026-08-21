@@ -1,10 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Cancel01Icon, Upload01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { validate_file } from "components/modules/video/helpers";
+import { getErrorsDict } from "components/modules/video/constants";
+import {
+  getMaxBodySize,
+  validate_file,
+} from "components/modules/video/helpers";
 import { toast } from "sonner";
 
 interface VideoDropZoneProps {
@@ -27,6 +31,8 @@ export function VideoDropZone({
   const showAlert = (msg: string) => {
     toast.error(msg);
   };
+  const maxBodySize = useMemo(() => getMaxBodySize(), []);
+  const errorsDict = useMemo(() => getErrorsDict(maxBodySize), [maxBodySize]);
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -36,7 +42,7 @@ export function VideoDropZone({
     const file = e.dataTransfer.files[0];
     if (!file) return;
 
-    if (!validate_file(file, showAlert)) {
+    if (!validate_file(file, errorsDict, showAlert)) {
       return;
     }
 

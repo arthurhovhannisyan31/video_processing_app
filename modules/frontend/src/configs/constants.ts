@@ -6,3 +6,4 @@ export const IS_PROD = process.env.NEXT_PUBLIC_IS_PROD === "true";
 export const SESSION_DATA_KEY = IS_PROD
   ? "__Secure-better-auth.session_data"
   : "better-auth.session_data";
+export const MAX_BODY_SIZE = process.env.NEXT_PUBLIC_MAX_BODY_SIZE;
