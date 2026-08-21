@@ -95,7 +95,7 @@ jobs:
           strip_components: 3
 
       - name: Write env variables to host
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -124,7 +124,7 @@ jobs:
             chmod 600 /root/server/.env
 
       - name: Pull docker image and restart server
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
@@ -137,7 +137,7 @@ jobs:
             docker compose --file ./docker-compose.prod.yml up -d --remove-orphans
 
       - name: Cleanup old images
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.HETZNER_HOST }}
           username: root
