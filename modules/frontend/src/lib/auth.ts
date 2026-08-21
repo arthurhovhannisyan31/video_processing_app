@@ -17,6 +17,9 @@ const authResponseSchema = zod.object({
 
 export const auth = betterAuth({
   secret: BETTER_AUTH_SECRET,
+  emailAndPassword: {
+    enabled: true,
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     cookieCache: {
@@ -51,9 +54,12 @@ export const auth = betterAuth({
             await setSessionCookie(ctx, {
               session,
               user: {
+                id: user.user_id,
+                email: user.email,
+                emailVerified: true,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                emailVerified: true,
+                name: ctx.body.token,
                 // @ts-expect-error Populate auth response data in user data
                 data: ctx.body,
               },

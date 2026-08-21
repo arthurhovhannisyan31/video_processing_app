@@ -1,26 +1,38 @@
 import {
-  errorsDict,
-  FILE_SIZE_LIMIT,
+  DEFAULT_MAX_BODY_SIZE,
+  type ErrorsDict,
   supportedMimeTypes,
 } from "components/modules/video/constants";
+import { MAX_BODY_SIZE } from "configs/constants";
+
+export const getMaxBodySize = () => {
+  const bodySize = +(MAX_BODY_SIZE ?? 0);
+
+  if (Number.isFinite(bodySize) && bodySize > 0) {
+    return bodySize;
+  }
+
+  return DEFAULT_MAX_BODY_SIZE;
+};
 
 export const validate_file = (
   file: File,
-  showAlert: (message: string, severity: string) => void,
+  errorsDict: ErrorsDict,
+  showAlert: (message: string) => void,
 ) => {
   if (!file.type) {
-    showAlert(errorsDict.fileType, "error");
+    showAlert(errorsDict.fileType);
     return false;
   }
 
   if (!supportedMimeTypes.includes(file.type)) {
-    showAlert(errorsDict.filesExtension, "error");
+    showAlert(errorsDict.filesExtension);
 
     return false;
   }
 
-  if (file.size > FILE_SIZE_LIMIT) {
-    showAlert(errorsDict.fileSize, "error");
+  if (file.size > getMaxBodySize()) {
+    showAlert(errorsDict.fileSize);
 
     return false;
   }
