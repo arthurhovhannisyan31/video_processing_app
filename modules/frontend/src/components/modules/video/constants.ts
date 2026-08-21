@@ -11,6 +11,6 @@ export type ErrorsDict = Record<
 export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
   fileType: "File type in not supported",
   filesExtension: `Only the following formats are supported: ${supportedTypesLabel}`,
-  fileSize: `Image size limit is ${maxBodySizeMB} Mb`,
+  fileSize: `Image size limit is ${(maxBodySizeMB / 1024) * 1024} Mb`,
   fileName: "File name is missing",
 });
