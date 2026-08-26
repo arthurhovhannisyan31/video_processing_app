@@ -2,7 +2,6 @@ use axum::extract::{Request, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::Response;
-use chrono::Utc;
 
 use crate::core::app_state::AppState;
 use crate::core::jwt::JwtService;
@@ -43,12 +42,6 @@ pub async fn authenticate_user(
   auth_service: &AuthService<PostgresUserRepository>,
 ) -> Option<AuthenticatedUser> {
   let claims = jwt_service.verify_token(token).ok()?;
-  let exp = chrono::DateTime::from_timestamp(claims.exp as i64, 0)?;
-
-  if Utc::now().gt(&exp) {
-    return None;
-  }
-
   let user = auth_service.get(claims.user_id).await.ok()?;
 
   Some(AuthenticatedUser {

@@ -55,11 +55,10 @@ pub async fn login(
 ) -> Result<impl IntoResponse, ApplicationError> {
   payload.validate()?;
 
-  let token = auth_state
+  let (user, token) = auth_state
     .auth_service
     .login(&payload.email, &payload.password)
     .await?;
-  let user = auth_state.auth_service.get_by_email(&payload.email).await?;
   Ok(build_auth_response(StatusCode::OK, token.clone(), user)?)
 }
 

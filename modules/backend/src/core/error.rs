@@ -13,7 +13,6 @@ use validator::ValidationErrors;
 
 /* Domain objects errors */
 #[derive(Debug, Error)]
-#[from(sqlx::Error)]
 pub enum DomainError {
   #[error("Access is forbidden")]
   Forbidden,

@@ -46,7 +46,11 @@ where
     self.repo.create(user).await.map_err(ApplicationError::from)
   }
 
-  pub async fn login(&self, email: &str, password: &str) -> Result<String, ApplicationError> {
+  pub async fn login(
+    &self,
+    email: &str,
+    password: &str,
+  ) -> Result<(User, String), ApplicationError> {
     let user_res = self.get_by_email(email).await;
 
     let password_hash = user_res
@@ -73,9 +77,11 @@ where
       Err(err) => return Err(err),
     };
 
-    self
+    let token = self
       .jwt_service
-      .generate_token(user.id, user.username)
-      .map_err(|err| ApplicationError::Internal(err.to_string()))
+      .generate_token(user.id.clone(), user.username.clone())
+      .map_err(|err| ApplicationError::Internal(err.to_string()))?;
+
+    Ok((user, token))
   }
 }
