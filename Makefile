@@ -23,7 +23,7 @@ format:
 format-check:
 	cd modules/backend && $(REPO_ROOT)/configs/scripts/cargo-fmt.sh
 test:
-	cd modules/backend && cargo test
+	cd modules/backend && cargo nextest run
 audit:
 	cd modules/backend && cargo audit
 	cd modules/frontend && yarn npm audit

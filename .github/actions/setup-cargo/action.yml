@@ -17,6 +17,8 @@ runs:
           ${{ runner.os }}-cargo-
     - name: Install cargo-binstall
       uses: cargo-bins/cargo-binstall@main
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@nextest
     - name: Install SQLx CLI via binstall
       run: cargo binstall sqlx-cli --secure -y
       shell: bash
