@@ -3,6 +3,8 @@ use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::time::timeout;
+use tracing::log::{error, info};
+use tracing::warn;
 
 use crate::core::error::ServerError;
 use crate::features::video::constants::VIDEO_API_TIMEOUT;
@@ -43,12 +45,12 @@ pub async fn ffmpeg_runner(
           "frame" => current_frame = value.to_string(),
           "fps" => current_fps = value.to_string(),
           "progress" => {
-            println!("DB update -> Frame: {current_frame}, FPS: {current_fps}, Status: {value}");
+            info!("DB update -> Frame: {current_frame}, FPS: {current_fps}, Status: {value}");
           }
           _ => {}
         }
       } else if !line.is_empty() {
-        println!("FFmpeg Log/Error: {}", line);
+        warn!("FFmpeg Log/Error: {}", line);
       }
     }
     Ok(())

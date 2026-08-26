@@ -74,13 +74,21 @@ pub async fn read_video_to_file(
   let mut created_file = File::create(&path).await?;
   let file_path = path.to_string_lossy().to_string();
 
+  let mut written_bytes: usize = 0;
   // Stream chunks directly from the request network buffer into the file
   while let Some(chunk) = field.chunk().await? {
+    written_bytes += chunk.len();
     created_file.write_all(&chunk).await?;
   }
 
   // Ensure all data chunks are flushed to file
   created_file.flush().await?;
+
+  if written_bytes == 0 {
+    return Err(ServerError::DataError(
+      "Uploaded video file is empty".to_string(),
+    ));
+  }
 
   if file_path.is_empty() {
     return Err(ServerError::DataError("Missing 'video' field".to_string()));
