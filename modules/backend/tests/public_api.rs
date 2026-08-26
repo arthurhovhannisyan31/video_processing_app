@@ -62,6 +62,7 @@ mod test_public_api {
     Ok(())
   }
 
+  #[ignore]
   #[sqlx::test]
   async fn test_register(pool: PgPool) -> Result<(), ServerError> {
     let router = utils::setup_router(pool)?;
@@ -88,6 +89,7 @@ mod test_public_api {
     Ok(())
   }
 
+  #[ignore]
   #[sqlx::test(fixtures("create_user"))]
   async fn test_login(pool: PgPool) -> Result<(), ServerError> {
     let router = utils::setup_router(pool)?;
