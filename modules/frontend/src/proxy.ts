@@ -1,5 +1,9 @@
 import { HttpStatusCode } from "axios";
-import { CALLBACK_URL, SESSION_DATA_KEY } from "configs/constants";
+import {
+  CALLBACK_URL,
+  PROXY_AUTH_CHECK_ENABLED,
+  SESSION_DATA_KEY,
+} from "configs/constants";
 import { RootPath } from "configs/routes/constants";
 import { getTokenExpired } from "lib/helpers/auth";
 import { type NextRequest, NextResponse } from "next/server";
@@ -7,6 +11,10 @@ import { type NextRequest, NextResponse } from "next/server";
 export default async function proxy(
   request: NextRequest,
 ): Promise<NextResponse | undefined> {
+  if (!PROXY_AUTH_CHECK_ENABLED) {
+    return NextResponse.next();
+  }
+
   const { origin, searchParams } = request.nextUrl;
 
   const fullPath =
