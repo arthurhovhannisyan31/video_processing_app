@@ -1,6 +1,6 @@
 "use client";
 
-import type { AxiosError } from "axios";
+import type { ApiError } from "configs/types";
 import { useState } from "react";
 
 import { VideoCompress } from "components/modules/video/video-compress";
@@ -26,21 +26,19 @@ export default function VideoPage() {
 
     try {
       const res = await inspectVideo({ body: { video: f } });
-
       if (res.error) {
-        throw res.error;
+        throw res;
       }
 
       setInspectData(res.data as Record<string, unknown>);
     } catch (err) {
-      const error = err as AxiosError;
-      const errorMessage = error.message || error.status;
+      const error = err as ApiError;
+      const errorMessage =
+        error.error || error.message || error.status || "Inspection failed.";
 
       toast.error(errorMessage);
 
-      setInspectError(
-        err instanceof Error ? err.message : "Inspection failed.",
-      );
+      setInspectError(errorMessage.toString());
     } finally {
       setIsInspecting(false);
     }
