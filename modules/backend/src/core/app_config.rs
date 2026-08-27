@@ -3,7 +3,9 @@ use std::env;
 use serde::Deserialize;
 
 use crate::core::error::ServerError;
-use crate::features::video::constants::DEFAULT_MAX_BODY_SIZE;
+use crate::features::video::constants::{
+  VIDEO_MAX_BODY_SIZE, VIDEO_RATE_LIMIT_PERIOD, VIDEO_RATE_LIMIT_SIZE,
+};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
@@ -15,7 +17,9 @@ pub struct AppConfig {
   pub db_max_connections: u32,
   pub is_production: bool,
   pub is_container: bool,
-  pub max_body_size: usize,
+  pub video_max_body_size: usize,
+  pub video_rate_limit_period: u64,
+  pub video_rate_limit_size: u32,
 }
 
 impl AppConfig {
@@ -52,9 +56,15 @@ impl AppConfig {
     let is_production = env::var("IS_PRODUCTION")
       .unwrap_or("false".to_string())
       .eq("true");
-    let max_body_size = env::var("BACKEND_MAX_BODY_SIZE")
-      .unwrap_or(DEFAULT_MAX_BODY_SIZE.to_string())
+    let video_max_body_size = env::var("BACKEND_VIDEO_MAX_BODY_SIZE")
+      .unwrap_or(VIDEO_MAX_BODY_SIZE.to_string())
       .parse::<usize>()?;
+    let video_rate_limit_period = env::var("BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC")
+      .unwrap_or(VIDEO_RATE_LIMIT_PERIOD.to_string())
+      .parse::<u64>()?;
+    let video_rate_limit_size = env::var("BACKEND_VIDEO_RATE_LIMIT_SIZE")
+      .unwrap_or(VIDEO_RATE_LIMIT_SIZE.to_string())
+      .parse::<u32>()?;
 
     Ok(Self {
       host,
@@ -65,7 +75,9 @@ impl AppConfig {
       db_max_connections,
       is_production,
       is_container,
-      max_body_size,
+      video_max_body_size,
+      video_rate_limit_period,
+      video_rate_limit_size,
     })
   }
 }

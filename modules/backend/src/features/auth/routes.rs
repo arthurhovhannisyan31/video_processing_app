@@ -21,19 +21,19 @@ use crate::features::auth::model::User;
 use crate::router::routes;
 
 pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
-  let auth_limiter = GovernorConfigBuilder::default()
-    .key_extractor(SmartIpKeyExtractor)
-    .finish()
-    .ok_or(ServerError::OtherError(anyhow!(
-      "Wrong tower_governor configuration"
-    )))?;
-
   let mut router = Router::new()
     .route(routes::LOGIN, post(login))
     .route(routes::REGISTER, post(register));
 
   if app_state.app_config.is_production {
-    router = router.layer(GovernorLayer::new(auth_limiter));
+    let rate_limiter = GovernorConfigBuilder::default()
+      .key_extractor(SmartIpKeyExtractor)
+      .finish()
+      .ok_or(ServerError::OtherError(anyhow!(
+        "Wrong tower_governor configuration"
+      )))?;
+
+    router = router.layer(GovernorLayer::new(rate_limiter));
   }
 
   Ok(router)
