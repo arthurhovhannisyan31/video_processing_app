@@ -5,7 +5,6 @@ use tower_http::trace::TraceLayer;
 use crate::core::app_state::AppState;
 use crate::core::cors::build_cors_layer;
 use crate::core::error::ServerError;
-use crate::features::auth::routes::get_auth_router;
 use crate::features::system::routes::get_system_router;
 use crate::features::video::routes::get_video_router;
 
@@ -22,7 +21,7 @@ pub mod routes {
 
 pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
   let merged_router = Router::new()
-    .merge(get_auth_router(app_state.clone())?)
+    // .merge(get_auth_router(app_state.clone())?)
     .merge(get_system_router())
     .merge(get_video_router(app_state.clone()))
     .with_state(app_state.clone());

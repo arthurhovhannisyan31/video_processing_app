@@ -7,3 +7,5 @@ export const SESSION_DATA_KEY = IS_PROD
   ? "__Secure-better-auth.session_data"
   : "better-auth.session_data";
 export const MAX_BODY_SIZE = process.env.NEXT_PUBLIC_MAX_BODY_SIZE;
+export const PROXY_AUTH_CHECK_ENABLED =
+  process.env.NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED === "true";

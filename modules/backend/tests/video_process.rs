@@ -47,7 +47,8 @@ mod test_video_process_api {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "audio_only.m4a";
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/audio_only.m4a");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -76,7 +77,8 @@ mod test_video_process_api {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "broken_truncated.mp4";
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/broken_truncated.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -104,7 +106,8 @@ mod test_video_process_api {
   async fn test_fail_missing_video_field(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let form = MultipartForm::new().add_text("operation", "compress");
 
     let response = server
@@ -127,7 +130,8 @@ mod test_video_process_api {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "dual_audio_tracks.mp4";
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -146,7 +150,8 @@ mod test_video_process_api {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "sample_av.mp4";
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
@@ -165,7 +170,8 @@ mod test_video_process_api {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "vertical_no_audio.mp4";
-    let bearer_token = get_authorization_token(&server).await;
+    // let bearer_token = get_authorization_token(&server).await;
+    let bearer_token = "temporary-disabled".to_string();
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/vertical_no_audio.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
