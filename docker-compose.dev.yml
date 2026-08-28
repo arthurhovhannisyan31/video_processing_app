@@ -13,8 +13,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: '0.50'
+          memory: 0.5G
+          cpus: '0.05'
         reservations:
           memory: 256M
     ulimits:
@@ -37,7 +37,6 @@ services:
       - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
     environment:
       - CONTAINER=true
-      - IS_PRODUCTION=true
     healthcheck:
       test: [ "CMD-SHELL", "./backend-healthcheck.sh" ]
       interval: 10s
@@ -47,8 +46,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '0.50'
+          memory: 3.5G
+          cpus: '0.95'
         reservations:
           memory: 256M
     restart: unless-stopped

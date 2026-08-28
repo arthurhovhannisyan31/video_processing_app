@@ -1,9 +1,15 @@
+use std::time::Duration;
+
+use anyhow::anyhow;
 use axum::extract::{DefaultBodyLimit, Multipart};
 use axum::response::IntoResponse;
 use axum::routing::post;
 use axum::{Json, Router};
 use serde_json::json;
 use tempfile::TempDir;
+use tower_governor::GovernorLayer;
+use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::key_extractor::SmartIpKeyExtractor;
 use utoipa::ToSchema;
 
 use crate::core::app_state::AppState;
@@ -19,12 +25,31 @@ use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::{inspect, process};
 use crate::router::routes;
 
-pub fn get_video_router(app_state: AppState) -> Router<AppState> {
-  Router::new()
+pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
+  let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
-    .layer(DefaultBodyLimit::max(app_state.app_config.max_body_size))
-  // .layer(middleware::from_fn_with_state(app_state, auth))
+    .layer(DefaultBodyLimit::max(
+      app_state.app_config.video_max_body_size,
+    ));
+  // .layer(middleware::from_fn_with_state(app_state, auth));
+
+  if app_state.app_config.is_production {
+    let rate_limiter = GovernorConfigBuilder::default()
+      .period(Duration::from_secs(
+        app_state.app_config.video_rate_limit_period,
+      ))
+      .burst_size(app_state.app_config.video_rate_limit_size)
+      .key_extractor(SmartIpKeyExtractor)
+      .finish()
+      .ok_or(ServerError::OtherError(anyhow!(
+        "Wrong tower_governor configuration"
+      )))?;
+
+    router = router.layer(GovernorLayer::new(rate_limiter))
+  }
+
+  Ok(router)
 }
 
 // Struct used for openapi schema typings
