@@ -23,7 +23,7 @@ pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
   let merged_router = Router::new()
     // .merge(get_auth_router(app_state.clone())?)
     .merge(get_system_router())
-    .merge(get_video_router(app_state.clone()))
+    .merge(get_video_router(app_state.clone())?)
     .with_state(app_state.clone());
 
   let router = Router::new()
