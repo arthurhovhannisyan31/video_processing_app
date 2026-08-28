@@ -3,7 +3,7 @@ use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::time::timeout;
-use tracing::log::{error, info};
+use tracing::log::info;
 use tracing::warn;
 
 use crate::core::error::ServerError;
@@ -18,11 +18,13 @@ pub async fn ffmpeg_runner(
   args.extend(preset);
   args.extend([output]);
 
-  let mut ffmpeg_process = Command::new("ffmpeg")
-    .kill_on_drop(true)
-    .args(args)
-    .stdout(Stdio::null()) // FFmpeg output file mode doesn't use stdout
-    .stderr(Stdio::piped())
+  let mut cmd = Command::new("ffmpeg");
+  cmd.kill_on_drop(true);
+  cmd.args(args);
+  cmd.stdout(Stdio::null());
+  cmd.stderr(Stdio::piped());
+
+  let mut ffmpeg_process = cmd
     .spawn()
     .map_err(|err| ServerError::Processing(format!("Failed to spawn 'ffmpeg' process: {err:?}")))?;
 
@@ -44,13 +46,11 @@ pub async fn ffmpeg_runner(
         match key {
           "frame" => current_frame = value.to_string(),
           "fps" => current_fps = value.to_string(),
-          "progress" => {
-            info!("DB update -> Frame: {current_frame}, FPS: {current_fps}, Status: {value}");
+          "progress" if value == "continue" || value == "end" => {
+            info!("Progress Update -> Frame: {current_frame}, FPS: {current_fps}");
           }
           _ => {}
         }
-      } else if !line.is_empty() {
-        warn!("FFmpeg Log/Error: {}", line);
       }
     }
     Ok(())
@@ -60,6 +60,7 @@ pub async fn ffmpeg_runner(
     Ok(res) => res?,
     Err(_) => return Err(ServerError::Processing("ffmpeg timed out".to_string())),
   };
+
   let _: Result<(), ServerError> = log_task.await?;
 
   if !status.success() {

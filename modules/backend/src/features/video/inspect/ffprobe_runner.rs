@@ -1,25 +1,26 @@
 use std::process::Stdio;
 
 use serde_json::Value;
-use sqlx::__rt::timeout;
 use tokio::process::Command;
+use tokio::time::timeout;
 
 use crate::core::error::ServerError;
 use crate::features::video::constants::VIDEO_API_TIMEOUT;
 
 pub async fn ffprobe_runner(file_path: &str) -> Result<Value, ServerError> {
-  let ffprobe_process = Command::new("ffprobe")
-    .kill_on_drop(true)
-    .args([
-      "-v",
-      "error",
-      "-show_format",
-      "-show_streams",
-      "-of",
-      "json",
-      file_path,
-    ])
-    .stdout(Stdio::piped())
+  let mut cmd = Command::new("ffprobe");
+  cmd.kill_on_drop(true);
+  cmd.args([
+    "-v",
+    "error",
+    "-show_format",
+    "-show_streams",
+    "-of",
+    "json",
+    file_path,
+  ]);
+  cmd.stdout(Stdio::piped());
+  let ffprobe_process = cmd
     .spawn()
     .map_err(|err| ServerError::Processing(format!("Failed to spawn 'ffprobe' process: {err}",)))?;
 
