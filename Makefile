@@ -9,7 +9,9 @@ prepare:
 prepare-backend:
 	cd modules/backend && cargo sqlx prepare
 prepare-frontend:
-	cd modules/frontend && yarn prepare
+	cd modules/frontend && yarn generate-openapi
+prepare-frontend-local:
+	cd modules/frontend && yarn generate-openapi-local
 backend:
 	cd modules/backend && cargo run
 frontend:

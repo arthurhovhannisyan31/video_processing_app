@@ -12,8 +12,10 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome check --write .",
-    "prepare": "yarn generate-openapi-client",
-    "generate-openapi-client": "../../configs/scripts/generate-openapi-client.sh --local",
+    "prepare": "yarn setup-git && yarn generate-openapi",
+    "setup-git": "../../configs/git/setup.sh",
+    "generate-openapi": "../../configs/scripts/generate-openapi-client.sh",
+    "generate-openapi-local": "../../configs/scripts/generate-openapi-client.sh --local",
     "types": "NODE_OPTIONS=--max-old-space-size=8196 tsc -p tsconfig.json --noEmit",
     "check": "yarn types && yarn lint"
   },
