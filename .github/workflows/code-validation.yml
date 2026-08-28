@@ -45,6 +45,7 @@ jobs:
         run: cd modules/backend && cargo sqlx migrate run
       - name: Generate openapi client
         run: |
+          make generate-openapi
           make prepare-frontend
       - name: Validate code
         run: |
