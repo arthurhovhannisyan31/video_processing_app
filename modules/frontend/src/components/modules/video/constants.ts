@@ -1,3 +1,5 @@
+import { formatBytes } from "lib/utils";
+
 export const DEFAULT_MAX_BODY_SIZE: number = 20 * 1024 * 1024;
 export const supportedMimeTypes: string[] = ["video/mp4"];
 const supportedTypesLabel = supportedMimeTypes
@@ -11,6 +13,6 @@ export type ErrorsDict = Record<
 export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
   fileType: "File type in not supported",
   filesExtension: `Only the following formats are supported: ${supportedTypesLabel}`,
-  fileSize: `Image size limit is ${(maxBodySizeMB / 1024) * 1024} Mb`,
+  fileSize: `Image size limit is ${formatBytes(maxBodySizeMB)}`,
   fileName: "File name is missing",
 });

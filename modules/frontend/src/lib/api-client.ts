@@ -8,7 +8,6 @@ import {
 import { NEXT_PUBLIC_BACKEND_BASE_URL } from "configs/constants";
 import { RootPath } from "configs/routes/constants";
 import { client } from "generated/client/client.gen";
-import { getAuthData } from "lib/auth-client";
 import { isSSR } from "lib/utils";
 import Router from "next/router";
 
@@ -19,16 +18,6 @@ if (!isSSR()) {
 
   client.instance.interceptors.request.use(
     async (requestConfig: InternalAxiosRequestConfig) => {
-      try {
-        const authData = await getAuthData();
-
-        if (authData) {
-          requestConfig.headers.Authorization = `Bearer ${authData.token}`;
-        }
-      } catch (error) {
-        console.error(error);
-      }
-
       return requestConfig;
     },
   );
