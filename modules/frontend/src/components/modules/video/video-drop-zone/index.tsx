@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type DragEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Cancel01Icon, Upload01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -9,6 +15,7 @@ import {
   getMaxBodySize,
   validate_file,
 } from "components/modules/video/helpers";
+import { formatBytes } from "lib/utils";
 import { toast } from "sonner";
 
 interface VideoDropZoneProps {
@@ -34,7 +41,10 @@ export function VideoDropZone({
   const maxBodySize = useMemo(() => getMaxBodySize(), []);
   const errorsDict = useMemo(() => getErrorsDict(maxBodySize), [maxBodySize]);
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    // Clean up current settings
+    onReset();
+
     e.preventDefault();
     setIsDragging(false);
     if (disabled) return;
@@ -47,10 +57,11 @@ export function VideoDropZone({
     }
 
     setError(null);
+
     onFile(file);
   }
 
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     if (!disabled) setIsDragging(true);
   }
@@ -63,17 +74,17 @@ export function VideoDropZone({
     if (!disabled && !file) inputRef.current?.click();
   }
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleInputChange(e: ChangeEvent<HTMLInputElement>) {
+    onReset();
+
     const selected = e.target.files?.[0];
+
     if (!selected) return;
+
     setError(null);
+
     onFile(selected);
     e.target.value = "";
-  }
-
-  function formatBytes(bytes: number) {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   return (

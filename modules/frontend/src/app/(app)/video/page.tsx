@@ -3,33 +3,52 @@
 import type { ApiError } from "configs/types";
 import { useState } from "react";
 
+import { VideoAttachment } from "components/modules/video/video-attachment";
 import { VideoCompress } from "components/modules/video/video-compress";
 import { VideoDropZone } from "components/modules/video/video-drop-zone";
+import { VideoInspectError } from "components/modules/video/video-inspect-error";
 import { VideoInspectResult } from "components/modules/video/video-inspect-result";
 import { inspectVideo } from "generated/client";
+import { useAbortController } from "lib/hooks/useAbortController";
 import { toast } from "sonner";
 
 export default function VideoPage() {
   const [file, setFile] = useState<File | null>(null);
+
   const [inspectData, setInspectData] = useState<Record<
     string,
     unknown
   > | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
-  const [inspectError, setInspectError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const abortController = useAbortController();
 
   async function handleFile(f: File) {
     setFile(f);
     setInspectData(null);
-    setInspectError(null);
+    setError(null);
     setIsInspecting(true);
 
     try {
-      const res = await inspectVideo({ body: { video: f } });
+      abortController.abort();
+      abortController.init();
+
+      const res = await inspectVideo({
+        body: { video: f },
+        onUploadProgress: (progressEvent) => {
+          const total = progressEvent.total || progressEvent.bytes;
+          const loaded = progressEvent.loaded;
+          setUploadProgress(Math.round((loaded / total) * 100));
+        },
+        signal: abortController.ref.current?.signal,
+      });
+
       if (res.error) {
         throw res;
       }
 
+      setError(null);
       setInspectData(res.data as Record<string, unknown>);
     } catch (err) {
       const error = err as ApiError;
@@ -38,16 +57,19 @@ export default function VideoPage() {
 
       toast.error(errorMessage);
 
-      setInspectError(errorMessage.toString());
+      setError(errorMessage.toString());
     } finally {
       setIsInspecting(false);
+      abortController.ref.current = null;
     }
   }
 
   function handleReset() {
+    abortController.ref.current?.abort();
+
     setFile(null);
     setInspectData(null);
-    setInspectError(null);
+    setError(null);
   }
 
   return (
@@ -58,17 +80,27 @@ export default function VideoPage() {
         onReset={handleReset}
         disabled={isInspecting}
       />
-      {(isInspecting || inspectData || inspectError) && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto]">
-          <VideoInspectResult
-            data={inspectData}
-            isLoading={isInspecting}
-            error={inspectError}
+      <div className={"flex gap-6 items-center"}>
+        {!!file && (
+          <VideoAttachment
+            isInspecting={isInspecting}
+            fileName={file.name}
+            uploadProgress={uploadProgress}
+            abort={abortController.abort}
           />
-          {!isInspecting && !inspectError && (
-            <VideoCompress file={file} isInspecting={isInspecting} />
-          )}
-        </div>
+        )}
+        {!!inspectData && (
+          <VideoCompress
+            file={file}
+            isInspecting={isInspecting}
+            abortController={abortController}
+            setError={setError}
+          />
+        )}
+      </div>
+      {!isInspecting && error && <VideoInspectError message={error} />}
+      {inspectData && (
+        <VideoInspectResult data={inspectData} isLoading={isInspecting} />
       )}
     </div>
   );
