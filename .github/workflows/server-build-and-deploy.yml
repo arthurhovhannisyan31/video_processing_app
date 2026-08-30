@@ -90,7 +90,7 @@ jobs:
           username: root
           key: ${{ secrets.HETZNER_SSH_KEY }}
           passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
-          source: "./configs/nginx/nginx.conf"
+          source: "./configs/nginx/nginx.prod.conf,./configs/scripts/server-setup.sh"
           target: "/root/server/"
           strip_components: 3
 
@@ -133,9 +133,8 @@ jobs:
           script: |
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             cd /root/server
-            docker compose --file ./docker-compose.prod.yml pull
-            docker compose --file ./docker-compose.prod.yml up -d --remove-orphans
-
+            ls -al
+            ./server-setup.sh
       - name: Cleanup old images
         uses: appleboy/ssh-action@v1.2.5
         with:
