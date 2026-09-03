@@ -1,18 +1,23 @@
 use std::process::Stdio;
+use std::sync::Arc;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::time::timeout;
-use tracing::log::info;
 use tracing::warn;
+use uuid::Uuid;
 
 use crate::core::error::ServerError;
 use crate::features::video::constants::VIDEO_API_PROCESS_TIMEOUT;
+use crate::features::video::state::{VideoState, VideoStateMessage, VideoStateProgress};
 
-pub async fn ffmpeg_runner(
+pub async fn process_file(
   input: &str,
   output: &str,
   preset: Vec<&str>,
+  video_state: Arc<VideoState>,
+  user_id: Uuid,
+  duration_seconds: f32,
 ) -> Result<(), ServerError> {
   let mut args: Vec<&str> = vec!["-i", input];
   args.extend(preset);
@@ -36,18 +41,41 @@ pub async fn ffmpeg_runner(
   let mut error_lines = BufReader::new(stderr).lines();
 
   let log_task = tokio::spawn(async move {
-    let mut current_frame = "0".to_string();
-    let mut current_fps = "0".to_string();
-
     while let Some(line) = error_lines.next_line().await? {
       let line = line.trim();
 
       if let Some((key, value)) = line.split_once('=') {
         match key {
-          "frame" => current_frame = value.to_string(),
-          "fps" => current_fps = value.to_string(),
-          "progress" if value == "continue" || value == "end" => {
-            info!("Progress Update -> Frame: {current_frame}, FPS: {current_fps}");
+          "out_time_ms" => {
+            if value == "N/A" {
+              continue;
+            }
+
+            let out_time_microseconds: i32 = value.parse().map_err(ServerError::ParseIntError)?;
+            let out_time_seconds: f32 = out_time_microseconds as f32 / 1000000.0;
+            let progress_value = out_time_seconds / duration_seconds;
+            let message = VideoStateMessage {
+              id: user_id,
+              message: VideoStateProgress {
+                value: progress_value,
+                done: false,
+              },
+            };
+            if let Err(err) = video_state.channel_tx.send(message) {
+              warn!("Error while sending message to video state stream: {err}");
+            }
+          }
+          "progress" if value == "end" => {
+            let message = VideoStateMessage {
+              id: user_id,
+              message: VideoStateProgress {
+                value: 1.0,
+                done: true,
+              },
+            };
+            if let Err(err) = video_state.channel_tx.send(message) {
+              warn!("Error while sending message to video state stream: {err}");
+            }
           }
           _ => {}
         }

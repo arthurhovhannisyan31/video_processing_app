@@ -23,11 +23,7 @@ use crate::core::error::{ApplicationError, ServerError};
 use crate::core::extractors::XUserIdExtractor;
 use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
-use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
-use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
-use crate::features::video::process::build_response::build_response;
 use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
-use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
 use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::state::VideoState;
 use crate::features::video::{inspect, process};
@@ -86,8 +82,8 @@ pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, A
   let temp_dir = TempDir::new()
     .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
   let file_path = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let inspection_data = ffprobe_runner(&file_path).await?;
-  let mapped_data = ffprobe_mapper(inspection_data)?;
+  let inspection_data = inspect::ffprobe_runner::inspect_file(&file_path).await?;
+  let mapped_data = inspect::ffprobe_mapper::map_media_meta(inspection_data)?;
 
   Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
 }
@@ -114,13 +110,29 @@ pub struct ProcessVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn process_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
+pub async fn process_video(
+  State(video_state): State<Arc<VideoState>>,
+  XUserIdExtractor(user_id): XUserIdExtractor,
+  media_data: Multipart,
+) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new().map_err(ServerError::IO)?;
   let ProcessVideoMeta { command, file_path } =
     process::form_data_reader::read(media_data, temp_dir.path()).await?;
   let output_path = append_path_suffix(&file_path, OUTPUT_PATH_SUFFIX)?;
   let preset = get_preset_by_name(&command)?;
-  ffmpeg_runner(&file_path, &output_path, preset).await?;
+  let duration = process::ffprobe_runner::inspect_file_size(&file_path).await?;
+  process::ffmpeg_runner::process_file(
+    &file_path,
+    &output_path,
+    preset,
+    video_state,
+    user_id,
+    duration,
+  )
+  .await?;
+
+  Ok(process::build_response::build_response(&file_path, &output_path).await?)
+}
 
 // TODO Open api declarations
 async fn ws_handler(
