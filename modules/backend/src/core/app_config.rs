@@ -1,7 +1,10 @@
 use std::env;
+use std::sync::Arc;
 
+use axum::extract::FromRef;
 use serde::Deserialize;
 
+use crate::core::app_state::AppState;
 use crate::core::error::ServerError;
 use crate::features::video::constants::{
   VIDEO_MAX_BODY_SIZE, VIDEO_RATE_LIMIT_PERIOD, VIDEO_RATE_LIMIT_SIZE,
@@ -79,5 +82,11 @@ impl AppConfig {
       video_rate_limit_period,
       video_rate_limit_size,
     })
+  }
+}
+
+impl FromRef<AppState> for Arc<AppConfig> {
+  fn from_ref(app_state: &AppState) -> Self {
+    app_state.app_config.clone()
   }
 }

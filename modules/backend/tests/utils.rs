@@ -5,12 +5,14 @@ use axum_test::TestServer;
 use serde_json::json;
 use sqlx::PgPool;
 use video_processing_server::core::app_config::AppConfig;
-use video_processing_server::core::app_state::{AppState, AuthState};
+use video_processing_server::core::app_state::AppState;
 use video_processing_server::core::error::ServerError;
 use video_processing_server::core::jwt::JwtService;
 use video_processing_server::features::auth::dto::{AuthRequest, AuthResponse};
 use video_processing_server::features::auth::repository::PostgresUserRepository;
 use video_processing_server::features::auth::service::AuthService;
+use video_processing_server::features::auth::state::AuthState;
+use video_processing_server::features::video::state::VideoState;
 use video_processing_server::router::{build_router, routes};
 
 #[cfg(test)]
@@ -25,6 +27,7 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
       jwt_service,
     }),
     app_config: Arc::new(app_config),
+    video_state: Arc::new(VideoState::default()),
   };
 
   build_router(app_state)

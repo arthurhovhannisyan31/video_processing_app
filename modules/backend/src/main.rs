@@ -4,7 +4,7 @@ mod http;
 mod router;
 
 use core::app_config::AppConfig;
-use core::app_state::{AppState, AuthState};
+use core::app_state::AppState;
 use core::database::{create_pool, run_migrations};
 use core::error::ServerError;
 use core::jwt::JwtService;
@@ -13,6 +13,8 @@ use std::sync::Arc;
 
 use features::auth::repository::PostgresUserRepository;
 use features::auth::service::AuthService;
+use features::auth::state::AuthState;
+use features::video::state::VideoState;
 use http::init_http_server;
 
 #[tokio::main]
@@ -33,6 +35,7 @@ async fn main() -> Result<(), ServerError> {
       jwt_service,
     }),
     app_config: Arc::new(app_config),
+    video_state: Arc::from(VideoState::default()),
   };
 
   init_http_server(app_state).await?;

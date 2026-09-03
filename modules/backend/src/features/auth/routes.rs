@@ -14,10 +14,11 @@ use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tracing::info;
 use validator::Validate;
 
-use crate::core::app_state::{AppState, AuthState};
+use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
 use crate::features::auth::model::User;
+use crate::features::auth::state::AuthState;
 use crate::router::routes;
 
 pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
