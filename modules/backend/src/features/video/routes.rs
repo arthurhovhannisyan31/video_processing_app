@@ -1,19 +1,26 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use axum::extract::{DefaultBodyLimit, Multipart};
+use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{DefaultBodyLimit, Multipart, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use axum::routing::post;
+use axum::routing::{any, post};
 use axum::{Json, Router};
+use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use tempfile::TempDir;
+use tokio::sync::broadcast::error::RecvError;
 use tower_governor::GovernorLayer;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
+use tracing::{error, info, warn};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
+use crate::core::extractors::XUserIdExtractor;
 use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
@@ -22,6 +29,7 @@ use crate::features::video::process::build_response::build_response;
 use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
 use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
 use crate::features::video::process::types::ProcessVideoMeta;
+use crate::features::video::state::VideoState;
 use crate::features::video::{inspect, process};
 use crate::router::routes;
 
@@ -29,6 +37,7 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
+    .route(routes::VIDEO_WEB_SOCKET, any(ws_handler))
     .layer(DefaultBodyLimit::max(
       app_state.app_config.video_max_body_size,
     ));
@@ -113,5 +122,61 @@ pub async fn process_video(media_data: Multipart) -> Result<impl IntoResponse, A
   let preset = get_preset_by_name(&command)?;
   ffmpeg_runner(&file_path, &output_path, preset).await?;
 
-  Ok(build_response(&file_path, &output_path).await?)
+// TODO Open api declarations
+async fn ws_handler(
+  State(video_state): State<Arc<VideoState>>,
+  XUserIdExtractor(user_id): XUserIdExtractor,
+  ws: WebSocketUpgrade,
+) -> Result<impl IntoResponse, ApplicationError> {
+  Ok(ws.on_upgrade(move |socket| handle_socket(socket, user_id, video_state)))
+}
+
+async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
+  let (mut sink, mut stream) = socket.split();
+  let mut rx = video_state.channel_tx.subscribe();
+
+  loop {
+    tokio::select! {
+      broadcast_msg = rx.recv() => {
+        match broadcast_msg{
+          Err(RecvError::Closed) => {
+            info!("All active senders are closed");
+            break;
+          }
+          Err(RecvError::Lagged(count)) => {
+            warn!("Lagged behind broadcast queue by {count} messages");
+          }
+          Ok(msg) => {
+            // Skip non-relevant messages
+            if msg.id != user_id {
+              continue;
+            }
+
+            let message = Message::from(json!(msg.message).to_string());
+
+            if let Err(err) = sink.send(message).await {
+              error!("Failed to send message to: {user_id}. Err: {err}");
+              break; // Disconnect if the socket is broken
+            }
+          }
+        }
+      }
+      client_msg = stream.next() => {
+        match client_msg{
+          // Ignore regular incoming messages: Ping, Pong, Close
+          Some(Ok(msg)) => {
+            info!("Regular message:  {user_id} {msg:?}");
+          }
+          Some(Err(err)) => {
+            error!("WebSocket error for user {user_id}: {err}");
+            break;
+          }
+          None => {
+            info!("WebSocket connection closed gracefully by user {user_id}");
+            break;
+          }
+        }
+      }
+    }
+  }
 }

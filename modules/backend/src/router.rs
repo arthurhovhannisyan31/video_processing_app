@@ -17,6 +17,7 @@ pub mod routes {
   pub const VIDEO_JOBS: &str = "/video/jobs";
   pub const VIDEO_JOBS_BY_ID: &str = "/video/jobs/{id}";
   pub const VIDEO_JOBS_BY_ID_LOGS: &str = "/video/jobs/{id}/logs";
+  pub const VIDEO_WEB_SOCKET: &str = "/video/ws";
 }
 
 pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
