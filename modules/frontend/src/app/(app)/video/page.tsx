@@ -1,8 +1,13 @@
 "use client";
 
 import type { ApiError } from "configs/types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import { getErrorsDict } from "components/modules/video/constants";
+import {
+  getMaxBodySize,
+  validate_file,
+} from "components/modules/video/helpers";
 import { VideoAttachment } from "components/modules/video/video-attachment";
 import { VideoCompress } from "components/modules/video/video-compress";
 import { VideoDropZone } from "components/modules/video/video-drop-zone";
@@ -23,9 +28,18 @@ export default function VideoPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const abortController = useAbortController();
+  const maxBodySize = useMemo(() => getMaxBodySize(), []);
+  const errorsDict = useMemo(() => getErrorsDict(maxBodySize), [maxBodySize]);
+  const showAlert = (msg: string) => {
+    toast.error(msg);
+  };
 
-  async function handleFile(f: File) {
-    setFile(f);
+  async function handleFile(file: File) {
+    if (!validate_file(file, errorsDict, showAlert)) {
+      return;
+    }
+
+    setFile(file);
     setInspectData(null);
     setError(null);
     setIsInspecting(true);
@@ -35,7 +49,7 @@ export default function VideoPage() {
       abortController.init();
 
       const res = await inspectVideo({
-        body: { video: f },
+        body: { video: file },
         onUploadProgress: (progressEvent) => {
           const total = progressEvent.total || progressEvent.bytes;
           const loaded = progressEvent.loaded;

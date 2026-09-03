@@ -27,6 +27,7 @@ export const VideoAttachment: FC<VideoAttachmentProps> = ({
   abort,
 }) => {
   return (
+    // TODO Change state based on current stage
     <Attachment state="uploading" className="w-fit gap-4">
       <AttachmentMedia>
         {isInspecting ? <Spinner /> : <VideoIcon />}
