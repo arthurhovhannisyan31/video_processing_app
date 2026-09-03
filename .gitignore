@@ -11,3 +11,5 @@
 **/*openapi.json
 **/*hints
 configs/.ssh
+modules/backend/tests/fixtures/media
+temp_docs

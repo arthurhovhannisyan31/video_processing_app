@@ -87,3 +87,60 @@ Content-Disposition: form-data; name="operation";
 
 compress
 --VerticalNoAudio--
+
+### Process Video 1.5MB
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb3
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson7.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson7.mp4
+--VerticalNoAudio
+Content-Disposition: form-data; name="operation";
+
+compress
+--VerticalNoAudio--
+
+### Process Video 10MB
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb3
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson11.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson11.mp4
+--VerticalNoAudio
+Content-Disposition: form-data; name="operation";
+
+compress
+--VerticalNoAudio--
+
+### Process Video 19MB
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson14.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson14.mp4
+--VerticalNoAudio
+Content-Disposition: form-data; name="operation";
+
+compress
+--VerticalNoAudio--

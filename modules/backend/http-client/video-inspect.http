@@ -67,3 +67,45 @@ Content-Type: video/mp4
 
 < ../tests/fixtures/media/vertical_no_audio.mp4
 --VerticalNoAudio--
+
+### Inspect Video 1.5 MB
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson7.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson7.mp4
+--VerticalNoAudio--
+
+### Inspect Video 10 MB
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson11.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson11.mp4
+--VerticalNoAudio--
+
+### Inspect Video 19 MB
+POST {{api_host}}/video/inspect
+Content-Type: multipart/form-data; boundary=VerticalNoAudio
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+
+--VerticalNoAudio
+Content-Disposition: form-data; name="video"; filename="lesson14.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/lesson14.mp4
+--VerticalNoAudio--
