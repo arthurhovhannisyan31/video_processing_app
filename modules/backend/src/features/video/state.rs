@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::extract::FromRef;
 use serde::Serialize;
 use tokio::sync::broadcast;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::core::app_state::AppState;
@@ -35,7 +36,7 @@ pub struct VideoStateMessage {
   pub message: VideoStateProgress,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct VideoStateProgress {
   pub value: f32,
   pub done: bool,
