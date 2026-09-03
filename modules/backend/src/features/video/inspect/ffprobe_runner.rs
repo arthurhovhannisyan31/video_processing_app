@@ -7,7 +7,7 @@ use tokio::time::timeout;
 use crate::core::error::ServerError;
 use crate::features::video::constants::VIDEO_API_INSPECT_TIMEOUT;
 
-pub async fn ffprobe_runner(file_path: &str) -> Result<Value, ServerError> {
+pub async fn inspect_file(file_path: &str) -> Result<Value, ServerError> {
   let mut cmd = Command::new("ffprobe");
   cmd.kill_on_drop(true);
   cmd.args([
