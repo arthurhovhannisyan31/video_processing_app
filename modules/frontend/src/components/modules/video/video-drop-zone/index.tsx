@@ -20,7 +20,6 @@ export function VideoDropZone({
   disabled,
 }: VideoDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
@@ -33,8 +32,6 @@ export function VideoDropZone({
 
     const file = e.dataTransfer.files[0];
     if (!file) return;
-
-    setError(null);
 
     onFile(file);
   }
@@ -58,8 +55,6 @@ export function VideoDropZone({
     const selected = e.target.files?.[0];
 
     if (!selected) return;
-
-    setError(null);
 
     onFile(selected);
     e.target.value = "";
@@ -136,8 +131,6 @@ export function VideoDropZone({
           </>
         )}
       </div>
-
-      {error && <p className="text-destructive text-sm">{error}</p>}
     </div>
   );
 }

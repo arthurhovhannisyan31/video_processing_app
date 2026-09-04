@@ -120,7 +120,7 @@ pub async fn process_video(
     process::form_data_reader::read(media_data, temp_dir.path()).await?;
   let output_path = append_path_suffix(&file_path, OUTPUT_PATH_SUFFIX)?;
   let preset = get_preset_by_name(&command)?;
-  let duration = process::ffprobe_runner::inspect_file_size(&file_path).await?;
+  let duration = process::ffprobe_runner::inspect_file_duration(&file_path).await?;
   process::ffmpeg_runner::process_file(
     &file_path,
     &output_path,
