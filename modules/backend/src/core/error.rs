@@ -157,3 +157,9 @@ impl From<ServerError> for ApplicationError {
     }
   }
 }
+
+impl IntoResponse for ServerError {
+  fn into_response(self) -> Response {
+    ApplicationError::from(self).into_response()
+  }
+}
