@@ -6,7 +6,7 @@ use tokio::time::timeout;
 use crate::core::error::ServerError;
 use crate::features::video::constants::VIDEO_API_INSPECT_TIMEOUT;
 
-pub async fn inspect_file_size(file_path: &str) -> Result<f32, ServerError> {
+pub async fn inspect_file_duration(file_path: &str) -> Result<f64, ServerError> {
   let mut cmd = Command::new("ffprobe");
   cmd.kill_on_drop(true);
   cmd.args([
@@ -42,10 +42,16 @@ pub async fn inspect_file_size(file_path: &str) -> Result<f32, ServerError> {
     ServerError::Processing(format!("ffprobe output contained invalid UTF-8: {err}"))
   })?;
 
-  let duration_seconds: f32 = stdout_str
+  let duration_seconds: f64 = stdout_str
     .trim()
     .parse()
     .map_err(ServerError::ParseFloatError)?;
+
+  if duration_seconds <= 0.0 {
+    return Err(ServerError::Processing(
+      "File has zero duration".to_string(),
+    ));
+  }
 
   Ok(duration_seconds)
 }

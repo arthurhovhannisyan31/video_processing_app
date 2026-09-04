@@ -3,8 +3,9 @@ use std::sync::Arc;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
+use tokio::task::JoinHandle;
 use tokio::time::timeout;
-use tracing::warn;
+use tracing::{error, warn};
 use uuid::Uuid;
 
 use crate::core::error::ServerError;
@@ -17,7 +18,7 @@ pub async fn process_file(
   preset: Vec<&str>,
   video_state: Arc<VideoState>,
   user_id: Uuid,
-  duration_seconds: f32,
+  duration_seconds: f64,
 ) -> Result<(), ServerError> {
   let mut args: Vec<&str> = vec!["-i", input];
   args.extend(preset);
@@ -40,7 +41,7 @@ pub async fn process_file(
 
   let mut error_lines = BufReader::new(stderr).lines();
 
-  let log_task = tokio::spawn(async move {
+  let log_task: JoinHandle<Result<(), ServerError>> = tokio::spawn(async move {
     while let Some(line) = error_lines.next_line().await? {
       let line = line.trim();
 
@@ -51,8 +52,8 @@ pub async fn process_file(
               continue;
             }
 
-            let out_time_microseconds: i32 = value.parse().map_err(ServerError::ParseIntError)?;
-            let out_time_seconds: f32 = out_time_microseconds as f32 / 1000000.0;
+            let out_time_microseconds: i64 = value.parse().map_err(ServerError::ParseIntError)?;
+            let out_time_seconds: f64 = out_time_microseconds as f64 / 1000000.0;
             let progress_value = out_time_seconds / duration_seconds;
             let message = VideoStateMessage {
               id: user_id,
@@ -89,7 +90,10 @@ pub async fn process_file(
     Err(_) => return Err(ServerError::Processing("ffmpeg timed out".to_string())),
   };
 
-  let _: Result<(), ServerError> = log_task.await?;
+  if let Err(err) = log_task.await? {
+    // Do not return if logging failed
+    error!("Failed to log processing progress {err:?}");
+  }
 
   if !status.success() {
     return Err(ServerError::Processing(format!("ffmpeg error: {}", status)));

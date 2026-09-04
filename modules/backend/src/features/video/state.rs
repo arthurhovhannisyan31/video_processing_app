@@ -38,6 +38,6 @@ pub struct VideoStateMessage {
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct VideoStateProgress {
-  pub value: f32,
+  pub value: f64,
   pub done: bool,
 }
