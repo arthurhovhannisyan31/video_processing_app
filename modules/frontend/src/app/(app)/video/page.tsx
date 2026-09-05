@@ -1,82 +1,42 @@
 "use client";
 
-import type { ApiError } from "configs/types";
-import { useMemo, useState } from "react";
+import type { InspectionData } from "components/modules/video/types";
+import { useCallback, useEffect, useState } from "react";
 
-import { getErrorsDict } from "components/modules/video/constants";
-import {
-  getMaxBodySize,
-  validate_file,
-} from "components/modules/video/helpers";
+import { JobType } from "components/modules/video/constants";
+import useHandleFileUpload from "components/modules/video/hooks/useHandleFileUpload";
+import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
 import { VideoAttachment } from "components/modules/video/video-attachment";
 import { VideoCompress } from "components/modules/video/video-compress";
 import { VideoDropZone } from "components/modules/video/video-drop-zone";
 import { VideoInspectError } from "components/modules/video/video-inspect-error";
 import { VideoInspectResult } from "components/modules/video/video-inspect-result";
-import { inspectVideo } from "generated/client";
-import { useAbortController } from "lib/hooks/useAbortController";
-import { toast } from "sonner";
+import { Progress } from "components/ui/progress";
+import { useAbortController } from "hooks/useAbortController";
+import { useAtomValue } from "jotai";
+import { videoStore } from "store/video";
 
 export default function VideoPage() {
   const [file, setFile] = useState<File | null>(null);
-
-  const [inspectData, setInspectData] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
-  const [isInspecting, setIsInspecting] = useState(false);
+  const [inspectData, setInspectData] = useState<InspectionData | null>(null);
+  const [jobType, setJobType] = useState<JobType>();
+  const [isInspecting, setInspecting] = useState(false);
+  const [isProcessing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const videoState = useAtomValue(videoStore);
+
   const abortController = useAbortController();
-  const maxBodySize = useMemo(() => getMaxBodySize(), []);
-  const errorsDict = useMemo(() => getErrorsDict(maxBodySize), [maxBodySize]);
-  const showAlert = (msg: string) => {
-    toast.error(msg);
-  };
 
-  async function handleFile(file: File) {
-    if (!validate_file(file, errorsDict, showAlert)) {
-      return;
-    }
-
-    setFile(file);
-    setInspectData(null);
-    setError(null);
-    setIsInspecting(true);
-
-    try {
-      abortController.abort();
-      abortController.init();
-
-      const res = await inspectVideo({
-        body: { video: file },
-        onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total || progressEvent.bytes;
-          const loaded = progressEvent.loaded;
-          setUploadProgress(Math.round((loaded / total) * 100));
-        },
-        signal: abortController.ref.current?.signal,
-      });
-
-      if (res.error) {
-        throw res;
-      }
-
-      setError(null);
-      setInspectData(res.data as Record<string, unknown>);
-    } catch (err) {
-      const error = err as ApiError;
-      const errorMessage =
-        error.error || error.message || error.status || "Inspection failed.";
-
-      toast.error(errorMessage);
-
-      setError(errorMessage.toString());
-    } finally {
-      setIsInspecting(false);
-      abortController.ref.current = null;
-    }
-  }
+  const handleFile = useHandleFileUpload(
+    setJobType,
+    setFile,
+    setInspectData,
+    setError,
+    setInspecting,
+    abortController,
+    setProgress,
+  );
 
   function handleReset() {
     abortController.ref.current?.abort();
@@ -86,6 +46,27 @@ export default function VideoPage() {
     setError(null);
   }
 
+  const handleProcessingStart = useCallback(() => {
+    abortController.abort();
+    abortController.init();
+    setJobType(JobType.Processing);
+    setProcessing(true);
+    setProgress(0);
+  }, [abortController.abort, abortController.init]);
+
+  const handleProcessingSettled = useCallback(() => {
+    abortController.ref.current = null;
+    setProcessing(false);
+  }, [abortController.ref]);
+
+  useEffect(() => {
+    setProgress(videoState.progress);
+    if (videoState.done) {
+      setProcessing(false);
+    }
+  }, [videoState]);
+  useWebSocket();
+
   return (
     <div className="flex flex-1 flex-col p-4 md:p-6 gap-6">
       <VideoDropZone
@@ -94,23 +75,29 @@ export default function VideoPage() {
         onReset={handleReset}
         disabled={isInspecting}
       />
-      <div className={"flex gap-6 items-center"}>
-        {!!file && (
-          <VideoAttachment
-            isInspecting={isInspecting}
-            fileName={file.name}
-            uploadProgress={uploadProgress}
-            abort={abortController.abort}
-          />
-        )}
-        {!!inspectData && (
-          <VideoCompress
-            file={file}
-            isInspecting={isInspecting}
-            abortController={abortController}
-            setError={setError}
-          />
-        )}
+      <div className={"flex flex-col gap-6 items-center"}>
+        <div className={"flex gap-6 items-center w-[75%]"}>
+          {!!file && (
+            <VideoAttachment
+              isLoading={isInspecting}
+              fileName={file.name}
+              progress={progress}
+              abort={abortController.abort}
+              jobType={jobType}
+            />
+          )}
+          {!!inspectData && (
+            <VideoCompress
+              file={file}
+              isInspecting={isProcessing}
+              abortController={abortController}
+              setError={setError}
+              onSettled={handleProcessingSettled}
+              onStart={handleProcessingStart}
+            />
+          )}
+        </div>
+        {isProcessing && <Progress className="w-[75%]" value={progress} />}
       </div>
       {!isInspecting && error && <VideoInspectError message={error} />}
       {inspectData && (

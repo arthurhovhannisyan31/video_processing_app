@@ -24,6 +24,13 @@ const attachmentVariants = cva(
   },
 );
 
+export type AttachmentStateType =
+  | "idle"
+  | "uploading"
+  | "processing"
+  | "error"
+  | "done";
+
 function Attachment({
   className,
   state = "done",
@@ -32,7 +39,7 @@ function Attachment({
   ...props
 }: React.ComponentProps<"div"> &
   VariantProps<typeof attachmentVariants> & {
-    state?: "idle" | "uploading" | "processing" | "error" | "done";
+    state?: AttachmentStateType;
   }) {
   return (
     <div

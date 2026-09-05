@@ -1,7 +1,7 @@
 "use client";
 
 import type { ApiError } from "configs/types";
-import type { AbortControllerResult } from "lib/hooks/useAbortController";
+import type { AbortControllerResult } from "hooks/useAbortController";
 
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "components/ui/button";
@@ -13,6 +13,8 @@ interface VideoCompressProps {
   isInspecting: boolean;
   abortController: AbortControllerResult;
   setError: (val: string | null) => void;
+  onStart: () => void;
+  onSettled: () => void;
 }
 
 export function VideoCompress({
@@ -20,11 +22,12 @@ export function VideoCompress({
   isInspecting,
   abortController,
   setError,
+  onStart,
+  onSettled,
 }: VideoCompressProps) {
   const { mutate, isPending, error, reset } = useMutation({
     mutationFn: async (f: File) => {
-      abortController.abort();
-      abortController.init();
+      onStart();
 
       const res = await processVideo({
         body: { video: f, operation: "compress" },
@@ -52,7 +55,7 @@ export function VideoCompress({
       setError(errorMessage.toString());
     },
     onSettled: () => {
-      abortController.ref.current = null;
+      onSettled();
     },
   });
 
