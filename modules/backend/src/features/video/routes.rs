@@ -2,11 +2,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use axum::extract::ws::{Message, WebSocket};
+use axum::extract::ws::{CloseFrame, Message, WebSocket, close_code};
 use axum::extract::{DefaultBodyLimit, Multipart, Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::{any, post};
 use axum::{Json, Router};
+use futures_util::stream::SplitSink;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use tempfile::TempDir;
@@ -33,7 +34,7 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
-    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(video_ws))
+    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler))
     .layer(DefaultBodyLimit::max(
       app_state.app_config.video_max_body_size,
     ));
@@ -151,14 +152,17 @@ pub async fn process_video(
     )
   )
 )]
-async fn video_ws(
+async fn websocket_handler(
   State(video_state): State<Arc<VideoState>>,
   Path(user_id): Path<Uuid>,
   ws: WebSocketUpgrade,
 ) -> Result<impl IntoResponse, ApplicationError> {
-  // TODO on_failed_upgrade
-
-  Ok(ws.on_upgrade(move |socket| handle_socket(socket, user_id, video_state)))
+  Ok(
+    ws.on_failed_upgrade(move |err| {
+      error!("Error upgrading websocket for user {user_id}: {err}");
+    })
+    .on_upgrade(move |socket| handle_socket(socket, user_id, video_state)),
+  )
 }
 
 async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
@@ -169,6 +173,7 @@ async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoS
     let mut connections_map = video_state.connections_map.write();
     if connections_map.contains_key(&user_id) {
       warn!("Conflicting key for video WS connections map: {user_id}");
+
       return;
     }
     connections_map.insert(user_id, tx);
@@ -183,24 +188,28 @@ async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoS
 
             if let Err(err) = sink.send(message).await {
               error!("Failed to send message to: {user_id}. Err: {err}");
+
               break; // Disconnect if the socket is broken
             }
           }
           None => {
             let mut connections_map = video_state.connections_map.write();
             connections_map.remove(&user_id);
+
             break;
           }
         }
       }
       client_msg = stream.next() => {
         match client_msg{
-          // Ignore regular incoming messages: Ping, Pong, Close
+          // Ping, Pong, Close are handled
           Some(Ok(msg)) => {
             info!("Regular message:  {user_id} {msg:?}");
           }
           Some(Err(err)) => {
-            error!("WebSocket error for user {user_id}: {err}");
+            warn!("Error receiving message from user {user_id}: {err}");
+            send_close_message(&mut sink, close_code::ERROR, &format!("Error occured: {}", err)).await;
+
             break;
           }
           None => {
@@ -214,4 +223,17 @@ async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoS
       }
     }
   }
+}
+
+async fn send_close_message(
+  socket_sink: &mut SplitSink<WebSocket, Message>,
+  code: u16,
+  reason: &str,
+) {
+  _ = socket_sink
+    .send(Message::Close(Some(CloseFrame {
+      code,
+      reason: reason.into(),
+    })))
+    .await;
 }
