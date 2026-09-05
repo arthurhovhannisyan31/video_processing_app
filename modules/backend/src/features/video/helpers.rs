@@ -8,6 +8,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 use crate::core::error::{ApplicationError, ServerError};
+use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -55,13 +56,17 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, Applicatio
   Ok(output_path.to_string_lossy().to_string())
 }
 
-pub async fn read_video_to_file(
+pub async fn read_form_data_to_file(
   field: &mut Field<'_>,
   temp_dir: &Path,
-) -> Result<String, ServerError> {
+) -> Result<ReadFormDataMeta, ServerError> {
+  let mut meta = ReadFormDataMeta::default();
   let file_name_value = field
     .file_name()
     .ok_or(ServerError::DataError("Missing file_name".to_string()))?;
+
+  meta.file_name = file_name_value.to_string();
+
   let safe_file_name = Path::new(file_name_value)
     .file_name()
     .ok_or(ServerError::DataError(format!(
@@ -72,7 +77,9 @@ pub async fn read_video_to_file(
 
   // create local file only when needed
   let mut created_file = File::create(&path).await?;
-  let file_path = path.to_string_lossy().to_string();
+
+  meta.local_path = path.to_string_lossy().to_string();
+
   let mut written_bytes: usize = 0;
   // Stream chunks directly from the request network buffer into the file
   while let Some(chunk) = field.chunk().await? {
@@ -84,16 +91,10 @@ pub async fn read_video_to_file(
   created_file.flush().await?;
 
   if written_bytes == 0 {
-    return Err(ServerError::DataError(
-      "Uploaded video file is empty".to_string(),
-    ));
+    return Err(ServerError::DataError("Form data is empty".to_string()));
   }
 
-  if file_path.is_empty() {
-    return Err(ServerError::DataError("Missing 'video' field".to_string()));
-  }
-
-  Ok(file_path)
+  Ok(meta)
 }
 
 #[cfg(test)]
@@ -155,12 +156,12 @@ mod tests {
     let mut multipart = multipart_from_field(Some("video.mp4"), content).await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
 
-    let file_path = read_video_to_file(&mut field, temp_dir.path())
+    let meta = read_form_data_to_file(&mut field, temp_dir.path())
       .await
       .unwrap();
 
-    assert!(Path::new(&file_path).starts_with(temp_dir.path()));
-    let saved = tokio::fs::read(&file_path).await.unwrap();
+    assert!(Path::new(&meta.local_path).starts_with(temp_dir.path()));
+    let saved = tokio::fs::read(&meta.local_path).await.unwrap();
     assert_eq!(saved, content);
   }
 
@@ -170,7 +171,7 @@ mod tests {
     let mut multipart = multipart_from_field(None, b"data").await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
 
-    let result = read_video_to_file(&mut field, temp_dir.path()).await;
+    let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
 
     assert!(matches!(result, Err(ServerError::DataError(msg)) if msg == "Missing file_name"));
   }
@@ -182,11 +183,11 @@ mod tests {
     let mut multipart = multipart_from_field(Some("../../etc/passwd"), content).await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
 
-    let file_path = read_video_to_file(&mut field, temp_dir.path())
+    let meta = read_form_data_to_file(&mut field, temp_dir.path())
       .await
       .unwrap();
 
-    let saved_path = Path::new(&file_path);
+    let saved_path = Path::new(&meta.local_path);
     assert_eq!(saved_path.parent().unwrap(), temp_dir.path());
     assert_eq!(saved_path.file_name().unwrap(), "passwd");
   }
@@ -197,7 +198,7 @@ mod tests {
     let mut multipart = multipart_from_field(Some(".."), b"data").await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
 
-    let result = read_video_to_file(&mut field, temp_dir.path()).await;
+    let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
 
     assert!(matches!(result, Err(ServerError::DataError(_))));
   }

@@ -81,8 +81,8 @@ pub struct InspectVideoPayload {
 pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new()
     .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
-  let file_path = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let inspection_data = inspect::ffprobe_runner::inspect_file(&file_path).await?;
+  let inspect_meta = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let inspection_data = inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path).await?;
   let mapped_data = inspect::ffprobe_mapper::map_media_meta(inspection_data)?;
 
   Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
@@ -116,14 +116,18 @@ pub async fn process_video(
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new().map_err(ServerError::IO)?;
-  let ProcessVideoMeta { command, file_path } =
-    process::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let output_path = append_path_suffix(&file_path, OUTPUT_PATH_SUFFIX)?;
-  let preset = get_preset_by_name(&command)?;
-  let duration = process::ffprobe_runner::inspect_file_duration(&file_path).await?;
+  let ProcessVideoMeta {
+    operation,
+    local_path,
+    file_name,
+  } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
+  let preset = get_preset_by_name(&operation)?;
+  let duration = process::ffprobe_runner::inspect_file_duration(&local_path).await?;
   process::ffmpeg_runner::process_file(
-    &file_path,
+    &local_path,
     &output_path,
+    &file_name,
     preset,
     video_state,
     user_id,
@@ -131,7 +135,7 @@ pub async fn process_video(
   )
   .await?;
 
-  Ok(process::build_response::build_response(&file_path, &output_path).await?)
+  Ok(process::build_response::build_response(&local_path, &output_path).await?)
 }
 
 #[utoipa::path(

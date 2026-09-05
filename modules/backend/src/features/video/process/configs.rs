@@ -21,7 +21,7 @@ impl FromStr for OperationType {
   }
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum FieldName {
   Video,
   Operation,

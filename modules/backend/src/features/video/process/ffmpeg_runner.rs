@@ -15,6 +15,7 @@ use crate::features::video::state::{VideoState, VideoStateMessage, VideoStatePro
 pub async fn process_file(
   input: &str,
   output: &str,
+  file_name: &str,
   preset: Vec<&str>,
   video_state: Arc<VideoState>,
   user_id: Uuid,
@@ -40,6 +41,7 @@ pub async fn process_file(
     .ok_or(ServerError::Processing("Missing ffmpeg stderr".to_string()))?;
 
   let mut error_lines = BufReader::new(stderr).lines();
+  let file_name = file_name.to_string();
 
   let log_task: JoinHandle<Result<(), ServerError>> = tokio::spawn(async move {
     while let Some(line) = error_lines.next_line().await? {
@@ -60,6 +62,7 @@ pub async fn process_file(
             message = Some(VideoStateMessage {
               id: user_id,
               message: VideoStateProgress {
+                file_name: file_name.to_owned(),
                 value: progress_value,
                 done: false,
               },
@@ -69,6 +72,7 @@ pub async fn process_file(
             message = Some(VideoStateMessage {
               id: user_id,
               message: VideoStateProgress {
+                file_name: file_name.to_owned(),
                 value: 1.0,
                 done: true,
               },

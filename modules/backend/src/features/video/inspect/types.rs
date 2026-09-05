@@ -101,3 +101,9 @@ impl TryFrom<FfprobeOutput> for MediaMetadata {
     Ok(media_metadata)
   }
 }
+
+#[derive(Debug, Default)]
+pub struct InspectVideoMeta {
+  pub file_name: String,
+  pub local_path: String,
+}

@@ -5,3 +5,4 @@ pub mod model;
 pub mod process;
 pub mod routes;
 pub mod state;
+pub mod types;
