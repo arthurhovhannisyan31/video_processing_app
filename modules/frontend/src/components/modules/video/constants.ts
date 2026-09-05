@@ -16,3 +16,11 @@ export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
   fileSize: `Image size limit is ${formatBytes(maxBodySizeMB)}`,
   fileName: "File name is missing",
 });
+
+export enum JobType {
+  Processing = "processing",
+  Uploading = "uploading",
+}
+
+export const WS_RECONNECT_TIMEOUT_TIME = 4000;
+export const WS_RECONNECT_ATTEMPTS = 4;
