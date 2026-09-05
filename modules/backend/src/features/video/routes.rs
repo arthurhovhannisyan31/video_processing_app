@@ -37,7 +37,6 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
     .layer(DefaultBodyLimit::max(
       app_state.app_config.video_max_body_size,
     ));
-  // .layer(middleware::from_fn_with_state(app_state, auth));
 
   if app_state.app_config.is_production {
     let rate_limiter = GovernorConfigBuilder::default()
