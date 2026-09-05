@@ -33,7 +33,7 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
-    .route(routes::VIDEO_WEB_SOCKET, any(video_ws))
+    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(video_ws))
     .layer(DefaultBodyLimit::max(
       app_state.app_config.video_max_body_size,
     ));
@@ -136,7 +136,7 @@ pub async fn process_video(
 
 #[utoipa::path(
   get,
-  path = "/video/ws",
+  path = "/video/ws/{user_id}",
   responses(
     (
       status = 101,
