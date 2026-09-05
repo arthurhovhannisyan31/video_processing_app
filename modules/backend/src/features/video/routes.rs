@@ -3,14 +3,14 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use axum::extract::ws::{Message, WebSocket};
-use axum::extract::{DefaultBodyLimit, Multipart, State, WebSocketUpgrade};
+use axum::extract::{DefaultBodyLimit, Multipart, Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::{any, post};
 use axum::{Json, Router};
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use tempfile::TempDir;
-use tokio::sync::broadcast::error::RecvError;
+use tokio::sync::mpsc;
 use tower_governor::GovernorLayer;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
@@ -25,7 +25,7 @@ use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
 use crate::features::video::process::types::ProcessVideoMeta;
-use crate::features::video::state::VideoState;
+use crate::features::video::state::{VideoState, VideoStateMessage};
 use crate::features::video::{inspect, process};
 use crate::router::routes;
 
@@ -150,39 +150,43 @@ pub async fn process_video(
 )]
 async fn video_ws(
   State(video_state): State<Arc<VideoState>>,
-  XUserIdExtractor(user_id): XUserIdExtractor,
+  Path(user_id): Path<Uuid>,
   ws: WebSocketUpgrade,
 ) -> Result<impl IntoResponse, ApplicationError> {
+  // TODO on_failed_upgrade
+
   Ok(ws.on_upgrade(move |socket| handle_socket(socket, user_id, video_state)))
 }
 
 async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
   let (mut sink, mut stream) = socket.split();
-  let mut rx = video_state.channel_tx.subscribe();
+  let (tx, mut rx) = mpsc::channel::<VideoStateMessage>(10);
+
+  {
+    let mut connections_map = video_state.connections_map.write();
+    if connections_map.contains_key(&user_id) {
+      warn!("Conflicting key for video WS connections map: {user_id}");
+      return;
+    }
+    connections_map.insert(user_id, tx);
+  }
 
   loop {
     tokio::select! {
-      broadcast_msg = rx.recv() => {
-        match broadcast_msg{
-          Err(RecvError::Closed) => {
-            info!("All active senders are closed");
-            break;
-          }
-          Err(RecvError::Lagged(count)) => {
-            warn!("Lagged behind broadcast queue by {count} messages");
-          }
-          Ok(msg) => {
-            // Skip non-relevant messages
-            if msg.id != user_id {
-              continue;
-            }
-
+      progress_msg = rx.recv() => {
+        match progress_msg{
+          Some(msg) => {
             let message = Message::from(json!(msg.message).to_string());
 
             if let Err(err) = sink.send(message).await {
               error!("Failed to send message to: {user_id}. Err: {err}");
               break; // Disconnect if the socket is broken
             }
+          }
+          None => {
+            let mut connections_map = video_state.connections_map.write();
+            connections_map.remove(&user_id);
+            break;
           }
         }
       }
@@ -197,7 +201,10 @@ async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoS
             break;
           }
           None => {
-            info!("WebSocket connection closed gracefully by user {user_id}");
+            info!("WebSocket connection has been closed by user {user_id}");
+            let mut connections_map = video_state.connections_map.write();
+            connections_map.remove(&user_id);
+
             break;
           }
         }

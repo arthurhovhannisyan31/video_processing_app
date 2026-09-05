@@ -46,6 +46,8 @@ pub async fn process_file(
       let line = line.trim();
 
       if let Some((key, value)) = line.split_once('=') {
+        let mut message: Option<VideoStateMessage> = None;
+
         match key {
           "out_time_ms" => {
             if value == "N/A" {
@@ -55,33 +57,38 @@ pub async fn process_file(
             let out_time_microseconds: i64 = value.parse().map_err(ServerError::ParseIntError)?;
             let out_time_seconds: f64 = out_time_microseconds as f64 / 1000000.0;
             let progress_value = out_time_seconds / duration_seconds;
-            let message = VideoStateMessage {
+            message = Some(VideoStateMessage {
               id: user_id,
               message: VideoStateProgress {
                 value: progress_value,
                 done: false,
               },
-            };
-            if let Err(err) = video_state.channel_tx.send(message) {
-              warn!("Error while sending message to video state stream: {err}");
-            }
+            });
           }
           "progress" if value == "end" => {
-            let message = VideoStateMessage {
+            message = Some(VideoStateMessage {
               id: user_id,
               message: VideoStateProgress {
                 value: 1.0,
                 done: true,
               },
-            };
-            if let Err(err) = video_state.channel_tx.send(message) {
-              warn!("Error while sending message to video state stream: {err}");
-            }
+            });
           }
           _ => {}
         }
+
+        if let Some(message) = message {
+          // Get shor-lived sender access
+          let tx = video_state.connections_map.read().get(&user_id).cloned();
+          if let Some(tx) = tx {
+            if let Err(err) = tx.send(message).await {
+              warn!("Error while sending message to video state stream: {err}");
+            }
+          }
+        }
       }
     }
+
     Ok(())
   });
 

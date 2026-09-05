@@ -1,25 +1,25 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::extract::FromRef;
+use parking_lot::RwLock;
 use serde::Serialize;
-use tokio::sync::broadcast;
+use tokio::sync::mpsc;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::core::app_state::AppState;
 
+pub type VideoWsConnectionsMap = RwLock<HashMap<Uuid, mpsc::Sender<VideoStateMessage>>>;
+
 pub struct VideoState {
-  pub channel_tx: broadcast::Sender<VideoStateMessage>,
-  pub channel_rx: broadcast::Receiver<VideoStateMessage>,
+  pub connections_map: VideoWsConnectionsMap,
 }
 
 impl Default for VideoState {
   fn default() -> Self {
-    let (tx, rx) = broadcast::channel::<VideoStateMessage>(1000);
-
     Self {
-      channel_tx: tx,
-      channel_rx: rx,
+      connections_map: RwLock::new(HashMap::new()),
     }
   }
 }
