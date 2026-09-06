@@ -1,11 +1,10 @@
 import { atom } from "jotai";
 
-export interface VideoStore {
+export interface ProcessingProgress {
   progress: number;
   done: boolean;
 }
 
-export const videoStore = atom<VideoStore>({
-  progress: 0,
-  done: false,
-});
+export type VideoStore = Record<string, ProcessingProgress>;
+
+export const videoStore = atom<VideoStore>({});
