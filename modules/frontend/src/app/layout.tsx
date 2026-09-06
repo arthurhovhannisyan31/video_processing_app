@@ -37,7 +37,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         inter.variable,
       )}
     >
-      <body>
+      <body className={"h-full"}>
         <Providers>{children}</Providers>
       </body>
     </html>
