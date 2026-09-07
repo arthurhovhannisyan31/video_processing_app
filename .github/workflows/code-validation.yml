@@ -46,7 +46,7 @@ jobs:
       - name: Generate openapi client
         run: |
           make generate-openapi
-          make prepare-frontend
+          make prepare-frontend-local
       - name: Validate code
         run: |
           make check
