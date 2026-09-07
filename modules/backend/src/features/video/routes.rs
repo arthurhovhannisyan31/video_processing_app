@@ -19,12 +19,14 @@ use tracing::{error, info, warn};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::core::extractors::XUserIdExtractor;
-use crate::features::video::helpers::append_path_suffix;
+use crate::features::video::helpers::{append_path_suffix, get_file_duration};
 use crate::features::video::inspect::dto::VideoInspectionResponse;
-use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
+use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
+use crate::features::video::process::helpers::get_args;
 use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::state::{VideoState, VideoStateProgress};
 use crate::features::video::{inspect, process};
@@ -79,6 +81,7 @@ pub struct InspectVideoPayload {
   )
 )]
 pub async fn inspect_video(
+  State(app_config): State<Arc<AppConfig>>,
   State(video_state): State<Arc<VideoState>>,
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
@@ -86,7 +89,11 @@ pub async fn inspect_video(
     .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
 
   let inspect_meta = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let inspection_raw_data = inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path).await?;
+  let inspection_raw_data = inspect::ffprobe_runner::inspect_file(
+    &inspect_meta.local_path,
+    app_config.video_inspect_timeout,
+  )
+  .await?;
   let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
 
   video_state
@@ -119,6 +126,7 @@ pub struct ProcessVideoPayload {
   )
 )]
 pub async fn process_video(
+  State(app_config): State<Arc<AppConfig>>,
   State(video_state): State<Arc<VideoState>>,
   XUserIdExtractor(user_id): XUserIdExtractor,
   media_data: Multipart,
@@ -130,26 +138,16 @@ pub async fn process_video(
     file_name,
   } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
   let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
-  let preset = get_preset_by_name(&operation)?;
-  let duration = match video_state.cache.get(&file_name) {
-    Some(meta) => meta.duration_seconds,
-    None => {
-      let inspection_raw_data = inspect::ffprobe_runner::inspect_file(&local_path).await?;
-      let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
-      video_state
-        .cache
-        .insert(file_name.clone(), media_meta_data.clone());
-      media_meta_data.duration_seconds
-    }
-  };
+  let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
+  let duration = get_file_duration(&file_name, &local_path, &video_state, &app_config).await?;
+
   process::ffmpeg_runner::process_file(
-    &local_path,
-    &output_path,
+    ffmpeg_args,
     &file_name,
-    preset,
     video_state,
     user_id,
     duration,
+    app_config.video_process_timeout,
   )
   .await?;
 

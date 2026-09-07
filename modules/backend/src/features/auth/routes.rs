@@ -14,6 +14,7 @@ use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tracing::info;
 use validator::Validate;
 
+use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
@@ -52,13 +53,18 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
 )]
 pub async fn login(
   State(auth_state): State<Arc<AuthState>>,
+  State(app_config): State<Arc<AppConfig>>,
   Json(payload): Json<AuthRequest>,
 ) -> Result<impl IntoResponse, ApplicationError> {
   payload.validate()?;
 
   let (user, token) = auth_state
     .auth_service
-    .login(&payload.email, &payload.password)
+    .login(
+      &payload.email,
+      &payload.password,
+      &app_config.mock_password_hash,
+    )
     .await?;
   Ok(build_auth_response(StatusCode::OK, token.clone(), user)?)
 }

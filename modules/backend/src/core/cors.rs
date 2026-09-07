@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::http::{HeaderValue, Method, header};
 use headers::HeaderName;
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use tracing::log::warn;
+use tracing::warn;
 
 use crate::core::app_config::AppConfig;
 use crate::core::extractors::X_USER_ID_HEADER;

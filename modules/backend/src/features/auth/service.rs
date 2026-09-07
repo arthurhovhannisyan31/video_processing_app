@@ -1,6 +1,5 @@
 use crate::core::error::ApplicationError;
 use crate::core::jwt::{JwtService, hash_password, verify_password};
-use crate::features::auth::constants::DUMMY_PASSWORD_HASH;
 use crate::features::auth::model::{User, UserId};
 use crate::features::auth::repository::UserRepository;
 
@@ -50,31 +49,24 @@ where
     &self,
     email: &str,
     password: &str,
+    mock_password_hash: &str,
   ) -> Result<(User, String), ApplicationError> {
-    let user_res = self.get_by_email(email).await;
+    let user_res = self.repo.find_by_email(email).await?;
 
     let password_hash = user_res
       .as_ref()
       .map(|u| u.password_hash.as_str())
-      .unwrap_or(DUMMY_PASSWORD_HASH);
+      .unwrap_or(mock_password_hash);
 
-    // run password validation to keep response latency stable regardless if user was found
-    let password_valid = match verify_password(password, password_hash) {
-      Ok(true) => true,
-      Ok(false) => return Err(ApplicationError::Unauthorized),
+    // constant performance time for any user lookup result
+    let password_ok = match verify_password(password, password_hash) {
+      Ok(password_ok) => password_ok,
       Err(err) => return Err(ApplicationError::Internal(err.to_string())),
     };
 
-    if !password_valid {
-      return Err(ApplicationError::Unauthorized);
-    }
-
-    let user = match user_res {
-      Ok(user) => user,
-      Err(ApplicationError::NotFound(_)) => {
-        return Err(ApplicationError::Unauthorized);
-      }
-      Err(err) => return Err(err),
+    let user = match (user_res, password_ok) {
+      (Some(user), true) => user,
+      _ => return Err(ApplicationError::Unauthorized),
     };
 
     let token = self

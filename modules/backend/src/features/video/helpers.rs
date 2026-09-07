@@ -1,13 +1,17 @@
 use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use axum::extract::multipart::Field;
 use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
+use crate::core::app_config::AppConfig;
 use crate::core::error::{ApplicationError, ServerError};
+use crate::features::video::inspect;
+use crate::features::video::state::VideoState;
 use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -95,6 +99,34 @@ pub async fn read_form_data_to_file(
   }
 
   Ok(meta)
+}
+
+pub async fn get_file_duration(
+  file_name: &str,
+  local_path: &str,
+  video_state: &Arc<VideoState>,
+  app_config: &Arc<AppConfig>,
+) -> Result<f64, ApplicationError> {
+  let duration = match video_state.cache.get(&file_name.to_string()) {
+    Some(meta) => meta.duration_seconds,
+    None => {
+      let inspection_raw_data =
+        inspect::ffprobe_runner::inspect_file(local_path, app_config.video_inspect_timeout).await?;
+      let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
+      video_state
+        .cache
+        .insert(file_name.to_string(), media_meta_data.clone());
+      media_meta_data.duration_seconds
+    }
+  };
+
+  if duration <= 0.0 {
+    Err(ServerError::Processing(
+      "File has zero duration".to_string(),
+    ))?;
+  }
+
+  Ok(duration)
 }
 
 #[cfg(test)]

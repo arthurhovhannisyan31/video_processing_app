@@ -1,32 +1,26 @@
 use std::process::Stdio;
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
-use tracing::{error, warn};
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::core::error::ServerError;
-use crate::features::video::constants::{
-  VIDEO_API_PROCESS_TIMEOUT, VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE,
-};
+use crate::features::video::constants::{VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE};
 use crate::features::video::state::{VideoState, VideoStateProgress};
 
 pub async fn process_file(
-  input: &str,
-  output: &str,
+  args: Vec<&str>,
   file_name: &str,
-  preset: Vec<&str>,
   video_state: Arc<VideoState>,
   user_id: Uuid,
   duration_seconds: f64,
+  process_timeout: Duration,
 ) -> Result<(), ServerError> {
-  let mut args: Vec<&str> = vec!["-i", input];
-  args.extend(preset);
-  args.extend([output]);
-
   let mut cmd = Command::new("ffmpeg");
   cmd.kill_on_drop(true);
   cmd.args(args);
@@ -64,13 +58,6 @@ pub async fn process_file(
             let progress_value = (out_time_seconds / duration_seconds)
               .clamp(VIDEO_MIN_PROGRESS_VALUE, VIDEO_MAX_PROGRESS_VALUE);
 
-            // TODO Move out
-            if duration_seconds <= 0.0 {
-              return Err(ServerError::Processing(
-                "File has zero duration".to_string(),
-              ));
-            }
-
             message = Some(VideoStateProgress {
               file_name: file_name.to_owned(),
               value: progress_value,
@@ -102,14 +89,17 @@ pub async fn process_file(
     Ok(())
   });
 
-  let status = match timeout(VIDEO_API_PROCESS_TIMEOUT, ffmpeg_process.wait()).await {
+  let status = match timeout(process_timeout, ffmpeg_process.wait()).await {
     Ok(res) => res?,
-    Err(_) => return Err(ServerError::Processing("ffmpeg timed out".to_string())),
+    Err(_) => {
+      log_task.abort();
+      return Err(ServerError::Processing("ffmpeg timed out".to_string()));
+    }
   };
 
   if let Err(err) = log_task.await? {
     // Do not return if logging failed
-    error!("Failed to log processing progress {err:?}");
+    warn!("Failed to log processing progress {err:?}");
   }
 
   if !status.success() {
