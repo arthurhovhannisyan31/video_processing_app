@@ -14,6 +14,9 @@ export const FilesList: FC<FilesListProps> = ({ files, filesStateMap }) => {
       files.map((file) => {
         const state = filesStateMap[file.name];
 
+        console.log(state);
+        console.log(state.processedData?.size);
+
         return (
           <FileCard
             key={file.name}

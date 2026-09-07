@@ -23,7 +23,7 @@ import { Progress } from "components/ui/progress";
 import { Spinner } from "components/ui/spinner";
 import { downloadFile } from "helpers/api/downloadFile";
 import { formatBytes } from "lib/utils";
-import { DownloadIcon, VideoIcon } from "lucide-react";
+import { ArrowLeft, DownloadIcon, VideoIcon } from "lucide-react";
 
 export interface FileCardProps {
   file: File;
@@ -67,27 +67,35 @@ const FileCard: FC<FileCardProps> = ({
           <AttachmentTitle className={"text-base max-w-sm"}>
             {file.name}
           </AttachmentTitle>
-          {progressType && (
-            <AttachmentDescription className={"text-base capitalize"}>
-              {`${progressType} - ${progress}%`}
+          <div className={"flex gap-4 items-center"}>
+            {progressType && (
+              <AttachmentDescription className={"text-base capitalize"}>
+                {`${progressType} - ${progress}%`}
+              </AttachmentDescription>
+            )}
+            <AttachmentDescription className={"text-base"}>
+              {formatBytes(file.size, 2)}
             </AttachmentDescription>
-          )}
-          <AttachmentDescription className={"text-base"}>
-            {formatBytes(file.size)}
-          </AttachmentDescription>
-          {processedData && (
-            <AttachmentActions>
-              <AttachmentAction className={"outline"}>
-                <Button
-                  className={"outline"}
-                  size={"icon-lg"}
-                  onClick={handleDownloadFile}
-                >
-                  <DownloadIcon />
-                </Button>
-              </AttachmentAction>
-            </AttachmentActions>
-          )}
+            {processedData && (
+              <AttachmentDescription className={"text-base flex gap-4"}>
+                <ArrowLeft className={"rotate-180 w-4"} />
+                {formatBytes(processedData.size, 2)}
+              </AttachmentDescription>
+            )}
+            {processedData && (
+              <AttachmentActions>
+                <AttachmentAction className={"outline"}>
+                  <Button
+                    className={"outline"}
+                    size={"icon-lg"}
+                    onClick={handleDownloadFile}
+                  >
+                    <DownloadIcon />
+                  </Button>
+                </AttachmentAction>
+              </AttachmentActions>
+            )}
+          </div>
         </AttachmentContent>
         {progressType === ProgressType.Processing && (
           <Progress className="w-full" value={progress} />
