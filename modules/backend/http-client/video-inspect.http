@@ -4,6 +4,7 @@ Content-Type: multipart/form-data; boundary=AudioInly
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --AudioInly
 Content-Disposition: form-data; name="audio"; filename="audio_only.m4a"
@@ -18,6 +19,7 @@ Content-Type: multipart/form-data; boundary=BrokenTruncated
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --BrokenTruncated
 Content-Disposition: form-data; name="video"; filename="broken_truncated.mp4"
@@ -32,6 +34,7 @@ Content-Type: multipart/form-data; boundary=DualAudioTracks
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --DualAudioTracks
 Content-Disposition: form-data; name="video"; filename="dual_audio_tracks.mp4"
@@ -46,6 +49,7 @@ Content-Type: multipart/form-data; boundary=SampleAv
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --SampleAv
 Content-Disposition: form-data; name="video"; filename="sample_av.mp4"
@@ -60,6 +64,7 @@ Content-Type: multipart/form-data; boundary=VerticalNoAudio
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --VerticalNoAudio
 Content-Disposition: form-data; name="video"; filename="vertical_no_audio.mp4"
@@ -74,12 +79,13 @@ Content-Type: multipart/form-data; boundary=VerticalNoAudio
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --VerticalNoAudio
-Content-Disposition: form-data; name="video"; filename="lesson7.mp4"
+Content-Disposition: form-data; name="video"; filename="1_5_mb.mp4"
 Content-Type: video/mp4
 
-< ../tests/fixtures/media/lesson7.mp4
+< ../tests/fixtures/media/1_5_mb.mp4
 --VerticalNoAudio--
 
 ### Inspect Video 10 MB
@@ -88,12 +94,13 @@ Content-Type: multipart/form-data; boundary=VerticalNoAudio
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --VerticalNoAudio
-Content-Disposition: form-data; name="video"; filename="lesson11.mp4"
+Content-Disposition: form-data; name="video"; filename="2_7_mb.mp4"
 Content-Type: video/mp4
 
-< ../tests/fixtures/media/lesson11.mp4
+< ../tests/fixtures/media/2_7_mb.mp4
 --VerticalNoAudio--
 
 ### Inspect Video 19 MB
@@ -102,10 +109,11 @@ Content-Type: multipart/form-data; boundary=VerticalNoAudio
 Accept: application/json
 Origin: http://localhost:3000
 Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb4
 
 --VerticalNoAudio
-Content-Disposition: form-data; name="video"; filename="lesson14.mp4"
+Content-Disposition: form-data; name="video"; filename="3_4_mb.mp4"
 Content-Type: video/mp4
 
-< ../tests/fixtures/media/lesson14.mp4
+< ../tests/fixtures/media/3_4_mb.mp4
 --VerticalNoAudio--

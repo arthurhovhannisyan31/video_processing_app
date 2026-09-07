@@ -4,32 +4,38 @@ Accept: application/json
 Content-Type: application/json
 Origin: http://localhost:3000
 
+### Check server readyness
+GET {{api_host}}/ready
+Accept: application/json
+Content-Type: application/json
+Origin: http://localhost:3000
+
 ### Get OpenAPI specification
 GET {{api_host}}/openapi
 Accept: application/json
 Origin: http://localhost:3000
 
-### Register a user
-POST {{api_host}}/auth/register
-X-Forwarded-For: 127.0.0.1
-Accept: application/json
-Content-Type: application/json
-Origin: http://localhost:3000
-
-{
-  "username": "testtest",
-  "email": "test@test.com",
-  "password": "Testtest1!"
-}
-
-### Login user
-POST {{api_host}}/auth/login
-X-Forwarded-For: 127.0.0.1
-Accept: application/json
-Content-Type: application/json
-Origin: some
-
-{
-  "email": "test@test.com",
-  "password": "Testtest1!"
-}
+#### Register a user
+#POST {{api_host}}/auth/register
+#X-Forwarded-For: 127.0.0.1
+#Accept: application/json
+#Content-Type: application/json
+##Origin: http://localhost:3000
+#
+#{
+#  "username": "testtest",
+#  "email": "test@test.com",
+#  "password": "Testtest1!"
+#}
+#
+#### Login user
+#POST {{api_host}}/auth/login
+#X-Forwarded-For: 127.0.0.1
+#Accept: application/json
+#Content-Type: application/json
+#Origin: some
+#
+#{
+#  "email": "test@test.com",
+#  "password": "Testtest1!"
+#}
