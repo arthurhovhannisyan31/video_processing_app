@@ -12,6 +12,7 @@ use video_processing_server::features::auth::dto::{AuthRequest, AuthResponse};
 use video_processing_server::features::auth::repository::PostgresUserRepository;
 use video_processing_server::features::auth::service::AuthService;
 use video_processing_server::features::auth::state::AuthState;
+use video_processing_server::features::system::state::SystemState;
 use video_processing_server::features::video::state::VideoState;
 use video_processing_server::router::{build_router, routes};
 
@@ -28,6 +29,7 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
     }),
     app_config: Arc::new(app_config),
     video_state: Arc::new(VideoState::default()),
+    system_state: Arc::new(SystemState { db_pool: pool }),
   };
 
   build_router(app_state)

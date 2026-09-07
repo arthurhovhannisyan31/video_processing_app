@@ -12,6 +12,7 @@ pub mod routes {
   pub const LOGIN: &str = "/auth/login";
   pub const REGISTER: &str = "/auth/register";
   pub const HEALTH: &str = "/health";
+  pub const READY: &str = "/ready";
   pub const OPENAPI: &str = "/openapi";
   pub const VIDEO_INSPECT: &str = "/video/inspect";
   pub const VIDEO_JOBS: &str = "/video/jobs";

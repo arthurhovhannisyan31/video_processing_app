@@ -17,6 +17,8 @@ use features::auth::state::AuthState;
 use features::video::state::VideoState;
 use http::init_http_server;
 
+use crate::features::system::state::SystemState;
+
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
   init_logging();
@@ -36,6 +38,7 @@ async fn main() -> Result<(), ServerError> {
     }),
     app_config: Arc::new(app_config),
     video_state: Arc::from(VideoState::default()),
+    system_state: Arc::new(SystemState { db_pool: pool }),
   };
 
   init_http_server(app_state).await?;
