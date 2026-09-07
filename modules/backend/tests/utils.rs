@@ -36,11 +36,13 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub fn with_base_route(path: &str) -> String {
   format!("/api/{}", path.strip_prefix("/").unwrap())
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub async fn get_authorization_token(server: &TestServer) -> String {
   let authentication_request = AuthRequest {
     email: "test@test.com".into(),

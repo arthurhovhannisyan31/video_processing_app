@@ -8,6 +8,7 @@ use crate::core::error::ServerError;
 use crate::features::system::routes::get_system_router;
 use crate::features::video::routes::get_video_router;
 
+#[allow(dead_code)]
 pub mod routes {
   pub const LOGIN: &str = "/auth/login";
   pub const REGISTER: &str = "/auth/register";

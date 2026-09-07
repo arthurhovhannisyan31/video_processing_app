@@ -22,6 +22,7 @@ use crate::features::auth::model::User;
 use crate::features::auth::state::AuthState;
 use crate::router::routes;
 
+#[allow(dead_code)]
 pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let mut router = Router::new()
     .route(routes::LOGIN, post(login))
@@ -51,6 +52,7 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
+#[allow(dead_code)]
 pub async fn login(
   State(auth_state): State<Arc<AuthState>>,
   State(app_config): State<Arc<AppConfig>>,
@@ -79,6 +81,7 @@ pub async fn login(
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
+#[allow(dead_code)]
 async fn register(
   State(auth_state): State<Arc<AuthState>>,
   Json(payload): Json<CreateUserRequest>,
@@ -106,6 +109,7 @@ async fn register(
   )?)
 }
 
+#[allow(dead_code)]
 fn build_auth_response(
   status: StatusCode,
   token: String,

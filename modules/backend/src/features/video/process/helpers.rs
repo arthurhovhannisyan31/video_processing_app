@@ -12,15 +12,15 @@ pub fn get_preset_by_name<'a>(operation: &str) -> Result<Vec<&'a str>, ServerErr
 }
 
 pub fn get_args<'a>(
-  input: &str,
-  output: &str,
-  operation: &str,
+  input: &'a str,
+  output: &'a str,
+  operation: &'a str,
 ) -> Result<Vec<&'a str>, ServerError> {
   let mut args: Vec<&str> = vec!["-i", input];
-  let preset = get_preset_by_name(&operation)?;
+  let preset = get_preset_by_name(operation)?;
 
   args.extend(preset);
   args.extend([output]);
 
-  Ok(vec![])
+  Ok(args)
 }
