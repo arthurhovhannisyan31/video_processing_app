@@ -7,7 +7,7 @@ export const MAX_FILES_COUNT = 4;
 
 export const supportedMimeTypes: string[] = ["video/mp4"];
 const supportedTypesLabel = supportedMimeTypes
-  .map((el) => el.replace("image/", ""))
+  .map((el) => el.replace("video/", ""))
   .join(", ");
 
 export type ErrorsDict = Record<
@@ -15,9 +15,9 @@ export type ErrorsDict = Record<
   string
 >;
 export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
-  fileType: "File type in not supported",
+  fileType: "File type is not supported",
   filesExtension: `Only the following formats are supported: ${supportedTypesLabel}`,
-  fileSize: `Image size limit is ${formatBytes(maxBodySizeMB)}`,
+  fileSize: `File size limit is ${formatBytes(maxBodySizeMB)}`,
   fileName: "File name is missing",
 });
 

@@ -9,8 +9,10 @@ use tracing::{error, warn};
 use uuid::Uuid;
 
 use crate::core::error::ServerError;
-use crate::features::video::constants::VIDEO_API_PROCESS_TIMEOUT;
-use crate::features::video::state::{VideoState, VideoStateMessage, VideoStateProgress};
+use crate::features::video::constants::{
+  VIDEO_API_PROCESS_TIMEOUT, VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE,
+};
+use crate::features::video::state::{VideoState, VideoStateProgress};
 
 pub async fn process_file(
   input: &str,
@@ -48,7 +50,7 @@ pub async fn process_file(
       let line = line.trim();
 
       if let Some((key, value)) = line.split_once('=') {
-        let mut message: Option<VideoStateMessage> = None;
+        let mut message: Option<VideoStateProgress> = None;
 
         match key {
           "out_time_ms" => {
@@ -58,24 +60,28 @@ pub async fn process_file(
 
             let out_time_microseconds: i64 = value.parse().map_err(ServerError::ParseIntError)?;
             let out_time_seconds: f64 = out_time_microseconds as f64 / 1000000.0;
-            let progress_value = out_time_seconds / duration_seconds;
-            message = Some(VideoStateMessage {
-              id: user_id,
-              message: VideoStateProgress {
-                file_name: file_name.to_owned(),
-                value: progress_value,
-                done: false,
-              },
+
+            let progress_value = (out_time_seconds / duration_seconds)
+              .clamp(VIDEO_MIN_PROGRESS_VALUE, VIDEO_MAX_PROGRESS_VALUE);
+
+            // TODO Move out
+            if duration_seconds <= 0.0 {
+              return Err(ServerError::Processing(
+                "File has zero duration".to_string(),
+              ));
+            }
+
+            message = Some(VideoStateProgress {
+              file_name: file_name.to_owned(),
+              value: progress_value,
+              done: false,
             });
           }
           "progress" if value == "end" => {
-            message = Some(VideoStateMessage {
-              id: user_id,
-              message: VideoStateProgress {
-                file_name: file_name.to_owned(),
-                value: 1.0,
-                done: true,
-              },
+            message = Some(VideoStateProgress {
+              file_name: file_name.to_owned(),
+              value: 1.0,
+              done: true,
             });
           }
           _ => {}

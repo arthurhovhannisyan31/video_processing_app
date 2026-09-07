@@ -26,7 +26,7 @@ use crate::features::video::helpers::append_path_suffix;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
 use crate::features::video::process::types::ProcessVideoMeta;
-use crate::features::video::state::{VideoState, VideoStateMessage};
+use crate::features::video::state::{VideoState, VideoStateProgress};
 use crate::features::video::{inspect, process};
 use crate::router::routes;
 
@@ -167,7 +167,7 @@ async fn websocket_handler(
 
 async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
   let (mut sink, mut stream) = socket.split();
-  let (tx, mut rx) = mpsc::channel::<VideoStateMessage>(10);
+  let (tx, mut rx) = mpsc::channel::<VideoStateProgress>(10);
 
   {
     let mut connections_map = video_state.connections_map.write();
@@ -184,7 +184,7 @@ async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoS
       progress_msg = rx.recv() => {
         match progress_msg{
           Some(msg) => {
-            let message = Message::from(json!(msg.message).to_string());
+            let message = Message::from(json!(msg).to_string());
 
             if let Err(err) = sink.send(message).await {
               error!("Failed to send message to: {user_id}. Err: {err}");

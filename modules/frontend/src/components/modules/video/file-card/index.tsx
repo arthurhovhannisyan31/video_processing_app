@@ -21,7 +21,7 @@ import {
 import { Button } from "components/ui/button";
 import { Progress } from "components/ui/progress";
 import { Spinner } from "components/ui/spinner";
-import { downloadFIle } from "helpers/api/downloadFIle";
+import { downloadFile } from "helpers/api/downloadFile";
 import { formatBytes } from "lib/utils";
 import { DownloadIcon, VideoIcon } from "lucide-react";
 
@@ -48,7 +48,7 @@ const FileCard: FC<FileCardProps> = ({
 }) => {
   const handleDownloadFile = () => {
     if (processedData) {
-      downloadFIle(file, processedData);
+      downloadFile(file, processedData);
     }
   };
 

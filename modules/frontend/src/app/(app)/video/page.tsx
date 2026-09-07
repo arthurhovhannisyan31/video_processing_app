@@ -73,11 +73,12 @@ export default function VideoPage() {
     }
   }, [files, filesStateMap, triggerUpdate]);
 
-  const handleInspectFiles = useCallback(async () => {
+  const handleInspectFiles = async () => {
     const requests = [];
 
     for (const file of files) {
       const fileState = filesStateMap[file.name];
+
       if (!fileState) {
         continue;
       }
@@ -92,7 +93,14 @@ export default function VideoPage() {
     } catch (err) {
       console.log(err);
     }
-  }, [filesStateMap, triggerUpdate, files]);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only trigger to files change
+  useEffect(() => {
+    if (files.length) {
+      handleInspectFiles();
+    }
+  }, [files]);
 
   useEffect(() => {
     setFilesStateMap((state) => {
@@ -116,7 +124,6 @@ export default function VideoPage() {
           <>
             <ControlsBar
               compressFiles={handleCompressFiles}
-              inspectFiles={handleInspectFiles}
               reset={handleReset}
               filesStateMap={filesStateMap}
             />

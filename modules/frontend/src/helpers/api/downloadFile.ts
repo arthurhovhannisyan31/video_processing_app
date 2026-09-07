@@ -1,4 +1,4 @@
-export const downloadFIle = (file: File, blob: Blob) => {
+export const downloadFile = (file: File, blob: Blob) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stem = file.name.replace(/\.[^.]+$/, "");

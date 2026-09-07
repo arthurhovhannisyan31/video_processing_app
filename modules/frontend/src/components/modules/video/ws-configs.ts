@@ -31,7 +31,9 @@ const throttledSetStore = throttle((stateProgress: VideoStateProgress) => {
 }, 300);
 
 export const wsDelegateConfig: SocketDelegate = {
-  socketDidOpen: (_) => {},
+  socketDidOpen: (_) => {
+    retryCount = WS_RECONNECT_ATTEMPTS;
+  },
   socketDidReceiveMessage: (_socket: Socket, message: string) => {
     try {
       const stateProgress: VideoStateProgress = JSON.parse(message);

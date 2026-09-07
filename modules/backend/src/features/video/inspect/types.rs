@@ -17,7 +17,7 @@ pub struct FfprobeFormat {
   #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_type")]
   pub bit_rate: i64,
   #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_type")]
-  pub duration: f32,
+  pub duration: f64,
   pub filename: String,
   pub format_name: String,
   #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_type")]
@@ -103,7 +103,7 @@ impl TryFrom<FfprobeOutput> for MediaMetadata {
 }
 
 #[derive(Debug, Default)]
-pub struct InspectVideoMeta {
+pub struct ReadFileMeta {
   pub file_name: String,
   pub local_path: String,
 }

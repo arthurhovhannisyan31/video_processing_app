@@ -85,7 +85,7 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
   };
 
   return (
-    <div ref={ref} className="flex flex-col gap-2">
+    <div ref={ref} className="flex flex-col gap-2 h-full">
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: not relevant */}
       {/** biome-ignore lint/a11y/noStaticElementInteractions: not relevant */}
       <div
@@ -94,9 +94,9 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
         onDragEnter={preventDragEvent}
         onDragOver={preventDragEvent}
         className={[
-          "flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 transition-colors",
+          "flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10",
+          "transition-colors cursor-pointer hover:border-primary/60 hover:bg-muted/40 h-full",
           isOver ? "border-primary bg-primary/5" : "border-border",
-          "cursor-pointer hover:border-primary/60 hover:bg-muted/40",
         ].join(" ")}
       >
         <input

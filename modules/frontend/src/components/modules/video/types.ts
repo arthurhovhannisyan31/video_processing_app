@@ -8,7 +8,7 @@ export type InspectionData = Record<string, unknown>;
 
 export class FileState {
   constructor(
-    public id: string,
+    public name: string,
     public progress: number = 0,
     public abortController: AbortController = new AbortController(),
     public status: Status = Status.Stale,

@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::core::app_state::AppState;
 
-pub type VideoWsConnectionsMap = RwLock<HashMap<Uuid, mpsc::Sender<VideoStateMessage>>>;
+pub type VideoWsConnectionsMap = RwLock<HashMap<Uuid, mpsc::Sender<VideoStateProgress>>>;
 
 pub struct VideoState {
   pub connections_map: VideoWsConnectionsMap,
@@ -28,12 +28,6 @@ impl FromRef<AppState> for Arc<VideoState> {
   fn from_ref(app_state: &AppState) -> Self {
     app_state.video_state.clone()
   }
-}
-
-#[derive(Clone, Debug)]
-pub struct VideoStateMessage {
-  pub id: Uuid,
-  pub message: VideoStateProgress,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

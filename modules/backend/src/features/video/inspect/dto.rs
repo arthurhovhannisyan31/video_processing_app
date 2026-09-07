@@ -8,7 +8,7 @@ use crate::features::video::model::{AudioStream, MediaMetadata, VideoStream};
 pub struct VideoInspectionResponse {
   pub original_file_name: String,
   pub file_size_bytes: i64,
-  pub duration_seconds: f32,
+  pub duration_seconds: f64,
   pub video_streams: Vec<VideoStream>,
   pub audio_streams: Vec<AudioStream>,
 }

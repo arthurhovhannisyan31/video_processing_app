@@ -8,14 +8,12 @@ import { Spinner } from "components/ui/spinner";
 export interface ControlsBarProps {
   filesStateMap: FilesStateMap;
   compressFiles: () => void;
-  inspectFiles: () => void;
   reset: () => void;
 }
 
 export const ControlsBar: FC<ControlsBarProps> = ({
   filesStateMap,
   compressFiles,
-  inspectFiles,
   reset,
 }) => {
   const isCompressing = useMemo(
@@ -40,13 +38,6 @@ export const ControlsBar: FC<ControlsBarProps> = ({
 
   return (
     <div className={"flex gap-4 w-full justify-center"}>
-      <Button
-        className="w-full sm:w-auto h-10 text-base"
-        onClick={inspectFiles}
-        disabled={isInspecting || isCompressing}
-      >
-        {isInspecting ? <Spinner /> : "Inspect files"}
-      </Button>
       <Button
         className="w-full sm:w-auto h-10 text-base"
         onClick={compressFiles}
