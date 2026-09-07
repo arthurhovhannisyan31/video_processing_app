@@ -14,7 +14,7 @@ mod test_video_inspect_api {
   use video_processing_server::features::video::inspect::dto::VideoInspectionResponse;
   use video_processing_server::router::routes;
 
-  use crate::utils::{get_authorization_token, setup_router, with_base_route};
+  use crate::utils::{setup_router, with_base_route};
 
   /// Important
   ///

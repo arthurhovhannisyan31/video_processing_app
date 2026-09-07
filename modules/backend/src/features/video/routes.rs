@@ -78,14 +78,22 @@ pub struct InspectVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
+pub async fn inspect_video(
+  State(video_state): State<Arc<VideoState>>,
+  media_data: Multipart,
+) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new()
     .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
-  let inspect_meta = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let inspection_data = inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path).await?;
-  let mapped_data = inspect::ffprobe_mapper::map_media_meta(inspection_data)?;
 
-  Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
+  let inspect_meta = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let inspection_raw_data = inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path).await?;
+  let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
+
+  video_state
+    .cache
+    .insert(inspect_meta.file_name, media_meta_data.clone());
+
+  Ok(Json(json!(VideoInspectionResponse::from(media_meta_data))))
 }
 
 // Struct used for openapi schema typings
@@ -123,7 +131,17 @@ pub async fn process_video(
   } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
   let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
   let preset = get_preset_by_name(&operation)?;
-  let duration = process::ffprobe_runner::inspect_file_duration(&local_path).await?;
+  let duration = match video_state.cache.get(&file_name) {
+    Some(meta) => meta.duration_seconds,
+    None => {
+      let inspection_raw_data = inspect::ffprobe_runner::inspect_file(&local_path).await?;
+      let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
+      video_state
+        .cache
+        .insert(file_name.clone(), media_meta_data.clone());
+      media_meta_data.duration_seconds
+    }
+  };
   process::ffmpeg_runner::process_file(
     &local_path,
     &output_path,

@@ -84,6 +84,8 @@ pub enum ServerError {
   HttpError(#[from] http::Error),
   #[error("Media data not found: {0}")]
   MissingMediaData(String),
+  #[error("Stale cache. Run inspection again: {0}")]
+  StaleCache(String),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -153,6 +155,7 @@ impl From<ServerError> for ApplicationError {
       ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
       ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::StaleCache(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
   }
