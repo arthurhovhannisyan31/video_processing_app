@@ -7,7 +7,8 @@
 
 # local
 **/*notes
-.env
+*.env*
+!.env.template
 **/*openapi.json
 **/*hints
 configs/.ssh
