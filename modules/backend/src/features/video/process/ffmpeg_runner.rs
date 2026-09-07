@@ -77,11 +77,12 @@ pub async fn process_file(
         if let Some(message) = message {
           // Get shor-lived sender access
           let tx = video_state.connections_map.read().get(&user_id).cloned();
-          if let Some(tx) = tx {
-            if let Err(err) = tx.send(message).await {
-              warn!("Error while sending message to video state stream: {err}");
-            }
+          if let Some(tx) = tx
+            && let Err(err) = tx.send(message).await
+          {
+            warn!("Error while sending message to video state stream: {err}");
           }
+          {}
         }
       }
     }

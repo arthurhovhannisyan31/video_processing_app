@@ -17,6 +17,7 @@ use video_processing_server::features::video::state::VideoState;
 use video_processing_server::router::{build_router, routes};
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
   let app_config = AppConfig::from_env()?;
   let jwt_service = JwtService::new(app_config.jwt_secret.clone());
