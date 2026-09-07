@@ -28,10 +28,11 @@ jobs:
         ports:
           - 5432:5432
     env:
+      CONTAINER: true
       DATABASE_URL: ${{ vars.DATABASE_URL }}
       BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
       BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
-      CONTAINER: true
+      BACKEND_VIDEO_MOCK_PASSWORD_HASH: ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
