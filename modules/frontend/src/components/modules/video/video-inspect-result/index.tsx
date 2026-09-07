@@ -11,7 +11,7 @@ import { Skeleton } from "components/ui/skeleton";
 import { ChevronDownIcon } from "lucide-react";
 
 interface VideoInspectResultProps {
-  data: Record<string, unknown> | null;
+  data?: Record<string, unknown>;
   isLoading: boolean;
 }
 

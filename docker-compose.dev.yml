@@ -13,8 +13,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 0.5G
-          cpus: '0.05'
+          memory: 1G
+          cpus: '0.1'
         reservations:
           memory: 256M
     ulimits:
@@ -46,8 +46,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 3.5G
-          cpus: '0.95'
+          memory: 6G
+          cpus: '0.9'
         reservations:
           memory: 256M
     restart: unless-stopped

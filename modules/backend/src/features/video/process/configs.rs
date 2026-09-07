@@ -21,7 +21,7 @@ impl FromStr for OperationType {
   }
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum FieldName {
   Video,
   Operation,
@@ -58,13 +58,5 @@ pub mod preset {
       "-progress",
       "pipe:2",
     ]
-  }
-}
-
-pub fn get_preset_by_name<'a>(operation: &str) -> Result<Vec<&'a str>, ServerError> {
-  let operation_type = OperationType::from_str(operation)?;
-
-  match operation_type {
-    OperationType::Compress => Ok(preset::compress()),
   }
 }

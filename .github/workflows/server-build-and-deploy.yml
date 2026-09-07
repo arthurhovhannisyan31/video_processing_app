@@ -19,18 +19,24 @@ jobs:
     environment: production
     env:
       CONTAINER: true
-      BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
-      BACKEND_DB_MAX_CONNECTIONS: ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
-      BACKEND_HOST: ${{ vars.BACKEND_HOST }}
-      BACKEND_HTTP_PORT: ${{ vars.BACKEND_HTTP_PORT }}
-      BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
-      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      IS_PRODUCTION: ${{ vars.IS_PRODUCTION }}
       POSTGRES_DB: ${{ vars.POSTGRES_DB }}
       POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
       POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
       POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
       POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-      IS_PRODUCTION: ${{ vars.IS_PRODUCTION }}
+      BACKEND_HOST: ${{ vars.BACKEND_HOST }}
+      BACKEND_HTTP_PORT: ${{ vars.BACKEND_HTTP_PORT }}
+      BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
+      BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      BACKEND_DB_MAX_CONNECTIONS: ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
+      BACKEND_VIDEO_MAX_BODY_SIZE: ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
+      BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
+      BACKEND_VIDEO_RATE_LIMIT_SIZE: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
+      BACKEND_VIDEO_INSPECT_TIMEOUT: ${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
+      BACKEND_VIDEO_PROCESS_TIMEOUT: ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
+      BACKEND_VIDEO_MOCK_PASSWORD_HASH: ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -107,18 +113,25 @@ jobs:
             IMAGE_TAG=${NEW_TAG:-${CURRENT_TAG:-latest}}
             touch /root/server/.env
             {
-            echo "BACKEND_CORS_ORIGINS=${{ vars.BACKEND_CORS_ORIGINS }}"
-            echo "BACKEND_DB_MAX_CONNECTIONS=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}"
-            echo "BACKEND_HOST=${{ vars.BACKEND_HOST }}"
-            echo "BACKEND_HTTP_PORT=${{ vars.BACKEND_HTTP_PORT }}"
-            echo "BACKEND_JWT_SECRET=${{ vars.BACKEND_JWT_SECRET }}"
-            echo "DATABASE_URL=${{ vars.DATABASE_URL }}"
+            echo "IMAGE_TAG=$IMAGE_TAG"
+            echo "IS_PRODUCTION"=true
             echo "POSTGRES_DB=${{ vars.POSTGRES_DB }}"
             echo "POSTGRES_HOST=${{ vars.POSTGRES_HOST }}"
             echo "POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}"
             echo "POSTGRES_PORT=${{ vars.POSTGRES_PORT }}"
             echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}"
-            echo "IMAGE_TAG=$IMAGE_TAG"
+            echo "DATABASE_URL=${{ vars.DATABASE_URL }}"
+            echo "BACKEND_HOST=${{ vars.BACKEND_HOST }}"
+            echo "BACKEND_HTTP_PORT=${{ vars.BACKEND_HTTP_PORT }}"
+            echo "BACKEND_JWT_SECRET=${{ vars.BACKEND_JWT_SECRET }}"
+            echo "BACKEND_CORS_ORIGINS=${{ vars.BACKEND_CORS_ORIGINS }}"
+            echo "BACKEND_DB_MAX_CONNECTIONS=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}"
+            echo "BACKEND_VIDEO_MAX_BODY_SIZE"=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
+            echo "BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC"=${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
+            echo "BACKEND_VIDEO_RATE_LIMIT_SIZE"=${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
+            echo "BACKEND_VIDEO_INSPECT_TIMEOUT"=${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
+            echo "BACKEND_VIDEO_PROCESS_TIMEOUT"=${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
+            echo "BACKEND_VIDEO_MOCK_PASSWORD_HASH"=${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
             } > /root/server/.env.new
             mv /root/server/.env.new /root/server/.env
             chmod 600 /root/server/.env

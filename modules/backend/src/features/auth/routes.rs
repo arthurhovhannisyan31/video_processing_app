@@ -14,12 +14,15 @@ use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tracing::info;
 use validator::Validate;
 
-use crate::core::app_state::{AppState, AuthState};
+use crate::core::app_config::AppConfig;
+use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
 use crate::features::auth::model::User;
+use crate::features::auth::state::AuthState;
 use crate::router::routes;
 
+#[allow(dead_code)]
 pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let mut router = Router::new()
     .route(routes::LOGIN, post(login))
@@ -49,15 +52,21 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
+#[allow(dead_code)]
 pub async fn login(
   State(auth_state): State<Arc<AuthState>>,
+  State(app_config): State<Arc<AppConfig>>,
   Json(payload): Json<AuthRequest>,
 ) -> Result<impl IntoResponse, ApplicationError> {
   payload.validate()?;
 
   let (user, token) = auth_state
     .auth_service
-    .login(&payload.email, &payload.password)
+    .login(
+      &payload.email,
+      &payload.password,
+      &app_config.mock_password_hash,
+    )
     .await?;
   Ok(build_auth_response(StatusCode::OK, token.clone(), user)?)
 }
@@ -72,6 +81,7 @@ pub async fn login(
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
+#[allow(dead_code)]
 async fn register(
   State(auth_state): State<Arc<AuthState>>,
   Json(payload): Json<CreateUserRequest>,
@@ -99,6 +109,7 @@ async fn register(
   )?)
 }
 
+#[allow(dead_code)]
 fn build_auth_response(
   status: StatusCode,
   token: String,

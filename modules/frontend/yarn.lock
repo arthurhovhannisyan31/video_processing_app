@@ -760,6 +760,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@github/stable-socket@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@github/stable-socket@npm:1.1.1"
+  checksum: 10/8db47196c547c66e13009d22c1f4d3a98303e8a79cc2d0b5101aeb5a129ccf7201baeea098e9aff7f062415c4fd9a12179cd8e8c802f01624fca255fdefa4a5d
+  languageName: node
+  linkType: hard
+
 "@hey-api/codegen-core@npm:0.9.1":
   version: 0.9.1
   resolution: "@hey-api/codegen-core@npm:0.9.1"
@@ -2346,6 +2353,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cn@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "cn@npm:0.2.4"
+  bin:
+    cn: bin/cn.mjs
+  checksum: 10/75ca71e22caedadec6506563fe4351f4204fff1480c6e53608d15ae328df64998e46c35843ea13d0ac57013ee6865e4e7da5b7223b646bf9140bc5077efcc23e
+  languageName: node
+  linkType: hard
+
 "code-block-writer@npm:^13.0.3":
   version: 13.0.3
   resolution: "code-block-writer@npm:13.0.3"
@@ -3154,6 +3170,7 @@ __metadata:
     "@dnd-kit/modifiers": "npm:^9.0.0"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
+    "@github/stable-socket": "npm:^1.1.1"
     "@hey-api/openapi-ts": "npm:^0.99.0"
     "@hookform/resolvers": "npm:^5.5.7"
     "@hugeicons/core-free-icons": "npm:^4.2.3"
@@ -3174,6 +3191,7 @@ __metadata:
     better-auth: "npm:^1.7.1"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    cn: "npm:^0.2.4"
     date-fns: "npm:^4.4.0"
     jose: "npm:^6.2.5"
     jotai: "npm:^2.20.1"
@@ -3194,6 +3212,7 @@ __metadata:
     tailwindcss: "npm:^4.3.3"
     tw-animate-css: "npm:^1.4.0"
     typescript: "npm:^6.0.3"
+    uuid: "npm:^14.0.2"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -5443,6 +5462,15 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 10/474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^14.0.2":
+  version: 14.0.2
+  resolution: "uuid@npm:14.0.2"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/e8263a76ad7b2d1f246df5a48a5bdf30d886eedbb1d3d74c75356d02b2966f5fffd7790b85afdb3682e4e732d13fca7974626419814f45de6847f78ce03c745e
   languageName: node
   linkType: hard
 

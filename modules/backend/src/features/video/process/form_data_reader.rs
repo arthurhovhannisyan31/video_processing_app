@@ -4,7 +4,7 @@ use std::str::FromStr;
 use axum::extract::Multipart;
 
 use crate::core::error::ServerError;
-use crate::features::video::helpers::read_video_to_file;
+use crate::features::video::helpers::read_form_data_to_file;
 use crate::features::video::process::configs::FieldName;
 use crate::features::video::process::types::ProcessVideoMeta;
 
@@ -24,15 +24,17 @@ pub async fn read(
 
     match field_name {
       FieldName::Video => {
-        meta.file_path = read_video_to_file(&mut field, temp_dir).await?;
+        let read_form_data_meta = read_form_data_to_file(&mut field, temp_dir).await?;
+        meta.file_name = read_form_data_meta.file_name;
+        meta.local_path = read_form_data_meta.local_path;
       }
       FieldName::Operation => {
-        meta.command = field.text().await?;
+        meta.operation = field.text().await?;
       }
     }
   }
 
-  if meta.file_path.is_empty() {
+  if meta.file_name.is_empty() {
     return Err(ServerError::DataError("Missing 'video' field".to_string()));
   }
 

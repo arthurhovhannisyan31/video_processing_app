@@ -9,6 +9,7 @@ use axum::response::{IntoResponse, Response};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
 use thiserror::Error;
+use tracing::error;
 use validator::ValidationErrors;
 
 /* Domain objects errors */
@@ -45,6 +46,8 @@ pub enum ApplicationError {
   Internal(String),
   #[error("Validation error")]
   Validation(#[from] ValidationErrors),
+  #[error("Service unavailable")]
+  ServiceUnavailable(String),
 }
 
 /* Server errors */
@@ -84,6 +87,8 @@ pub enum ServerError {
   HttpError(#[from] http::Error),
   #[error("Media data not found: {0}")]
   MissingMediaData(String),
+  #[error("Stale cache. Run inspection again: {0}")]
+  StaleCache(String),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -98,11 +103,15 @@ impl IntoResponse for ApplicationError {
         (StatusCode::CONFLICT, json!({"message": msg}).to_string()).into_response()
       }
       ApplicationError::Forbidden => StatusCode::FORBIDDEN.into_response(),
-      ApplicationError::Internal(msg) => (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        json!({"message": msg}).to_string(),
-      )
-        .into_response(),
+      ApplicationError::Internal(msg) => {
+        error!(error = %msg, "internal error");
+
+        (
+          StatusCode::INTERNAL_SERVER_ERROR,
+          json!({"message": "Internal server error"}).to_string(),
+        )
+          .into_response()
+      }
       ApplicationError::NotFound(msg) => {
         (StatusCode::NOT_FOUND, json!({"message": msg}).to_string()).into_response()
       }
@@ -112,6 +121,11 @@ impl IntoResponse for ApplicationError {
         json!({"message": err.to_string()}).to_string(),
       )
         .into_response(),
+      ApplicationError::ServiceUnavailable(err) => {
+        error!(error = %err, "Service is unavailable");
+
+        StatusCode::SERVICE_UNAVAILABLE.into_response()
+      }
     }
   }
 }
@@ -153,7 +167,14 @@ impl From<ServerError> for ApplicationError {
       ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
       ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::StaleCache(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
+  }
+}
+
+impl IntoResponse for ServerError {
+  fn into_response(self) -> Response {
+    ApplicationError::from(self).into_response()
   }
 }

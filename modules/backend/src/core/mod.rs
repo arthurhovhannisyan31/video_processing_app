@@ -3,6 +3,7 @@ pub mod app_state;
 pub mod cors;
 pub mod database;
 pub mod error;
+pub mod extractors;
 pub mod jwt;
 pub mod logging;
 pub mod openapi;

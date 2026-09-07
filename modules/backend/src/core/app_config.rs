@@ -1,10 +1,15 @@
 use std::env;
+use std::sync::Arc;
+use std::time::Duration;
 
+use axum::extract::FromRef;
 use serde::Deserialize;
 
+use crate::core::app_state::AppState;
 use crate::core::error::ServerError;
 use crate::features::video::constants::{
-  VIDEO_MAX_BODY_SIZE, VIDEO_RATE_LIMIT_PERIOD, VIDEO_RATE_LIMIT_SIZE,
+  VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_PROCESS_TIMEOUT, VIDEO_RATE_LIMIT_PERIOD,
+  VIDEO_RATE_LIMIT_SIZE,
 };
 
 #[derive(Clone, Debug, Deserialize)]
@@ -16,10 +21,12 @@ pub struct AppConfig {
   pub cors_origins: Vec<String>,
   pub db_max_connections: u32,
   pub is_production: bool,
-  pub is_container: bool,
   pub video_max_body_size: usize,
   pub video_rate_limit_period: u64,
   pub video_rate_limit_size: u32,
+  pub video_inspect_timeout: Duration,
+  pub video_process_timeout: Duration,
+  pub mock_password_hash: String,
 }
 
 impl AppConfig {
@@ -65,6 +72,15 @@ impl AppConfig {
     let video_rate_limit_size = env::var("BACKEND_VIDEO_RATE_LIMIT_SIZE")
       .unwrap_or(VIDEO_RATE_LIMIT_SIZE.to_string())
       .parse::<u32>()?;
+    let video_inspect_timeout = env::var("BACKEND_VIDEO_INSPECT_TIMEOUT")
+      .unwrap_or(VIDEO_INSPECT_TIMEOUT.to_string())
+      .parse::<u64>()?;
+    let video_process_timeout = env::var("BACKEND_VIDEO_PROCESS_TIMEOUT")
+      .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
+      .parse::<u64>()?;
+    let mock_password_hash = env::var("BACKEND_VIDEO_MOCK_PASSWORD_HASH").map_err(|e| {
+      ServerError::VarError(format!("Missing BACKEND_VIDEO_MOCK_PASSWORD_HASH: {e}"))
+    })?;
 
     Ok(Self {
       host,
@@ -74,10 +90,18 @@ impl AppConfig {
       cors_origins,
       db_max_connections,
       is_production,
-      is_container,
       video_max_body_size,
       video_rate_limit_period,
       video_rate_limit_size,
+      video_inspect_timeout: Duration::from_secs(video_inspect_timeout),
+      video_process_timeout: Duration::from_secs(video_process_timeout),
+      mock_password_hash,
     })
+  }
+}
+
+impl FromRef<AppState> for Arc<AppConfig> {
+  fn from_ref(app_state: &AppState) -> Self {
+    app_state.app_config.clone()
   }
 }

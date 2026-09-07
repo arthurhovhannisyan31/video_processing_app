@@ -1,107 +1,138 @@
 "use client";
 
-import type { ApiError } from "configs/types";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { VideoAttachment } from "components/modules/video/video-attachment";
-import { VideoCompress } from "components/modules/video/video-compress";
-import { VideoDropZone } from "components/modules/video/video-drop-zone";
-import { VideoInspectError } from "components/modules/video/video-inspect-error";
-import { VideoInspectResult } from "components/modules/video/video-inspect-result";
-import { inspectVideo } from "generated/client";
-import { useAbortController } from "lib/hooks/useAbortController";
-import { toast } from "sonner";
+import { ProgressType } from "components/modules/video/constants";
+import { ControlsBar } from "components/modules/video/controls-bar";
+import { DropZone } from "components/modules/video/drop-zone";
+import { FilesList } from "components/modules/video/files-list";
+import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
+import { FileState, type FilesStateMap } from "components/modules/video/types";
+import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
+import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
+import { useAtomValue } from "jotai";
+import { videoStore } from "store/video";
 
 export default function VideoPage() {
-  const [file, setFile] = useState<File | null>(null);
+  const videoState = useAtomValue(videoStore);
+  const [files, setFiles] = useState<File[]>([]);
+  const [filesStateMap, setFilesStateMap] = useState<FilesStateMap>({});
 
-  const [inspectData, setInspectData] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
-  const [isInspecting, setIsInspecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const abortController = useAbortController();
+  const handleAddFiles = useCallback((newFiles: File[]) => {
+    setFiles((files) => [...files, ...newFiles]);
 
-  async function handleFile(f: File) {
-    setFile(f);
-    setInspectData(null);
-    setError(null);
-    setIsInspecting(true);
+    const newFilesState = newFiles.reduce<FilesStateMap>((acc, file) => {
+      acc[file.name] = new FileState(file.name);
+      return acc;
+    }, {});
 
-    try {
-      abortController.abort();
-      abortController.init();
+    setFilesStateMap((state) => ({
+      ...state,
+      ...newFilesState,
+    }));
+  }, []);
 
-      const res = await inspectVideo({
-        body: { video: f },
-        onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total || progressEvent.bytes;
-          const loaded = progressEvent.loaded;
-          setUploadProgress(Math.round((loaded / total) * 100));
-        },
-        signal: abortController.ref.current?.signal,
-      });
+  const triggerUpdate = useCallback(() => {
+    setFilesStateMap((state) => ({
+      ...state,
+    }));
+  }, []);
 
-      if (res.error) {
-        throw res;
+  const handleReset = useCallback(() => {
+    for (const file of files) {
+      const fileState = filesStateMap[file.name];
+
+      if (!fileState) {
+        continue;
       }
 
-      setError(null);
-      setInspectData(res.data as Record<string, unknown>);
-    } catch (err) {
-      const error = err as ApiError;
-      const errorMessage =
-        error.error || error.message || error.status || "Inspection failed.";
-
-      toast.error(errorMessage);
-
-      setError(errorMessage.toString());
-    } finally {
-      setIsInspecting(false);
-      abortController.ref.current = null;
+      fileState.abortController.abort();
     }
-  }
+    setFiles([]);
+  }, [files, filesStateMap]);
 
-  function handleReset() {
-    abortController.ref.current?.abort();
+  const handleCompressFiles = useCallback(async () => {
+    const requests = [];
 
-    setFile(null);
-    setInspectData(null);
-    setError(null);
-  }
+    for (const file of files) {
+      const fileState = filesStateMap[file.name];
+
+      if (!fileState) {
+        continue;
+      }
+
+      requests.push(() =>
+        getCompressVideoPromise(file, fileState, triggerUpdate),
+      );
+    }
+
+    try {
+      await Promise.all(requests.map((r) => r()));
+    } catch (err) {
+      console.log(err);
+    }
+  }, [files, filesStateMap, triggerUpdate]);
+
+  const handleInspectFiles = async () => {
+    const requests = [];
+
+    for (const file of files) {
+      const fileState = filesStateMap[file.name];
+
+      if (!fileState) {
+        continue;
+      }
+
+      requests.push(() =>
+        getInspectVideoPromise(file, fileState, triggerUpdate),
+      );
+    }
+
+    try {
+      await Promise.all(requests.map((r) => r()));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only trigger to files change
+  useEffect(() => {
+    if (files.length) {
+      handleInspectFiles();
+    }
+  }, [files]);
+
+  useEffect(() => {
+    setFilesStateMap((state) => {
+      Object.entries(videoState).forEach(([key, value]) => {
+        state[key].progress = value.progress;
+        state[key].progressType = value.done
+          ? ProgressType.Processed
+          : ProgressType.Processing;
+      });
+
+      return { ...state };
+    });
+  }, [videoState]);
+
+  useWebSocket();
 
   return (
-    <div className="flex flex-1 flex-col p-4 md:p-6 gap-6">
-      <VideoDropZone
-        file={file}
-        onFile={handleFile}
-        onReset={handleReset}
-        disabled={isInspecting}
-      />
-      <div className={"flex gap-6 items-center"}>
-        {!!file && (
-          <VideoAttachment
-            isInspecting={isInspecting}
-            fileName={file.name}
-            uploadProgress={uploadProgress}
-            abort={abortController.abort}
-          />
-        )}
-        {!!inspectData && (
-          <VideoCompress
-            file={file}
-            isInspecting={isInspecting}
-            abortController={abortController}
-            setError={setError}
-          />
+    <div className="flex flex-1 w-full justify-center">
+      <div className={"flex flex-1 flex-col p-4 md:p-6 gap-8 max-w-200"}>
+        {files.length ? (
+          <>
+            <ControlsBar
+              compressFiles={handleCompressFiles}
+              reset={handleReset}
+              filesStateMap={filesStateMap}
+            />
+            <FilesList files={files} filesStateMap={filesStateMap} />
+          </>
+        ) : (
+          <DropZone addFiles={handleAddFiles} />
         )}
       </div>
-      {!isInspecting && error && <VideoInspectError message={error} />}
-      {inspectData && (
-        <VideoInspectResult data={inspectData} isLoading={isInspecting} />
-      )}
     </div>
   );
 }

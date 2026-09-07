@@ -9,6 +9,7 @@ use crate::features::auth::dto::AuthenticatedUser;
 use crate::features::auth::repository::PostgresUserRepository;
 use crate::features::auth::service::AuthService;
 
+#[allow(dead_code)]
 pub async fn auth(
   State(app_state): State<AppState>,
   headers: HeaderMap,
@@ -28,6 +29,7 @@ pub async fn auth(
   Ok(next.run(request).await)
 }
 
+#[allow(dead_code)]
 fn get_token(headers: &HeaderMap) -> Option<&str> {
   let auth_header = headers
     .get(header::AUTHORIZATION)
@@ -36,6 +38,7 @@ fn get_token(headers: &HeaderMap) -> Option<&str> {
   (scheme.eq_ignore_ascii_case("bearer")).then_some(token)
 }
 
+#[allow(dead_code)]
 pub async fn authenticate_user(
   token: &str,
   jwt_service: &JwtService,

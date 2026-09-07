@@ -7,6 +7,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "components/theme-provider";
 import { Toaster } from "components/ui/sonner";
 import { TooltipProvider } from "components/ui/tooltip";
+import { Provider } from "jotai";
+import { store } from "store";
+
 import "lib/setup";
 
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -22,8 +25,10 @@ export default function Providers({ children }: PropsWithChildren) {
         disableTransitionOnChange
       >
         <TooltipProvider>
-          {children}
-          <Toaster />
+          <Provider store={store}>
+            {children}
+            <Toaster />
+          </Provider>
         </TooltipProvider>
       </ThemeProvider>
       <Analytics />

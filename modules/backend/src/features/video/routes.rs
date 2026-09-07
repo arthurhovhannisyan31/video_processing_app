@@ -1,27 +1,34 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use axum::extract::{DefaultBodyLimit, Multipart};
+use axum::extract::ws::{CloseFrame, Message, WebSocket, close_code};
+use axum::extract::{DefaultBodyLimit, Multipart, Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use axum::routing::post;
+use axum::routing::{any, post};
 use axum::{Json, Router};
+use futures_util::stream::SplitSink;
+use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use tempfile::TempDir;
+use tokio::sync::mpsc;
 use tower_governor::GovernorLayer;
 use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
+use tracing::{error, info, warn};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
+use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
-use crate::features::video::helpers::append_path_suffix;
+use crate::core::extractors::XUserIdExtractor;
+use crate::features::video::helpers::{append_path_suffix, get_file_duration};
 use crate::features::video::inspect::dto::VideoInspectionResponse;
-use crate::features::video::inspect::ffprobe_mapper::ffprobe_mapper;
-use crate::features::video::inspect::ffprobe_runner::ffprobe_runner;
-use crate::features::video::process::build_response::build_response;
-use crate::features::video::process::configs::{OUTPUT_PATH_SUFFIX, get_preset_by_name};
-use crate::features::video::process::ffmpeg_runner::ffmpeg_runner;
+use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
+use crate::features::video::process::helpers::get_args;
 use crate::features::video::process::types::ProcessVideoMeta;
+use crate::features::video::state::{VideoState, VideoStateProgress};
 use crate::features::video::{inspect, process};
 use crate::router::routes;
 
@@ -29,10 +36,10 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
     .route(routes::VIDEO_JOBS, post(process_video))
+    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler))
     .layer(DefaultBodyLimit::max(
       app_state.app_config.video_max_body_size,
     ));
-  // .layer(middleware::from_fn_with_state(app_state, auth));
 
   if app_state.app_config.is_production {
     let rate_limiter = GovernorConfigBuilder::default()
@@ -73,14 +80,27 @@ pub struct InspectVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn inspect_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
+pub async fn inspect_video(
+  State(app_config): State<Arc<AppConfig>>,
+  State(video_state): State<Arc<VideoState>>,
+  media_data: Multipart,
+) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new()
     .map_err(|err| ApplicationError::Internal(format!("Failed to create temp directory: {err}")))?;
-  let file_path = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let inspection_data = ffprobe_runner(&file_path).await?;
-  let mapped_data = ffprobe_mapper(inspection_data)?;
 
-  Ok(Json(json!(VideoInspectionResponse::from(mapped_data))))
+  let inspect_meta = inspect::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let inspection_raw_data = inspect::ffprobe_runner::inspect_file(
+    &inspect_meta.local_path,
+    app_config.video_inspect_timeout,
+  )
+  .await?;
+  let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
+
+  video_state
+    .cache
+    .insert(inspect_meta.file_name, media_meta_data.clone());
+
+  Ok(Json(json!(VideoInspectionResponse::from(media_meta_data))))
 }
 
 // Struct used for openapi schema typings
@@ -105,13 +125,131 @@ pub struct ProcessVideoPayload {
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-pub async fn process_video(media_data: Multipart) -> Result<impl IntoResponse, ApplicationError> {
+pub async fn process_video(
+  State(app_config): State<Arc<AppConfig>>,
+  State(video_state): State<Arc<VideoState>>,
+  XUserIdExtractor(user_id): XUserIdExtractor,
+  media_data: Multipart,
+) -> Result<impl IntoResponse, ApplicationError> {
   let temp_dir = TempDir::new().map_err(ServerError::IO)?;
-  let ProcessVideoMeta { command, file_path } =
-    process::form_data_reader::read(media_data, temp_dir.path()).await?;
-  let output_path = append_path_suffix(&file_path, OUTPUT_PATH_SUFFIX)?;
-  let preset = get_preset_by_name(&command)?;
-  ffmpeg_runner(&file_path, &output_path, preset).await?;
+  let ProcessVideoMeta {
+    operation,
+    local_path,
+    file_name,
+  } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
+  let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
+  let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
+  let duration = get_file_duration(&file_name, &local_path, &video_state, &app_config).await?;
 
-  Ok(build_response(&file_path, &output_path).await?)
+  process::ffmpeg_runner::process_file(
+    ffmpeg_args,
+    &file_name,
+    video_state,
+    user_id,
+    duration,
+    app_config.video_process_timeout,
+  )
+  .await?;
+
+  Ok(process::build_response::build_response(&local_path, &output_path).await?)
+}
+
+#[utoipa::path(
+  get,
+  path = "/video/ws/{user_id}",
+  responses(
+    (
+      status = 101,
+      description = "Switching Protocols to WebSocket.",
+      headers(
+          ("Upgrade" = String, description = "websocket"),
+          ("Connection" = String, description = "Upgrade")
+      )
+    )
+  )
+)]
+async fn websocket_handler(
+  State(video_state): State<Arc<VideoState>>,
+  Path(user_id): Path<Uuid>,
+  ws: WebSocketUpgrade,
+) -> Result<impl IntoResponse, ApplicationError> {
+  Ok(
+    ws.on_failed_upgrade(move |err| {
+      error!("Error upgrading websocket for user {user_id}: {err}");
+    })
+    .on_upgrade(move |socket| handle_socket(socket, user_id, video_state)),
+  )
+}
+
+async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
+  let (mut sink, mut stream) = socket.split();
+  let (tx, mut rx) = mpsc::channel::<VideoStateProgress>(10);
+
+  {
+    let mut connections_map = video_state.connections_map.write();
+    if connections_map.contains_key(&user_id) {
+      warn!("Conflicting key for video WS connections map: {user_id}");
+
+      return;
+    }
+    connections_map.insert(user_id, tx);
+  }
+
+  loop {
+    tokio::select! {
+      progress_msg = rx.recv() => {
+        match progress_msg{
+          Some(msg) => {
+            let message = Message::from(json!(msg).to_string());
+
+            if let Err(err) = sink.send(message).await {
+              error!("Failed to send message to: {user_id}. Err: {err}");
+
+              break; // Disconnect if the socket is broken
+            }
+          }
+          None => {
+            let mut connections_map = video_state.connections_map.write();
+            connections_map.remove(&user_id);
+
+            break;
+          }
+        }
+      }
+      client_msg = stream.next() => {
+        match client_msg{
+          // Ping, Pong, Close are handled
+          Some(Ok(msg)) => {
+            info!("Regular message:  {user_id} {msg:?}");
+          }
+          Some(Err(err)) => {
+            warn!("Error receiving message from user {user_id}: {err}");
+            send_close_message(&mut sink, close_code::ERROR, &format!("Error occured: {}", err)).await;
+
+            break;
+          }
+          None => {
+            info!("WebSocket connection has been closed by user {user_id}");
+            let mut connections_map = video_state.connections_map.write();
+            connections_map.remove(&user_id);
+
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+async fn send_close_message(
+  socket_sink: &mut SplitSink<WebSocket, Message>,
+  code: u16,
+  reason: &str,
+) {
+  _ = socket_sink
+    .send(Message::Close(Some(CloseFrame {
+      code,
+      reason: reason.into(),
+    })))
+    .await;
 }

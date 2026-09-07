@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const isSSR = () => typeof window === "undefined";
 
-export const formatBytes = (bytes: number) => {
+export const formatBytes = (bytes: number, fractionDigits = 1) => {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024)).toFixed(fractionDigits)} MB`;
 };
