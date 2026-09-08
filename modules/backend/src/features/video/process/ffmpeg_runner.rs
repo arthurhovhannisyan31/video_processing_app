@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
-use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::warn;
 use uuid::Uuid;
@@ -37,71 +36,73 @@ pub async fn process_file(
     .ok_or(ServerError::Processing("Missing ffmpeg stderr".to_string()))?;
 
   let mut error_lines = BufReader::new(stderr).lines();
-  let file_name = file_name.to_string();
+  let file_name_str = file_name.to_string();
 
-  let log_task: JoinHandle<Result<(), ServerError>> = tokio::spawn(async move {
-    while let Some(line) = error_lines.next_line().await? {
-      let line = line.trim();
+  let process_result = timeout(process_timeout, async {
+    loop {
+      tokio::select! {
+        // Drain the stderr pipe lines to prevent buffer overflow and drop
+        line_res = error_lines.next_line() => {
+          match line_res {
+            Ok(Some(line)) => {
+              let line = line.trim();
+              if let Some((key, value)) = line.split_once('=') {
+                let mut message: Option<VideoStateProgress> = None;
 
-      if let Some((key, value)) = line.split_once('=') {
-        let mut message: Option<VideoStateProgress> = None;
+                match key {
+                  "out_time_ms" => {
+                    if value == "N/A" { continue; }
+                    let out_time_microseconds: i64 = value.parse().map_err(ServerError::ParseIntError)?;
+                    let out_time_seconds: f64 = out_time_microseconds as f64 / 1_000_000.0;
+                    let progress_value = (out_time_seconds / duration_seconds)
+                      .clamp(VIDEO_MIN_PROGRESS_VALUE, VIDEO_MAX_PROGRESS_VALUE);
 
-        match key {
-          "out_time_ms" => {
-            if value == "N/A" {
+                    message = Some(VideoStateProgress {
+                      file_name: file_name_str.clone(),
+                      value: progress_value,
+                      done: false,
+                    });
+                  }
+                  "progress" if value == "end" => {
+                    message = Some(VideoStateProgress {
+                      file_name: file_name_str.clone(),
+                      value: 1.0,
+                      done: true,
+                    });
+                  }
+                  _ => {}
+                }
+
+                if let Some(message) = message {
+                  let tx = video_state.connections_map.read().get(&user_id).cloned();
+                  if let Some(tx) = tx && let Err(err) = tx.send(message).await {
+                    warn!("Error while sending message to video state stream: {err}");
+                  }
+                }
+              }
+            }
+            Ok(None) => {
+              // Pipe closed
               continue;
             }
-
-            let out_time_microseconds: i64 = value.parse().map_err(ServerError::ParseIntError)?;
-            let out_time_seconds: f64 = out_time_microseconds as f64 / 1000000.0;
-
-            let progress_value = (out_time_seconds / duration_seconds)
-              .clamp(VIDEO_MIN_PROGRESS_VALUE, VIDEO_MAX_PROGRESS_VALUE);
-
-            message = Some(VideoStateProgress {
-              file_name: file_name.to_owned(),
-              value: progress_value,
-              done: false,
-            });
+            Err(err) => {
+              warn!("Failed to read processing progress line: {err:?}");
+            }
           }
-          "progress" if value == "end" => {
-            message = Some(VideoStateProgress {
-              file_name: file_name.to_owned(),
-              value: 1.0,
-              done: true,
-            });
-          }
-          _ => {}
         }
-
-        if let Some(message) = message {
-          // Get shor-lived sender access
-          let tx = video_state.connections_map.read().get(&user_id).cloned();
-          if let Some(tx) = tx
-            && let Err(err) = tx.send(message).await
-          {
-            warn!("Error while sending message to video state stream: {err}");
-          }
-          {}
+        // Wait for the exit status
+        status_res = ffmpeg_process.wait() => {
+          return status_res.map_err(|e| ServerError::Processing(e.to_string()));
         }
       }
     }
+  }).await;
 
-    Ok(())
-  });
-
-  let status = match timeout(process_timeout, ffmpeg_process.wait()).await {
+  // Handle timeout or underlying processing result
+  let status = match process_result {
     Ok(res) => res?,
-    Err(_) => {
-      log_task.abort();
-      return Err(ServerError::Processing("ffmpeg timed out".to_string()));
-    }
+    Err(_) => return Err(ServerError::Processing("ffmpeg timed out".to_string())),
   };
-
-  if let Err(err) = log_task.await? {
-    // Do not return if logging failed
-    warn!("Failed to log processing progress {err:?}");
-  }
 
   if !status.success() {
     return Err(ServerError::Processing(format!("ffmpeg error: {}", status)));
