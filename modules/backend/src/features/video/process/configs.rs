@@ -45,6 +45,8 @@ pub mod preset {
     vec![
       "-y",
       "-nostdin",
+      "-loglevel",
+      "quiet",
       "-vcodec",
       "libx264",
       "-crf",
