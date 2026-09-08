@@ -9,7 +9,7 @@ import {
   WS_RECONNECT_ATTEMPTS,
   WS_RECONNECT_TIMEOUT_TIME,
 } from "components/modules/video/constants";
-import { throttle } from "lodash-es";
+import { debounce } from "lodash-es";
 import { store } from "store";
 import { videoStore } from "store/video";
 
@@ -19,21 +19,23 @@ export const websocketPolicy: SocketPolicy = {
 };
 let retryCount = WS_RECONNECT_ATTEMPTS;
 
-const throttledSetStore = throttle((stateProgress: VideoStateProgress) => {
-  const videoState = store.get(videoStore);
-  store.set(videoStore, {
-    ...videoState,
-    [stateProgress.file_name]: {
-      progress: Math.round(stateProgress.value * 100),
-      done: stateProgress.done,
-    },
-  });
-}, 300);
+const throttledSetStore = debounce(
+  (stateProgress: VideoStateProgress) => {
+    const videoState = store.get(videoStore);
+    store.set(videoStore, {
+      ...videoState,
+      [stateProgress.file_name]: {
+        progress: Math.round(stateProgress.value * 100),
+        done: stateProgress.done,
+      },
+    });
+  },
+  300,
+  { trailing: true },
+);
 
 export const wsDelegateConfig: SocketDelegate = {
-  socketDidOpen: (_) => {
-    retryCount = WS_RECONNECT_ATTEMPTS;
-  },
+  socketDidOpen: (_) => {},
   socketDidReceiveMessage: (_socket: Socket, message: string) => {
     try {
       const stateProgress: VideoStateProgress = JSON.parse(message);
