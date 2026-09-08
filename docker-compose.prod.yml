@@ -14,7 +14,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '0.50'
+          cpus: '0.1'
         reservations:
           memory: 256M
     ulimits:
@@ -47,7 +47,7 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '0.50'
+          cpus: '0.9'
         reservations:
           memory: 256M
     restart: unless-stopped
