@@ -95,7 +95,7 @@ jobs:
           username: root
           key: ${{ secrets.HETZNER_SSH_KEY }}
           passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
-          source: "./configs/nginx/nginx.prod.conf,./configs/scripts/server-setup.sh"
+          source: "./configs/nginx/nginx.prod.conf,./configs/nginx/nginx.certbot.conf,./configs/scripts/server-setup.sh"
           target: "/root/server/"
           strip_components: 3
 
