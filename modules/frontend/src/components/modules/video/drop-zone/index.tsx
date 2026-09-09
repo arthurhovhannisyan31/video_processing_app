@@ -117,7 +117,9 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
           <p className="text-muted-foreground text-xs mt-1">
             or click to browse
           </p>
-          <p className="text-muted-foreground text-xs mt-1">5 files max</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            {MAX_FILES_COUNT} files max
+          </p>
         </div>
       </div>
     </div>

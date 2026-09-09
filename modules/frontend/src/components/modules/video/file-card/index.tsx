@@ -53,7 +53,7 @@ const FileCard: FC<FileCardProps> = ({
   };
 
   return (
-    <div className={"flex flex-col w-full gap-1.5"}>
+    <div className={"flex flex-col w-full gap-1.5 backdrop-blur-xs"}>
       <Attachment
         state={statusToAttachmentStateMap[status]}
         className="flex-1 gap-4 w-full"
