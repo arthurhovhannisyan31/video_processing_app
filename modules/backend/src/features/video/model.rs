@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct MediaMetadata {
@@ -24,4 +25,11 @@ pub struct AudioStream {
   pub id: String,
   pub bit_rate: i32,
   pub codec: String,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct VideoStateProgress {
+  pub file_name: String,
+  pub value: f64,
+  pub done: bool,
 }

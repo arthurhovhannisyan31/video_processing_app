@@ -18,6 +18,7 @@ use features::video::state::VideoState;
 use http::init_http_server;
 
 use crate::features::system::state::SystemState;
+use crate::features::video::process::service::VideoService;
 
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
@@ -37,7 +38,9 @@ async fn main() -> Result<(), ServerError> {
       jwt_service,
     }),
     app_config: Arc::new(app_config),
-    video_state: Arc::from(VideoState::default()),
+    video_state: Arc::from(VideoState {
+      video_service: VideoService::default(),
+    }),
     system_state: Arc::new(SystemState { db_pool: pool }),
   };
 

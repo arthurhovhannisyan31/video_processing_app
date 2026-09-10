@@ -11,7 +11,7 @@ const CACHE_TTI: u64 = 600;
 
 type VideoMediaDataCache = Cache<String, MediaMetadata>;
 
-pub fn build_cache() -> VideoMediaDataCache {
+pub fn build_media_data_cache() -> VideoMediaDataCache {
   Cache::<String, MediaMetadata>::builder()
     .time_to_live(Duration::from_secs(CACHE_TTL))
     .time_to_idle(Duration::from_secs(CACHE_TTI))
