@@ -4,6 +4,8 @@ services:
     image: postgres:18.4
     env_file:
       - .env.container
+    volumes:
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1
       interval: 10s
@@ -14,9 +16,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '0.1'
+          cpus: '1.0'
+          pids: 200
         reservations:
-          memory: 256M
+          memory: 512M
     ulimits:
       nofile:
         soft: 65536
@@ -26,6 +29,7 @@ services:
   backend:
     container_name: app_server
     build:
+      context: .
       dockerfile: ./configs/docker/backend.dockerfile
     env_file:
       - .env.container
@@ -47,9 +51,11 @@ services:
       resources:
         limits:
           memory: 6G
-          cpus: '0.9'
+          cpus: '3.0'
+          pids: 6000
         reservations:
-          memory: 256M
+          memory: 2G
+          cpus: '1.5'
     restart: unless-stopped
     logging:
       driver: json-file
@@ -59,11 +65,22 @@ services:
   #================================================
   nginx:
     image: nginx:stable-alpine
+    container_name: nginx_proxy
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+        restart: true
     ports:
       - "8080:80"
     volumes:
       - ./configs/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
       - ./configs/.ssh/cloudflare:/etc/nginx/certs:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  pg_data:
