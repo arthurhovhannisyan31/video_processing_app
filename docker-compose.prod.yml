@@ -4,6 +4,8 @@ services:
     image: postgres:18.4
     env_file:
       - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1
       interval: 10s
@@ -14,9 +16,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '0.1'
+          cpus: '1.0'
+          pids: 200
         reservations:
-          memory: 256M
+          memory: 512M
     ulimits:
       nofile:
         soft: 65536
@@ -46,10 +49,12 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '0.9'
+          memory: 6G
+          cpus: '3.5'
+          pids: 200
         reservations:
-          memory: 256M
+          memory: 2G
+          cpus: '1.5'
     restart: unless-stopped
     logging:
       driver: json-file
@@ -57,20 +62,13 @@ services:
         max-size: "50m"
         max-file: "5"
   #================================================
-  certbot:
-    image: certbot/certbot:latest
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - webroot:/var/www/certbot
-    depends_on:
-      - nginx
-  #================================================
   nginx:
     image: nginx:stable-alpine
+    container_name: nginx_proxy
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+        restart: true
     ports:
       - "80:80"
       - "443:443"
@@ -80,8 +78,25 @@ services:
       - certbot-var:/var/lib/letsencrypt:ro
       - webroot:/var/www/certbot:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+  #================================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    depends_on:
+      - nginx
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - webroot:/var/www/certbot
+    restart: unless-stopped
 
 volumes:
   certbot-etc:
   certbot-var:
   webroot:
+  pg_data:

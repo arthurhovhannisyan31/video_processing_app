@@ -9,18 +9,22 @@
 
 ## Overview
 
-A full-stack app for inspecting and processing video files: upload a video, get its metadata (via `ffprobe`), run an `ffmpeg` operation on it, and watch the job progress live over a WebSocket. It's a monorepo with a Rust API server and a Next.js web client.
+A full-stack app for inspecting and processing video files: upload a video, get its metadata (via `ffprobe`), run an
+`ffmpeg` operation on it, and watch the job progress live over a WebSocket. It's a monorepo with a Rust API server and a
+Next.js web client.
 
-- **[`modules/backend`](modules/backend/README.md)** — Rust/Axum API: auth, video inspect/process endpoints, WebSocket progress updates, PostgreSQL storage. See its [README](modules/backend/README.md) for details.
-- **[`modules/frontend`](modules/frontend/README.md)** — Next.js/React web client: upload UI, auth, live job progress. See its [README](modules/frontend/README.md) for details.
+- **[`modules/backend`](modules/backend/README.md)** — Rust/Axum API: auth, video inspect/process endpoints, WebSocket
+  progress updates, PostgreSQL storage. See its [README](modules/backend/README.md) for details.
+- **[`modules/frontend`](modules/frontend/README.md)** — Next.js/React web client: upload UI, auth, live job progress.
+  See its [README](modules/frontend/README.md) for details.
 
 ## Tech stack
 
-| | |
-|---|---|
-| Backend | Rust, Axum, SQLx/PostgreSQL, JWT auth, `ffmpeg`/`ffprobe` |
+|          |                                                                                    |
+|----------|------------------------------------------------------------------------------------|
+| Backend  | Rust, Axum, SQLx/PostgreSQL, JWT auth, `ffmpeg`/`ffprobe`                          |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Jotai, better-auth |
-| Infra | Docker Compose, nginx, GitHub Actions CI/CD |
+| Infra    | Docker Compose, nginx, GitHub Actions CI/CD                                        |
 
 ## Repository layout
 
@@ -46,21 +50,30 @@ A full-stack app for inspecting and processing video files: upload a video, get 
 
 ## Getting started
 
-1. Copy the env template and fill in the values:
-   ```sh
-   cp .env.template .env
-   ```
-2. One-time setup (git hooks, DB query cache, API client generation):
-   ```sh
-   make prepare
-   ```
-3. Run each module in its own terminal:
-   ```sh
-   make backend    # cd modules/backend && cargo run
-   make frontend   # cd modules/frontend && yarn dev
-   ```
+### 1. Manual setup
 
-Or run everything via Docker Compose:
+1.1 Copy the env template and fill in the values:
+
+```sh
+cp .env.template .env.container
+```
+
+1.2 One-time setup (git hooks, DB query cache, API client generation):
+
+```sh
+make prepare
+```
+
+Or Run each module in its own terminal:
+
+```sh
+make backend    # cd modules/backend && cargo run
+make frontend   # cd modules/frontend && yarn dev
+```
+
+### 2. Docker Compose:
+
+You can run backend services with docker compose:
 
 ```sh
 docker compose -f docker-compose.dev.yml --env-file .env.container up --build
@@ -72,22 +85,23 @@ This starts Postgres, the backend, and an nginx reverse proxy (dev config in [`c
 
 Run from the repo root; each target delegates into the relevant module.
 
-| Command | Description |
-|---|---|
-| `make prepare` | install git hooks, prepare SQLx offline cache, generate the frontend API client |
-| `make backend` / `make frontend` | run the backend / frontend dev servers |
-| `make check` | lint both modules (`cargo clippy`, `yarn check`) |
-| `make format` / `make format-check` | format both modules / verify formatting in CI |
-| `make test` | run backend tests (`cargo nextest run`) |
-| `make audit` | dependency vulnerability audits for both modules |
-| `make generate-openapi` | regenerate `openapi.json` from the backend |
-| `make prepare-frontend-local` | regenerate the frontend's typed API client from the local backend schema |
+| Command                             | Description                                                                     |
+|-------------------------------------|---------------------------------------------------------------------------------|
+| `make prepare`                      | install git hooks, prepare SQLx offline cache, generate the frontend API client |
+| `make backend` / `make frontend`    | run the backend / frontend dev servers                                          |
+| `make check`                        | lint both modules (`cargo clippy`, `yarn check`)                                |
+| `make format` / `make format-check` | format both modules / verify formatting in CI                                   |
+| `make test`                         | run backend tests (`cargo nextest run`)                                         |
+| `make audit`                        | dependency vulnerability audits for both modules                                |
+| `make generate-openapi`             | regenerate `openapi.json` from the backend                                      |
+| `make prepare-frontend-local`       | regenerate the frontend's typed API client from the local backend schema        |
 
 ## CI/CD
 
 GitHub Actions workflows in [`.github/workflows`](.github/workflows):
 
-- **code-validation** — spins up Postgres, runs migrations, generates the OpenAPI client, then lints/formats/tests both modules on every push
+- **code-validation** — spins up Postgres, runs migrations, generates the OpenAPI client, then lints/formats/tests both
+  modules on every push
 - **packages-validation** — `cargo audit` and `yarn npm audit`
 - **cleanup-caches** — clears GitHub Actions caches for closed branches
 - **server-build-and-deploy** — builds/pushes the backend Docker image and deploys it

@@ -1,5 +1,4 @@
 use std::process::Stdio;
-use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -10,12 +9,13 @@ use uuid::Uuid;
 
 use crate::core::error::ServerError;
 use crate::features::video::constants::{VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE};
-use crate::features::video::state::{VideoState, VideoStateProgress};
+use crate::features::video::model::VideoStateProgress;
+use crate::features::video::process::service::VideoWsConnectionsMap;
 
 pub async fn process_file(
   args: Vec<&str>,
   file_name: &str,
-  video_state: Arc<VideoState>,
+  connections_map: &VideoWsConnectionsMap,
   user_id: Uuid,
   duration_seconds: f64,
   process_timeout: Duration,
@@ -74,7 +74,7 @@ pub async fn process_file(
                 }
 
                 if let Some(message) = message {
-                  let tx = video_state.connections_map.read().get(&user_id).cloned();
+                  let tx = connections_map.read().get(&user_id).cloned();
                   if let Some(tx) = tx && let Err(err) = tx.send(message).await {
                     warn!("Error while sending message to video state stream: {err}");
                   }

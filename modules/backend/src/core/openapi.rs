@@ -2,10 +2,10 @@ use utoipa::OpenApi;
 
 use crate::features::auth::routes::{__path_login, __path_register};
 use crate::features::system::routes::{__path_health, __path_openapi};
+use crate::features::video::model::VideoStateProgress;
 use crate::features::video::routes::{
   __path_inspect_video, __path_process_video, __path_websocket_handler,
 };
-use crate::features::video::state::VideoStateProgress;
 
 #[derive(OpenApi)]
 #[openapi(

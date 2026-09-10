@@ -1,17 +1,18 @@
 use std::fmt::Display;
+use std::io::ErrorKind;
 use std::path::Path;
 use std::str::FromStr;
-use std::sync::Arc;
+use std::time::Duration;
 
 use axum::extract::multipart::Field;
 use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
+use tokio::io;
 use tokio::io::AsyncWriteExt;
 
-use crate::core::app_config::AppConfig;
-use crate::core::error::{ApplicationError, ServerError};
+use crate::core::error::ServerError;
 use crate::features::video::inspect;
-use crate::features::video::state::VideoState;
+use crate::features::video::process::service::MediaDataCache;
 use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -24,36 +25,42 @@ where
   s.parse::<T>().map_err(serde::de::Error::custom)
 }
 
-pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ApplicationError> {
+pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerError> {
   if path.is_empty() {
-    return Err(ApplicationError::Internal("Path is empty".to_string()));
+    return Err(ServerError::IO(io::Error::new(
+      ErrorKind::NotFound,
+      "File not found",
+    )));
   }
   if suffix.is_empty() {
-    return Err(ApplicationError::Internal("Suffix is empty".to_string()));
+    return Err(ServerError::DataError("Suffix is empty".to_string()));
   }
 
   let path = Path::new(path);
   let stem = path
     .file_stem()
-    .ok_or(ApplicationError::Internal(
-      "Failed to read file stem".to_string(),
-    ))?
+    .ok_or(ServerError::IO(io::Error::new(
+      ErrorKind::InvalidFilename,
+      "Failed to read file stem",
+    )))?
     .to_str()
-    .ok_or(ApplicationError::Internal(
+    .ok_or(ServerError::DataError(
       "Failed to convert file stem to string".to_string(),
     ))?;
   let extension = path
     .extension()
-    .ok_or(ApplicationError::Internal(
-      "Failed to read file extension".to_string(),
-    ))?
+    .ok_or(ServerError::IO(io::Error::new(
+      ErrorKind::InvalidFilename,
+      "Failed to read file extension",
+    )))?
     .to_str()
-    .ok_or(ApplicationError::Internal(
+    .ok_or(ServerError::DataError(
       "Failed to convert file extension to string".to_string(),
     ))?;
-  let parent_path = path.parent().ok_or(ApplicationError::Internal(
-    "Failed to read file parent directory".to_string(),
-  ))?;
+  let parent_path = path.parent().ok_or(ServerError::IO(io::Error::new(
+    ErrorKind::NotFound,
+    "Failed to read file parent directory",
+  )))?;
   let new_name = format!("{stem}{suffix}.{extension}");
   let output_path = parent_path.join(new_name);
 
@@ -104,18 +111,16 @@ pub async fn read_form_data_to_file(
 pub async fn get_file_duration(
   file_name: &str,
   local_path: &str,
-  video_state: &Arc<VideoState>,
-  app_config: &Arc<AppConfig>,
-) -> Result<f64, ApplicationError> {
-  let duration = match video_state.cache.get(&file_name.to_string()) {
+  media_data_cache: &MediaDataCache,
+  video_inspect_timeout: Duration,
+) -> Result<f64, ServerError> {
+  let duration = match media_data_cache.get(&file_name.to_string()) {
     Some(meta) => meta.duration_seconds,
     None => {
       let inspection_raw_data =
-        inspect::ffprobe_runner::inspect_file(local_path, app_config.video_inspect_timeout).await?;
+        inspect::ffprobe_runner::inspect_file(local_path, video_inspect_timeout).await?;
       let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
-      video_state
-        .cache
-        .insert(file_name.to_string(), media_meta_data.clone());
+      media_data_cache.insert(file_name.to_string(), media_meta_data.clone());
       media_meta_data.duration_seconds
     }
   };
