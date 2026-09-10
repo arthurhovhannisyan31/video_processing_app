@@ -49,6 +49,7 @@ export default function VideoPage() {
       fileState.abortController.abort();
     }
     setFiles([]);
+    setFilesStateMap({});
   }, [files, filesStateMap]);
 
   const handleCompressFiles = useCallback(async () => {
@@ -105,6 +106,9 @@ export default function VideoPage() {
   useEffect(() => {
     setFilesStateMap((state) => {
       Object.entries(videoState).forEach(([key, value]) => {
+        if (!state[key]) {
+          return;
+        }
         state[key].progress = value.progress;
         state[key].progressType = value.done
           ? ProgressType.Processed

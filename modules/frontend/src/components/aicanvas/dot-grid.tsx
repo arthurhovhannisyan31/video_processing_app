@@ -18,9 +18,9 @@ const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 const SPACING = 20; // tune: raise to spread the dots farther apart
-const RADIUS = 130; // tune: raise to widen the pointer influence
-const BASE_A = 0.13; // tune: raise to brighten resting dots
-const PEAK_A = 0.92; // tune: raise to brighten highlighted dots
+const RADIUS = 150; // tune: raise to widen the pointer influence
+const BASE_A = 0.15; // tune: raise to brighten resting dots
+const PEAK_A = 1; // tune: raise to brighten highlighted dots
 
 export interface InteractiveDotGridProps extends PropsWithChildren {
   colors?: {

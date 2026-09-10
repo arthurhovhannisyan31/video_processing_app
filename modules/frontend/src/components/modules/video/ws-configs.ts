@@ -19,28 +19,40 @@ export const websocketPolicy: SocketPolicy = {
 };
 let retryCount = WS_RECONNECT_ATTEMPTS;
 
-const throttledSetStore = debounce(
-  (stateProgress: VideoStateProgress) => {
-    const videoState = store.get(videoStore);
-    store.set(videoStore, {
-      ...videoState,
-      [stateProgress.file_name]: {
-        progress: Math.round(stateProgress.value * 100),
-        done: stateProgress.done,
-      },
-    });
-  },
-  300,
-  { trailing: true },
-);
+const debouncedUpdaters = new Map<string, ReturnType<typeof debounce>>();
+const getDebouncedUpdater = (fileName: string) => {
+  if (!debouncedUpdaters.has(fileName)) {
+    debouncedUpdaters.set(
+      fileName,
+      debounce(
+        (stateProgress: VideoStateProgress) => {
+          const videoState = store.get(videoStore);
+          store.set(videoStore, {
+            ...videoState,
+            [stateProgress.file_name]: {
+              progress: Math.round(stateProgress.value * 100),
+              done: stateProgress.done,
+            },
+          });
+        },
+        200,
+        { trailing: true, leading: true },
+      ),
+    );
+  }
+  return debouncedUpdaters.get(fileName);
+};
 
 export const wsDelegateConfig: SocketDelegate = {
   socketDidOpen: (_) => {},
   socketDidReceiveMessage: (_socket: Socket, message: string) => {
     try {
       const stateProgress: VideoStateProgress = JSON.parse(message);
+      const updateFn = getDebouncedUpdater(stateProgress.file_name);
 
-      throttledSetStore(stateProgress);
+      if (!updateFn) return;
+
+      updateFn(stateProgress);
     } catch (err) {
       console.warn(err);
       return;
