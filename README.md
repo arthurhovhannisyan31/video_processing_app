@@ -18,6 +18,8 @@ Next.js web client.
 - **[`modules/frontend`](modules/frontend/README.md)** — Next.js/React web client: upload UI, auth, live job progress.
   See its [README](modules/frontend/README.md) for details.
 
+![img.png](./static/images/system-architecture.png)
+
 ## Tech stack
 
 |          |                                                                                    |
