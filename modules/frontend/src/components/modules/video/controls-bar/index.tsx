@@ -39,7 +39,7 @@ export const ControlsBar: FC<ControlsBarProps> = ({
   return (
     <div className={"flex gap-4 w-full justify-center"}>
       <Button
-        className="w-full sm:w-auto h-10 text-base backdrop-blur-xs"
+        className="sm:w-auto h-10 text-base backdrop-blur-xs"
         onClick={compressFiles}
         disabled={isInspecting || isCompressing}
       >
@@ -47,7 +47,7 @@ export const ControlsBar: FC<ControlsBarProps> = ({
       </Button>
       <Button
         variant={"destructive"}
-        className="w-full sm:w-auto h-10 text-base backdrop-blur-xs"
+        className="sm:w-auto h-10 text-base backdrop-blur-xs"
         onClick={reset}
       >
         Reset
