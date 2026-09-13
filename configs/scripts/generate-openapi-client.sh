@@ -16,6 +16,7 @@ else
 fi
 
 # Run the openapi-ts generator
-yarn openapi-ts --client=@hey-api/client-axios \
+yarn openapi-ts \
+  -c @hey-api/client-axios \
   -i "$SCHEMA_SRC" \
   -o "$OUTPUT_DIR"
