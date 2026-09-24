@@ -9,6 +9,8 @@ use crate::core::app_config::AppConfig;
 use crate::core::extractors::X_USER_ID_HEADER;
 
 pub fn build_cors_layer(app_config: Arc<AppConfig>) -> CorsLayer {
+  println!("app_config.cors_origins {:?}", app_config.cors_origins);
+
   let origin_values: Vec<HeaderValue> = app_config
     .cors_origins
     .iter()

@@ -17,6 +17,7 @@ export default function VideoPage() {
   const videoState = useAtomValue(videoStore);
   const [files, setFiles] = useState<File[]>([]);
   const [filesStateMap, setFilesStateMap] = useState<FilesStateMap>({});
+  const { openConnection } = useWebSocket();
 
   const handleAddFiles = useCallback((newFiles: File[]) => {
     setFiles((files) => [...files, ...newFiles]);
@@ -53,6 +54,8 @@ export default function VideoPage() {
   }, [files, filesStateMap]);
 
   const handleCompressFiles = useCallback(async () => {
+    await openConnection();
+
     const requests = [];
 
     for (const file of files) {
@@ -72,7 +75,7 @@ export default function VideoPage() {
     } catch (err) {
       console.log(err);
     }
-  }, [files, filesStateMap, triggerUpdate]);
+  }, [files, filesStateMap, triggerUpdate, openConnection]);
 
   const handleInspectFiles = async () => {
     const requests = [];
@@ -118,8 +121,6 @@ export default function VideoPage() {
       return { ...state };
     });
   }, [videoState]);
-
-  useWebSocket();
 
   return (
     <div className="flex flex-1 w-full justify-center">

@@ -127,23 +127,17 @@ impl VideoService {
     loop {
       tokio::select! {
         progress_msg = rx.recv() => {
-          match progress_msg{
-            Some(msg) => {
-              let message = Message::from(json!(msg).to_string());
+          if let Some(msg) = progress_msg {
+            let message = Message::from(json!(msg).to_string());
 
-              if let Err(err) = sink.send(message).await {
-                error!(user_id = %user_id, error = %err, "Failed to send message to user");
+            if let Err(err) = sink.send(message).await {
+              error!(user_id = %user_id, error = %err, "Failed to send message to user");
 
-                break; // Disconnect if the socket is broken
-              }
-            }
-            None => {
-              let mut connections_map = self.connections_map.write();
-              connections_map.remove(&user_id);
-
-              break;
+              break; // Disconnect if the socket is broken
             }
           }
+          // Err case is not needed. Sender is not dropped on processing sid so channel only closed
+          // when removed from connections_map.
         }
         client_msg = stream.next() => {
           match client_msg{
@@ -151,23 +145,25 @@ impl VideoService {
             Some(Ok(msg)) => {
               info!("Regular message:  {user_id} {msg:?}");
             }
+            // Connection reset without closing handshake
             Some(Err(err)) => {
+              // TODO Test it
               warn!(user_id = %user_id, err = %err, "Error receiving message from user");
               send_close_message(&mut sink, close_code::ERROR, &format!("Error occured: {}", err)).await;
-
               break;
             }
+            // Connection closed
             None => {
               info!(user_id = %user_id, "WebSocket connection has been closed by user");
-              let mut connections_map = self.connections_map.write();
-              connections_map.remove(&user_id);
-
               break;
             }
           }
         }
       }
     }
+
+    let mut connections_map = self.connections_map.write();
+    connections_map.remove(&user_id);
   }
 }
 async fn send_close_message(

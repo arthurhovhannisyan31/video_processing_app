@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef } from "react";
+import { type RefObject, useCallback, useEffect, useRef } from "react";
 
 import {
   BufferedSocket,
@@ -7,29 +7,41 @@ import {
   StableSocket,
 } from "@github/stable-socket";
 
+export interface BufferedWebSocketResult {
+  ref: RefObject<BufferedSocket | null>;
+  openConnection: () => Promise<void>;
+}
+
 export const useBufferedWebSocket = (
   url: string,
   isReady: boolean,
   delegate: SocketDelegate,
   policy: SocketPolicy,
-): RefObject<BufferedSocket | null> => {
-  const wsRef = useRef<BufferedSocket | null>(null);
+): BufferedWebSocketResult => {
+  const ref = useRef<BufferedSocket | null>(null);
+
+  const openConnection = useCallback(async () => {
+    if (isReady && ref.current && !ref.current?.isOpen()) {
+      await ref.current.open();
+    }
+  }, [isReady]);
 
   useEffect(() => {
-    if (isReady && wsRef.current === null) {
-      wsRef.current = new BufferedSocket(
-        new StableSocket(url, delegate, policy),
-      );
+    if (isReady && ref.current === null) {
+      ref.current = new BufferedSocket(new StableSocket(url, delegate, policy));
 
-      void wsRef.current.open();
+      void ref.current.open();
     }
 
     return () => {
-      if (wsRef.current?.isOpen()) {
-        wsRef.current.close();
+      if (ref.current?.isOpen()) {
+        ref.current.close();
       }
     };
   }, [delegate, isReady, policy, url]);
 
-  return wsRef;
+  return {
+    ref,
+    openConnection,
+  };
 };

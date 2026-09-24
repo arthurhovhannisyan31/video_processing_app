@@ -2,7 +2,6 @@
 GET {{api_host}}/health
 Accept: application/json
 Content-Type: application/json
-Origin: http://localhost:3000
 
 ### Check server readyness
 GET {{api_host}}/ready
