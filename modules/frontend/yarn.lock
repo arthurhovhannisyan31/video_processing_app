@@ -946,10 +946,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hugeicons/core-free-icons@npm:^4.3.2":
-  version: 4.3.2
-  resolution: "@hugeicons/core-free-icons@npm:4.3.2"
-  checksum: 10/14743687eac129eb01167ef5a2d75bf628c6643dcce003a42d7d130ecae976d25be8ab73e5ff4d0db9a52405ad189046ed5cf983fcadcc60c17617fa98105ec9
+"@hugeicons/core-free-icons@npm:^4.3.3":
+  version: 4.3.3
+  resolution: "@hugeicons/core-free-icons@npm:4.3.3"
+  checksum: 10/102309ba88da47695d76c9e57fce7dd2aedccf91fa8ec3a313f729ffae8e0c6bc0960bc2664bc393cf30b919c0c9f7b9bf1a84b3124dd3a56683a294926c6ac6
   languageName: node
   linkType: hard
 
@@ -3189,7 +3189,7 @@ __metadata:
     "@github/stable-socket": "npm:^1.1.1"
     "@hey-api/openapi-ts": "npm:^0.99.0"
     "@hookform/resolvers": "npm:^5.5.7"
-    "@hugeicons/core-free-icons": "npm:^4.3.2"
+    "@hugeicons/core-free-icons": "npm:^4.3.3"
     "@hugeicons/react": "npm:^1.1.10"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@tanstack/react-query": "npm:^5.101.4"
