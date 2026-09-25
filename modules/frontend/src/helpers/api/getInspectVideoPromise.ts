@@ -7,6 +7,7 @@ import {
   Status,
 } from "components/modules/video/constants";
 import { inspectVideo } from "generated/client";
+import { getErrorMessage } from "helpers/utils";
 import { toast } from "sonner";
 
 export const getInspectVideoPromise = (
@@ -48,11 +49,7 @@ export const getInspectVideoPromise = (
         fileState.status = Status.Error;
 
         const error = err as ApiError;
-        const errorMessage = (
-          error.message ||
-          error.status ||
-          "Inspection failed."
-        ).toString();
+        const errorMessage = getErrorMessage(error, "Inspection failed.");
         fileState.error = errorMessage;
         toast.error(errorMessage);
 

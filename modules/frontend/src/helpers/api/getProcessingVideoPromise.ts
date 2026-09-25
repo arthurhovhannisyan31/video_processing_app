@@ -8,6 +8,7 @@ import {
   Status,
 } from "components/modules/video/constants";
 import { processVideo } from "generated/client";
+import { getErrorMessage } from "helpers/utils";
 import { toast } from "sonner";
 
 export const getCompressVideoPromise = (
@@ -50,11 +51,7 @@ export const getCompressVideoPromise = (
         fileState.status = Status.Error;
 
         const error = err as ApiError;
-        const errorMessage = (
-          error.message ||
-          error.status ||
-          "Inspection failed."
-        ).toString();
+        const errorMessage = getErrorMessage(error, "Processing failed.");
         fileState.error = errorMessage;
         toast.error(errorMessage);
 
