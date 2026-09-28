@@ -14,7 +14,7 @@ use serde_json::json;
 use tempfile::TempDir;
 use tokio::io;
 use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 use uuid::Uuid;
 
 use crate::core::error::ServerError;

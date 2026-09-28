@@ -27,6 +27,7 @@ pub struct AppConfig {
   pub video_inspect_timeout: Duration,
   pub video_process_timeout: Duration,
   pub mock_password_hash: String,
+  pub sentry_dsn: String,
 }
 
 impl AppConfig {
@@ -81,6 +82,8 @@ impl AppConfig {
     let mock_password_hash = env::var("BACKEND_VIDEO_MOCK_PASSWORD_HASH").map_err(|e| {
       ServerError::VarError(format!("Missing BACKEND_VIDEO_MOCK_PASSWORD_HASH: {e}"))
     })?;
+    let sentry_dsn = env::var("SENTRY_DSN")
+      .map_err(|e| ServerError::VarError(format!("Missing SENTRY_DSN: {e}")))?;
 
     Ok(Self {
       host,
@@ -96,6 +99,7 @@ impl AppConfig {
       video_inspect_timeout: Duration::from_secs(video_inspect_timeout),
       video_process_timeout: Duration::from_secs(video_process_timeout),
       mock_password_hash,
+      sentry_dsn,
     })
   }
 }

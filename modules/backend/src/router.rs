@@ -1,4 +1,8 @@
 use axum::Router;
+use axum::body::Body;
+use axum::http::Request;
+use sentry::integrations::tower::NewSentryLayer;
+use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::trace::TraceLayer;
 
@@ -32,7 +36,8 @@ pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
     .nest("/api", merged_router)
     .layer(TraceLayer::new_for_http())
     .layer(CompressionLayer::new())
-    .layer(build_cors_layer(app_state.app_config.clone()));
+    .layer(build_cors_layer(app_state.app_config.clone()))
+    .layer(ServiceBuilder::new().layer(NewSentryLayer::<Request<Body>>::new_from_top()));
 
   Ok(router)
 }

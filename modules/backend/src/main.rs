@@ -7,44 +7,44 @@ use core::app_config::AppConfig;
 use core::app_state::AppState;
 use core::database::{create_pool, run_migrations};
 use core::error::ServerError;
-use core::jwt::JwtService;
 use core::logging::init_logging;
-use std::sync::Arc;
 
-use features::auth::repository::PostgresUserRepository;
-use features::auth::service::AuthService;
-use features::auth::state::AuthState;
-use features::video::state::VideoState;
 use http::init_http_server;
+use tracing::error;
 
-use crate::features::system::state::SystemState;
-use crate::features::video::process::service::VideoService;
-
-#[tokio::main]
-async fn main() -> Result<(), ServerError> {
+fn main() -> Result<(), ServerError> {
   init_logging();
 
   let app_config = AppConfig::from_env()?;
-  let pool = create_pool(&app_config.database_url, app_config.db_max_connections).await?;
 
-  run_migrations(&pool).await?;
+  let _guard = sentry::init(
+    sentry::ClientOptions::new()
+      .dsn(&app_config.sentry_dsn)
+      .maybe_release(sentry::release_name!())
+      .send_default_pii(true),
+  );
 
-  let jwt_service = JwtService::new(app_config.jwt_secret.clone());
-  let users_repo = PostgresUserRepository::new(pool.clone());
-  let auth_service = AuthService::new(users_repo, jwt_service.clone());
-  let app_state = AppState {
-    auth_state: Arc::new(AuthState {
-      auth_service,
-      jwt_service,
-    }),
-    app_config: Arc::new(app_config),
-    video_state: Arc::from(VideoState {
-      video_service: VideoService::default(),
-    }),
-    system_state: Arc::new(SystemState { db_pool: pool }),
+  if let Err(err) = tokio::runtime::Builder::new_multi_thread()
+    .enable_all()
+    .build()?
+    .block_on(async {
+      let pool = create_pool(&app_config.database_url, app_config.db_max_connections).await?;
+
+      run_migrations(&pool).await?;
+
+      let app_state = AppState::new(app_config, pool);
+
+      if let Err(err) = init_http_server(app_state).await {
+        sentry::capture_error(&err);
+        error!("Error: {err}");
+      }
+
+      Ok::<(), ServerError>(())
+    })
+  {
+    sentry::capture_error(&err);
+    error!("Error: {err}");
   };
-
-  init_http_server(app_state).await?;
 
   Ok(())
 }
