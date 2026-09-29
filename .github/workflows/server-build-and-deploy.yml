@@ -17,25 +17,6 @@ jobs:
     name: Server build and deploy
     runs-on: ubuntu-latest
     environment: production
-    env:
-      CONTAINER: true
-      POSTGRES_DB: ${{ vars.POSTGRES_DB }}
-      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
-      POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
-      POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
-      POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-      BACKEND_HOST: ${{ vars.BACKEND_HOST }}
-      BACKEND_HTTP_PORT: ${{ vars.BACKEND_HTTP_PORT }}
-      BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
-      BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
-      DATABASE_URL: ${{ vars.DATABASE_URL }}
-      BACKEND_DB_MAX_CONNECTIONS: ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
-      BACKEND_VIDEO_MAX_BODY_SIZE: ${{ vars.BACKEND_VIDEO_MAX_BODY_SIZE }}
-      BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
-      BACKEND_VIDEO_RATE_LIMIT_SIZE: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
-      BACKEND_VIDEO_INSPECT_TIMEOUT: ${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
-      BACKEND_VIDEO_PROCESS_TIMEOUT: ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
-      BACKEND_VIDEO_MOCK_PASSWORD_HASH: ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -99,6 +80,28 @@ jobs:
           target: "/root/server/"
           strip_components: 3
 
+        env:
+          IS_PRODUCTION: true
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+          POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+          POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          BACKEND_HOST: ${{ vars.BACKEND_HOST }}
+          BACKEND_HTTP_PORT: ${{ vars.BACKEND_HTTP_PORT }}
+          BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
+          BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
+          BACKEND_DB_MAX_CONNECTIONS: ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
+          BACKEND_VIDEO_MAX_BODY_SIZE: ${{ vars.BACKEND_VIDEO_MAX_BODY_SIZE }}
+          BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
+          BACKEND_VIDEO_RATE_LIMIT_SIZE: ${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
+          BACKEND_VIDEO_INSPECT_TIMEOUT: ${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
+          BACKEND_VIDEO_PROCESS_TIMEOUT: ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
+          BACKEND_VIDEO_MOCK_PASSWORD_HASH: ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
       - name: Write env variables to host
         uses: appleboy/ssh-action@v1.2.5
         with:
@@ -107,31 +110,20 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           passphrase: ${{ secrets.HETZNER_PASSPHRASE }}
           script: |
+            # Determine image tag value
             NEW_TAG="${{ !inputs.skip_build && steps.tag.outputs.sha || '' }}"
             CURRENT_TAG=$(grep '^IMAGE_TAG=' /root/server/.env 2>/dev/null | cut -d= -f2- || true)
-            IMAGE_TAG=${NEW_TAG:-${CURRENT_TAG:-latest}}
+            export IMAGE_TAG=${NEW_TAG:-${CURRENT_TAG:-latest}}
+            export IS_PRODUCTION=true
+            
+            # Ensure env file exists
+            mkdir -p /root/server
             touch /root/server/.env
-            {
-            echo "IMAGE_TAG=$IMAGE_TAG"
-            echo "IS_PRODUCTION"=true
-            echo "POSTGRES_DB=${{ vars.POSTGRES_DB }}"
-            echo "POSTGRES_HOST=${{ vars.POSTGRES_HOST }}"
-            echo "POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}"
-            echo "POSTGRES_PORT=${{ vars.POSTGRES_PORT }}"
-            echo "POSTGRES_USER=${{ vars.POSTGRES_USER }}"
-            echo "DATABASE_URL=${{ vars.DATABASE_URL }}"
-            echo "BACKEND_HOST=${{ vars.BACKEND_HOST }}"
-            echo "BACKEND_HTTP_PORT=${{ vars.BACKEND_HTTP_PORT }}"
-            echo "BACKEND_JWT_SECRET=${{ vars.BACKEND_JWT_SECRET }}"
-            echo "BACKEND_CORS_ORIGINS=${{ vars.BACKEND_CORS_ORIGINS }}"
-            echo "BACKEND_DB_MAX_CONNECTIONS=${{ vars.BACKEND_DB_MAX_CONNECTIONS }}"
-            echo "BACKEND_VIDEO_MAX_BODY_SIZE"=${{ vars.BACKEND_VIDEO_MAX_BODY_SIZE }}
-            echo "BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC"=${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
-            echo "BACKEND_VIDEO_RATE_LIMIT_SIZE"=${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
-            echo "BACKEND_VIDEO_INSPECT_TIMEOUT"=${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
-            echo "BACKEND_VIDEO_PROCESS_TIMEOUT"=${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
-            echo "BACKEND_VIDEO_MOCK_PASSWORD_HASH"=${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
-            } > /root/server/.env.new
+            
+            # Collect all env variable groups and write to new env file
+            env | grep -E '^(IMAGE_TAG|IS_PRODUCTION|POSTGRES_|BACKEND_|DATABASE_|SENTRY_)' > /root/server/.env.new
+            
+            # replace old env file with new one
             mv /root/server/.env.new /root/server/.env
             chmod 600 /root/server/.env
 
