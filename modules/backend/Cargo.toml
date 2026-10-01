@@ -42,8 +42,9 @@ validator = { version = "0.21.0", features = ["derive"] }
 sentry = { version = "0.49.3", features = ["tower-axum-matched-path"] }
 
 [dev-dependencies]
-axum-test = "21.0"
+axum-test = { version = "21.0", features = ["ws"] }
 proptest = { version = "1.11.0", features = ["regex-syntax"] }
+tungstenite = "0.30.0"
 
 [profile.release]
 lto = "thin"

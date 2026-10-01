@@ -114,14 +114,28 @@ impl VideoService {
     let (mut sink, mut stream) = socket.split();
     let (tx, mut rx) = mpsc::channel::<VideoStateProgress>(10);
 
+    let mut has_conflict = false;
     {
       let mut connections_map = self.connections_map.write();
       if connections_map.contains_key(&user_id) {
+        has_conflict = true;
         warn!(user_id = %user_id, "Conflicting key for video WS connections map");
-
-        return;
       }
       connections_map.insert(user_id, tx);
+    }
+
+    if has_conflict {
+      if let Err(err) = send_close_message(
+        &mut sink,
+        close_code::ERROR,
+        "Duplicated connections are not allowed: Closing channel",
+      )
+      .await
+      {
+        error!(error = %err, "Failed sending ws close message");
+      }
+
+      return;
     }
 
     loop {
@@ -146,7 +160,11 @@ impl VideoService {
             // Connection reset without closing handshake
             Some(Err(err)) => {
               warn!(user_id = %user_id, err = %err, "Error receiving message from user");
-              send_close_message(&mut sink, close_code::ERROR, "Error occurred: Closing channel").await;
+
+              if let Err(err) = send_close_message(&mut sink, close_code::ERROR, "Error occurred: Closing channel").await {
+                error!(error = %err, "Failed sending ws close message");
+              }
+
               break;
             }
             // Connection closed
@@ -167,11 +185,13 @@ async fn send_close_message(
   socket_sink: &mut SplitSink<WebSocket, Message>,
   code: u16,
   reason: &str,
-) {
-  _ = socket_sink
+) -> Result<(), ServerError> {
+  socket_sink
     .send(Message::Close(Some(CloseFrame {
       code,
       reason: reason.into(),
     })))
-    .await;
+    .await?;
+
+  Ok(())
 }

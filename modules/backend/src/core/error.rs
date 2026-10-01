@@ -3,8 +3,7 @@ use std::net::AddrParseError;
 use std::num::{ParseFloatError, ParseIntError};
 
 use axum::extract::multipart::MultipartError;
-use axum::http;
-use axum::http::StatusCode;
+use axum::http::{self, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::json;
 use sqlx::migrate::MigrateError;
@@ -89,6 +88,8 @@ pub enum ServerError {
   MissingMediaData(String),
   #[error("Stale cache. Run inspection again: {0}")]
   StaleCache(String),
+  #[error("Failed sending message with ws sink: {0}")]
+  SocketSink(#[from] axum::Error),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -168,6 +169,7 @@ impl From<ServerError> for ApplicationError {
       ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::StaleCache(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::SocketSink(err) => ApplicationError::Internal(err.to_string()),
       ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
     }
   }
