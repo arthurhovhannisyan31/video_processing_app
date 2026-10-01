@@ -8,9 +8,9 @@ use crate::core::error::ServerError;
 
 pub const X_USER_ID_HEADER: &str = "x-user-id";
 
-pub struct XUserIdExtractor(pub Uuid);
+pub struct UserIdExtractor(pub Uuid);
 
-impl<S> FromRequestParts<S> for XUserIdExtractor
+impl<S> FromRequestParts<S> for UserIdExtractor
 where
   S: Send + Sync,
 {
@@ -19,7 +19,7 @@ where
   async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {
     if let Some(val) = parts.headers.get(X_USER_ID_HEADER) {
       if let Some(user_id) = val.to_str().ok().and_then(|val| Uuid::from_str(val).ok()) {
-        Ok(XUserIdExtractor(user_id))
+        Ok(UserIdExtractor(user_id))
       } else {
         Err(ServerError::DataError(
           "`X-USER-ID` header has wrong value".to_string(),

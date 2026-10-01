@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
-use crate::core::extractors::XUserIdExtractor;
+use crate::core::extractors::UserIdExtractor;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::state::VideoState;
 use crate::router::routes;
@@ -109,7 +109,7 @@ pub struct ProcessVideoPayload {
 pub async fn process_video(
   State(app_config): State<Arc<AppConfig>>,
   State(video_state): State<Arc<VideoState>>,
-  XUserIdExtractor(user_id): XUserIdExtractor,
+  UserIdExtractor(user_id): UserIdExtractor,
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
   Ok(
@@ -139,17 +139,15 @@ pub async fn process_video(
     )
   )
 )]
-async fn websocket_handler(
+pub async fn websocket_handler(
   State(video_state): State<Arc<VideoState>>,
   Path(user_id): Path<Uuid>,
   ws: WebSocketUpgrade,
-) -> Result<impl IntoResponse, ApplicationError> {
-  Ok(
-    ws.on_failed_upgrade(move |err| {
-      error!(user_id = %user_id, error = %err, "Error upgrading websocket for user");
-    })
-    .on_upgrade(move |socket| handle_socket(socket, user_id, video_state)),
-  )
+) -> impl IntoResponse {
+  ws.on_failed_upgrade(move |err| {
+    error!(user_id = %user_id, error = %err, "Error upgrading websocket for user");
+  })
+  .on_upgrade(move |socket| handle_socket(socket, user_id, video_state))
 }
 
 async fn handle_socket(socket: WebSocket, user_id: Uuid, video_state: Arc<VideoState>) {
