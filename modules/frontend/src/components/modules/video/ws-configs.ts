@@ -29,10 +29,10 @@ const RETRIABLE_WS_CODES = [
   WSCodes.TryAgainLater,
 ];
 
-const debouncedUpdaters = new Map<string, ReturnType<typeof debounce>>();
+const debouncedUpdatersMap = new Map<string, ReturnType<typeof debounce>>();
 const getDebouncedUpdater = (fileName: string) => {
-  if (!debouncedUpdaters.has(fileName)) {
-    debouncedUpdaters.set(
+  if (!debouncedUpdatersMap.has(fileName)) {
+    debouncedUpdatersMap.set(
       fileName,
       debounce(
         (stateProgress: VideoStateProgress) => {
@@ -50,7 +50,7 @@ const getDebouncedUpdater = (fileName: string) => {
       ),
     );
   }
-  return debouncedUpdaters.get(fileName);
+  return debouncedUpdatersMap.get(fileName);
 };
 
 export const getWsDelegateConfig = (
@@ -68,6 +68,10 @@ export const getWsDelegateConfig = (
       if (!updateFn) return;
 
       updateFn(stateProgress);
+
+      if (stateProgress.done) {
+        debouncedUpdatersMap.delete(stateProgress.file_name);
+      }
     } catch (err) {
       console.warn(err);
       return;
