@@ -23,7 +23,7 @@ pub fn get_system_router() -> Router<AppState> {
 
 #[utoipa::path(
   get,
-  path = routes::READY,
+  path = routes::HEALTH,
   responses((status = OK, body = Value))
 )]
 async fn health() -> Json<Value> {

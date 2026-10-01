@@ -35,8 +35,6 @@ services:
       db:
         condition: service_healthy
         restart: true
-    ports:
-      - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
     environment:
       - CONTAINER=true
       - IS_PRODUCTION=true

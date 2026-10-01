@@ -26,9 +26,9 @@ pub struct FfprobeFormat {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct FfprobeStream {
-  pub id: String,
-  #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_type")]
-  pub bit_rate: i32,
+  pub id: Option<String>,
+  #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_option_type")]
+  pub bit_rate: Option<i32>,
   pub codec_type: String,
   pub codec_long_name: String,
   pub width: Option<i32>,
