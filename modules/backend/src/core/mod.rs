@@ -4,6 +4,7 @@ pub mod cors;
 pub mod database;
 pub mod error;
 pub mod extractors;
+pub mod hash;
 pub mod jwt;
 pub mod logging;
 pub mod openapi;

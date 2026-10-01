@@ -23,6 +23,7 @@ pub async fn inspect_file(
     file_path,
   ]);
   cmd.stdout(Stdio::piped());
+  cmd.stderr(Stdio::piped());
   let ffprobe_process = cmd
     .spawn()
     .map_err(|err| ServerError::Processing(format!("Failed to spawn 'ffprobe' process: {err}",)))?;

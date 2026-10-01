@@ -11,10 +11,13 @@ mod test_video_inspect_api {
   use serde_json::json;
   use sqlx::PgPool;
   use video_processing_server::core::error::{ApplicationError, ServerError};
+  use video_processing_server::core::extractors::X_USER_ID_HEADER;
   use video_processing_server::features::video::inspect::dto::VideoInspectionResponse;
   use video_processing_server::router::routes;
 
   use crate::utils::{setup_router, with_base_route};
+
+  const MOCK_USER_ID: &str = "e2ba73db-2805-4ded-91f8-50193e38dcb4";
 
   /// Important
   ///
@@ -32,6 +35,7 @@ mod test_video_inspect_api {
       .post(&with_base_route(routes::VIDEO_INSPECT))
       .multipart(form)
       .add_header(header::AUTHORIZATION, token)
+      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .expect_success()
       .await;
 

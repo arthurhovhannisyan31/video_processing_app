@@ -12,8 +12,8 @@ pub struct MediaMetadata {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VideoStream {
-  pub id: String,
-  pub bit_rate: i32,
+  pub id: Option<String>,
+  pub bit_rate: Option<i32>,
   pub codec: String,
   pub fps: f32,
   pub height: i32,
@@ -22,8 +22,8 @@ pub struct VideoStream {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AudioStream {
-  pub id: String,
-  pub bit_rate: i32,
+  pub id: Option<String>,
+  pub bit_rate: Option<i32>,
   pub codec: String,
 }
 

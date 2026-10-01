@@ -26,11 +26,7 @@ use crate::router::routes;
 pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
-    .route(routes::VIDEO_JOBS, post(process_video))
-    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler))
-    .layer(DefaultBodyLimit::max(
-      app_state.app_config.video_max_body_size,
-    ));
+    .route(routes::VIDEO_JOBS, post(process_video));
 
   if app_state.app_config.is_production {
     let rate_limiter = GovernorConfigBuilder::default()
@@ -44,8 +40,14 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
         "Wrong tower_governor configuration"
       )))?;
 
-    router = router.layer(GovernorLayer::new(rate_limiter))
+    router = router.layer(GovernorLayer::new(rate_limiter));
   }
+
+  router = router
+    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler))
+    .layer(DefaultBodyLimit::max(
+      app_state.app_config.video_max_body_size,
+    ));
 
   Ok(router)
 }
@@ -74,11 +76,12 @@ pub struct InspectVideoPayload {
 pub async fn inspect_video(
   State(app_config): State<Arc<AppConfig>>,
   State(video_state): State<Arc<VideoState>>,
+  UserIdExtractor(user_id): UserIdExtractor,
   media_data: Multipart,
 ) -> Result<impl IntoResponse, ApplicationError> {
   let media_meta_data = video_state
     .video_service
-    .inspect(media_data, app_config.video_inspect_timeout)
+    .inspect(media_data, user_id, app_config.video_inspect_timeout)
     .await?;
 
   Ok(Json(json!(VideoInspectionResponse::from(media_meta_data))))

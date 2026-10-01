@@ -92,7 +92,7 @@ jobs:
             NEW_TAG="${{ !inputs.skip_build && steps.tag.outputs.sha || '' }}"
             CURRENT_TAG=$(grep '^IMAGE_TAG=' /root/server/.env 2>/dev/null | cut -d= -f2- || true)
             IMAGE_TAG=${NEW_TAG:-${CURRENT_TAG:-latest}}
-            # Folder /root/server should already be created, .env file copied 
+            # Folder /root/server should be already created, .env file copied 
             {
             echo "IMAGE_TAG=$IMAGE_TAG"
             echo "IS_PRODUCTION"=true

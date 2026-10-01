@@ -9,10 +9,12 @@ use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io;
 use tokio::io::AsyncWriteExt;
+use uuid::Uuid;
 
 use crate::core::error::ServerError;
+use crate::core::hash::calculate_hash;
+use crate::features::video::cache::MediaDataCache;
 use crate::features::video::inspect;
-use crate::features::video::process::service::MediaDataCache;
 use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -23,6 +25,17 @@ where
 {
   let s = String::deserialize(deserializer)?;
   s.parse::<T>().map_err(serde::de::Error::custom)
+}
+
+pub fn deserialize_string_to_option_type<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+  D: Deserializer<'de>,
+  T: FromStr,
+  T::Err: Display,
+{
+  let s = String::deserialize(deserializer)?;
+  let value = s.parse::<T>().map_err(serde::de::Error::custom)?;
+  Ok(Some(value))
 }
 
 pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerError> {
@@ -110,17 +123,25 @@ pub async fn read_form_data_to_file(
 
 pub async fn get_file_duration(
   file_name: &str,
+  user_id: Uuid,
   local_path: &str,
   media_data_cache: &MediaDataCache,
   video_inspect_timeout: Duration,
 ) -> Result<f64, ServerError> {
-  let duration = match media_data_cache.get(&file_name.to_string()) {
-    Some(meta) => meta.duration_seconds,
+  let file_hash = calculate_hash(&format!("{}{}", file_name, user_id));
+
+  let duration = match media_data_cache.get(&file_hash) {
+    Some(meta) => {
+      // TODO Test
+      println!("Missing cache: File name: {file_name:?}");
+      meta.duration_seconds
+    }
     None => {
+      println!("Missing cache: File name: {file_name:?}");
       let inspection_raw_data =
         inspect::ffprobe_runner::inspect_file(local_path, video_inspect_timeout).await?;
       let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
-      media_data_cache.insert(file_name.to_string(), media_meta_data.clone());
+      media_data_cache.insert(file_hash, media_meta_data.clone());
       media_meta_data.duration_seconds
     }
   };
