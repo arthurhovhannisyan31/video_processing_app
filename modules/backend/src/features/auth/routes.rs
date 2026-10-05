@@ -17,6 +17,7 @@ use validator::Validate;
 use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
+use crate::core::governor::build_governor_config;
 use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
 use crate::features::auth::model::User;
 use crate::features::auth::state::AuthState;
@@ -29,14 +30,11 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
     .route(routes::REGISTER, post(register));
 
   if app_state.app_config.is_production {
-    let rate_limiter = GovernorConfigBuilder::default()
-      .key_extractor(SmartIpKeyExtractor)
-      .finish()
-      .ok_or(ServerError::OtherError(anyhow!(
-        "Wrong tower_governor configuration"
-      )))?;
+    let governor_conf = build_governor_config(SmartIpKeyExtractor, None, None)?;
+    let governor_limiter = governor_conf.limiter().clone();
+    // insert into a map
 
-    router = router.layer(GovernorLayer::new(rate_limiter));
+    router = router.layer(GovernorLayer::new(governor_conf));
   }
 
   Ok(router)

@@ -43,6 +43,7 @@ sentry = { version = "0.49.3", features = ["tower-axum-matched-path"] }
 
 [dev-dependencies]
 axum-test = { version = "21.0", features = ["ws"] }
+governor = "0.10.4"
 proptest = { version = "1.11.0", features = ["regex-syntax"] }
 tungstenite = "0.30.0"
 

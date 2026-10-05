@@ -19,6 +19,7 @@ use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::core::extractors::UserIdExtractor;
+use crate::core::governor::build_governor_config;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::state::VideoState;
 use crate::router::routes;
@@ -26,28 +27,25 @@ use crate::router::routes;
 pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let mut router = Router::new()
     .route(routes::VIDEO_INSPECT, post(inspect_video))
-    .route(routes::VIDEO_JOBS, post(process_video));
+    .route(routes::VIDEO_JOBS, post(process_video))
+    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler));
 
   if app_state.app_config.is_production {
-    let rate_limiter = GovernorConfigBuilder::default()
-      .period(Duration::from_secs(
+    let governor_conf = build_governor_config(
+      SmartIpKeyExtractor,
+      Some(Duration::from_secs(
         app_state.app_config.video_rate_limit_period,
-      ))
-      .burst_size(app_state.app_config.video_rate_limit_size)
-      .key_extractor(SmartIpKeyExtractor)
-      .finish()
-      .ok_or(ServerError::OtherError(anyhow!(
-        "Wrong tower_governor configuration"
-      )))?;
-
-    router = router.layer(GovernorLayer::new(rate_limiter));
+      )),
+      Some(app_state.app_config.video_rate_limit_size),
+    )?;
+    let governor_limiter = governor_conf.limiter().clone();
+    // insert into a map
+    router = router.layer(GovernorLayer::new(governor_conf));
   }
 
-  router = router
-    .route(routes::VIDEO_WEB_SOCKET_BY_ID, any(websocket_handler))
-    .layer(DefaultBodyLimit::max(
-      app_state.app_config.video_max_body_size,
-    ));
+  router = router.layer(DefaultBodyLimit::max(
+    app_state.app_config.video_max_body_size,
+  ));
 
   Ok(router)
 }
