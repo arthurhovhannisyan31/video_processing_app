@@ -91,7 +91,6 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
-    restart: unless-stopped
 
 volumes:
   certbot-etc:

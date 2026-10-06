@@ -3,7 +3,8 @@ use axum::body::Body;
 use axum::http::Request;
 use sentry::integrations::tower::NewSentryLayer;
 use tower::ServiceBuilder;
-use tower_http::compression::CompressionLayer;
+use tower_http::compression::predicate::NotForContentType;
+use tower_http::compression::{CompressionLayer, DefaultPredicate, Predicate};
 use tower_http::trace::TraceLayer;
 
 use crate::core::app_state::AppState;
@@ -36,7 +37,10 @@ pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
   let router = Router::new()
     .nest("/api", merged_router)
     .layer(TraceLayer::new_for_http())
-    .layer(CompressionLayer::new())
+    .layer(
+      CompressionLayer::new()
+        .compress_when(DefaultPredicate::new().and(NotForContentType::new("video/"))),
+    )
     .layer(build_cors_layer(app_state.app_config.clone()))
     .layer(ServiceBuilder::new().layer(NewSentryLayer::<Request<Body>>::new_from_top()));
 
