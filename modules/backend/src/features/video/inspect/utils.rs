@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use crate::core::error::ServerError;
 
 pub fn get_r_frame_rate_from_string(input: String) -> Result<f32, ServerError> {
@@ -10,7 +8,7 @@ pub fn get_r_frame_rate_from_string(input: String) -> Result<f32, ServerError> {
     return Ok(val1 / val2);
   }
 
-  Err(ServerError::OtherError(anyhow!(
-    "Failed to parse r_frame_rate from string"
-  )))?
+  Err(ServerError::DataError(
+    "Failed to parse r_frame_rate from string".to_string(),
+  ))?
 }

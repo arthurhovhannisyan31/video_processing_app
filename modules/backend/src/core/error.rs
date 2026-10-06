@@ -2,14 +2,21 @@ use std::io;
 use std::net::AddrParseError;
 use std::num::{ParseFloatError, ParseIntError};
 
+use axum::Json;
 use axum::extract::multipart::MultipartError;
 use axum::http::{self, StatusCode};
 use axum::response::{IntoResponse, Response};
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 use sqlx::migrate::MigrateError;
 use thiserror::Error;
 use tracing::error;
+use tracing_subscriber::filter::ParseError;
 use validator::ValidationErrors;
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct ErrorBody {
+  pub message: String,
+}
 
 /* Domain objects errors */
 #[derive(Debug, Error)]
@@ -90,6 +97,8 @@ pub enum ServerError {
   StaleCache(String),
   #[error("Failed sending message with ws sink: {0}")]
   SocketSink(#[from] axum::Error),
+  #[error("Failed parsing tracing env: {0}")]
+  TracingParseError(#[from] ParseError),
   #[error(transparent)]
   OtherError(#[from] anyhow::Error),
 }
@@ -98,10 +107,10 @@ impl IntoResponse for ApplicationError {
   fn into_response(self) -> Response {
     match self {
       ApplicationError::BadRequest(msg) => {
-        (StatusCode::BAD_REQUEST, json!({"message": msg}).to_string()).into_response()
+        (StatusCode::BAD_REQUEST, Json(ErrorBody { message: msg })).into_response()
       }
       ApplicationError::Conflict(msg) => {
-        (StatusCode::CONFLICT, json!({"message": msg}).to_string()).into_response()
+        (StatusCode::CONFLICT, Json(ErrorBody { message: msg })).into_response()
       }
       ApplicationError::Forbidden => StatusCode::FORBIDDEN.into_response(),
       ApplicationError::Internal(msg) => {
@@ -109,17 +118,21 @@ impl IntoResponse for ApplicationError {
 
         (
           StatusCode::INTERNAL_SERVER_ERROR,
-          json!({"message": "Internal server error"}).to_string(),
+          Json(ErrorBody {
+            message: "Internal server error".to_string(),
+          }),
         )
           .into_response()
       }
       ApplicationError::NotFound(msg) => {
-        (StatusCode::NOT_FOUND, json!({"message": msg}).to_string()).into_response()
+        (StatusCode::NOT_FOUND, Json(ErrorBody { message: msg })).into_response()
       }
       ApplicationError::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
       ApplicationError::Validation(err) => (
         StatusCode::BAD_REQUEST,
-        json!({"message": err.to_string()}).to_string(),
+        Json(ErrorBody {
+          message: err.to_string(),
+        }),
       )
         .into_response(),
       ApplicationError::ServiceUnavailable(err) => {
@@ -170,7 +183,8 @@ impl From<ServerError> for ApplicationError {
       ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::StaleCache(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::SocketSink(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::OtherError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::TracingParseError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::OtherError(err) => ApplicationError::BadRequest(err.to_string()),
     }
   }
 }

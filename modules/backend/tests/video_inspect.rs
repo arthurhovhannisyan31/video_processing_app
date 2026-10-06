@@ -11,7 +11,7 @@ mod test_video_inspect_api {
   use axum_test::{TestServer, expect_json};
   use serde_json::json;
   use sqlx::PgPool;
-  use video_processing_server::core::error::{ApplicationError, ServerError};
+  use video_processing_server::core::error::{ErrorBody, ServerError};
   use video_processing_server::core::extractors::X_USER_ID_HEADER;
   use video_processing_server::features::video::inspect::dto::VideoInspectionResponse;
   use video_processing_server::router::routes;
@@ -50,7 +50,38 @@ mod test_video_inspect_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_fail_wrong_file_format(pool: PgPool) -> Result<(), ApplicationError> {
+  async fn test_missing_user_id_header(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_name: &str = "dual_audio_tracks.mp4";
+    let bearer_token = "temporary-disabled".to_string();
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
+    let part_bytes = Part::bytes(file_bytes)
+      .file_name(file_name)
+      .mime_type("video/mp4");
+    let form = MultipartForm::new().add_part("video", part_bytes);
+
+    let response = server
+      .post(&with_base_route(routes::VIDEO_INSPECT))
+      .add_header("X-Forwarded-For", "127.0.0.1")
+      .multipart(form)
+      .add_header(header::AUTHORIZATION, bearer_token)
+      .expect_failure()
+      .await;
+
+    assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "`X-USER-ID` header is missing".to_string()
+      }
+    );
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_field(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "audio_only.m4a";
@@ -63,21 +94,25 @@ mod test_video_inspect_api {
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
       .add_header("X-Forwarded-For", "127.0.0.1")
+      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .multipart(form)
       .add_header(header::AUTHORIZATION, bearer_token)
       .expect_failure()
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Field name is not supported: audio".to_string()
+      }
+    );
 
     Ok(())
   }
 
   #[sqlx::test(fixtures("create_user"))]
-  async fn test_fail_broken_video_file(pool: PgPool) -> Result<(), ApplicationError> {
+  async fn test_fail_broken_video_file(pool: PgPool) -> Result<(), ServerError> {
     let router = setup_router(pool)?;
     let server = TestServer::new(router);
     let file_name = "broken_truncated.mp4";
@@ -85,19 +120,23 @@ mod test_video_inspect_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/broken_truncated.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
-      .mime_type("audio/x-m4a");
-    let form = MultipartForm::new().add_part("audio", part_bytes);
+      .mime_type("video/mp4");
+    let form = MultipartForm::new().add_part("video", part_bytes);
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
       .multipart(form)
       .add_header(header::AUTHORIZATION, bearer_token)
+      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .expect_failure()
       .await;
 
-    assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(response.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Internal server error".to_string()
+      }
+    );
 
     Ok(())
   }
@@ -113,13 +152,17 @@ mod test_video_inspect_api {
       .post(&with_base_route(routes::VIDEO_INSPECT))
       .multipart(form)
       .add_header(header::AUTHORIZATION, bearer_token)
+      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .expect_failure()
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Error parsing `multipart/form-data` request".to_string()
+      }
+    );
 
     Ok(())
   }

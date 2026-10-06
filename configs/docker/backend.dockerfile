@@ -6,13 +6,13 @@ COPY modules/backend .
 COPY configs/scripts/backend-healthcheck.sh .
 
 ENV SQLX_OFFLINE=true
-RUN cargo build --release
+RUN cargo build --release --locked
 
 # glibc compatible container
 FROM debian:trixie-slim
 
 RUN apt-get update \
-    && apt-get install -y ffmpeg \
+    && apt-get install -y ffmpeg --no-install-recommends \
     && apt-get install -y curl \
     && apt-get install -y bash \
     && rm -rf /var/lib/apt/lists/*

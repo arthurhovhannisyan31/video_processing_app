@@ -1,13 +1,15 @@
 # rust artifacts
 **/*/target
-**/*.rs.bk
 
 # env files
 *.env*
-!.env.template
+.env.template
 
-# ide
-**/*.idea
+# vcs & ide
+.git
+.gitignore
+.github/
+.idea/
 
 # local
 **/*notes

@@ -8,7 +8,7 @@ mod test_video_process_api {
   use axum_test::{TestServer, expect_json};
   use serde_json::json;
   use sqlx::PgPool;
-  use video_processing_server::core::error::ServerError;
+  use video_processing_server::core::error::{ErrorBody, ServerError};
   use video_processing_server::core::extractors::X_USER_ID_HEADER;
   use video_processing_server::router::routes;
 
@@ -68,9 +68,12 @@ mod test_video_process_api {
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "`X-USER-ID` header is missing".to_string()
+      }
+    );
 
     Ok(())
   }
@@ -98,9 +101,12 @@ mod test_video_process_api {
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "`X-USER-ID` header has wrong value".to_string()
+      }
+    );
 
     Ok(())
   }
@@ -128,9 +134,12 @@ mod test_video_process_api {
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Field name is not supported: audio".to_string()
+      }
+    );
 
     Ok(())
   }
@@ -144,9 +153,9 @@ mod test_video_process_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/broken_truncated.mp4");
     let part_bytes = Part::bytes(file_bytes)
       .file_name(file_name)
-      .mime_type("audio/x-m4a");
+      .mime_type("video/mp4");
     let form = MultipartForm::new()
-      .add_part("audio", part_bytes)
+      .add_part("video", part_bytes)
       .add_text("operation", "compress");
 
     let response = server
@@ -157,10 +166,13 @@ mod test_video_process_api {
       .expect_failure()
       .await;
 
-    assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(response.status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Internal server error".to_string()
+      }
+    );
 
     Ok(())
   }

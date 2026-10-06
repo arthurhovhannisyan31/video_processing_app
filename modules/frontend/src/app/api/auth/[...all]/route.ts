@@ -1,3 +1,4 @@
+import "server-only";
 import type { AuthResponse } from "generated/client";
 
 import axios, { type AxiosResponse } from "axios";

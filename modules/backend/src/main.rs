@@ -10,12 +10,11 @@ use core::error::ServerError;
 use core::logging::init_logging;
 
 use http::init_http_server;
-use tracing::error;
 
 use crate::core::governor::rate_limiters_cleanup;
 
 fn main() -> Result<(), ServerError> {
-  init_logging();
+  init_logging()?;
 
   let app_config = AppConfig::from_env()?;
 
@@ -23,10 +22,10 @@ fn main() -> Result<(), ServerError> {
     sentry::ClientOptions::new()
       .dsn(&app_config.sentry_dsn)
       .maybe_release(sentry::release_name!())
-      .send_default_pii(true),
+      .send_default_pii(false),
   );
 
-  if let Err(err) = tokio::runtime::Builder::new_multi_thread()
+  tokio::runtime::Builder::new_multi_thread()
     .enable_all()
     .build()?
     .block_on(async {
@@ -37,17 +36,15 @@ fn main() -> Result<(), ServerError> {
       let app_state = AppState::new(app_config, pool);
       rate_limiters_cleanup(app_state.system_state.rate_limiters.clone());
 
-      if let Err(err) = init_http_server(app_state).await {
+      init_http_server(app_state).await.inspect_err(|err| {
         sentry::capture_error(&err);
-        error!("Error: {err}");
-      }
+      })?;
 
       Ok::<(), ServerError>(())
     })
-  {
-    sentry::capture_error(&err);
-    error!("Error: {err}");
-  };
+    .inspect_err(|err| {
+      sentry::capture_error(&err);
+    })?;
 
   Ok(())
 }

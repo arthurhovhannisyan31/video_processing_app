@@ -52,20 +52,18 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerErro
   let path = Path::new(path);
   let stem = path
     .file_stem()
-    .ok_or(ServerError::IO(io::Error::new(
-      ErrorKind::InvalidFilename,
-      "Failed to read file stem",
-    )))?
+    .ok_or(ServerError::DataError(
+      "Failed to read file stem".to_string(),
+    ))?
     .to_str()
     .ok_or(ServerError::DataError(
       "Failed to convert file stem to string".to_string(),
     ))?;
   let extension = path
     .extension()
-    .ok_or(ServerError::IO(io::Error::new(
-      ErrorKind::InvalidFilename,
-      "Failed to read file extension",
-    )))?
+    .ok_or(ServerError::DataError(
+      "Failed to read file extension".to_string(),
+    ))?
     .to_str()
     .ok_or(ServerError::DataError(
       "Failed to convert file extension to string".to_string(),
@@ -131,13 +129,8 @@ pub async fn get_file_duration(
   let file_hash = calculate_hash(&format!("{}{}", file_name, user_id));
 
   let duration = match media_data_cache.get(&file_hash) {
-    Some(meta) => {
-      // TODO Test
-      println!("Missing cache: File name: {file_name:?}");
-      meta.duration_seconds
-    }
+    Some(meta) => meta.duration_seconds,
     None => {
-      println!("Missing cache: File name: {file_name:?}");
       let inspection_raw_data =
         inspect::ffprobe_runner::inspect_file(local_path, video_inspect_timeout).await?;
       let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
@@ -147,9 +140,7 @@ pub async fn get_file_duration(
   };
 
   if duration <= 0.0 {
-    Err(ServerError::Processing(
-      "File has zero duration".to_string(),
-    ))?;
+    Err(ServerError::DataError("File has zero duration".to_string()))?;
   }
 
   Ok(duration)
