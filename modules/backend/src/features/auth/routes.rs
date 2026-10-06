@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use anyhow::anyhow;
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::{Response, StatusCode};
@@ -9,7 +8,6 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde_json::json;
 use tower_governor::GovernorLayer;
-use tower_governor::governor::GovernorConfigBuilder;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tracing::info;
 use validator::Validate;
@@ -21,7 +19,6 @@ use crate::core::governor::build_rate_limiter_config;
 use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
 use crate::features::auth::model::User;
 use crate::features::auth::state::AuthState;
-use crate::features::system::state::RateLimiters;
 use crate::router::routes;
 
 #[allow(dead_code)]

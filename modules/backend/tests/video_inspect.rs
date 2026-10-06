@@ -1,3 +1,4 @@
+mod constants;
 mod utils;
 
 #[cfg(test)]
@@ -15,9 +16,8 @@ mod test_video_inspect_api {
   use video_processing_server::features::video::inspect::dto::VideoInspectionResponse;
   use video_processing_server::router::routes;
 
+  use crate::constants::MOCK_USER_ID;
   use crate::utils::{setup_router, with_base_route};
-
-  const MOCK_USER_ID: &str = "e2ba73db-2805-4ded-91f8-50193e38dcb4";
 
   /// Important
   ///
