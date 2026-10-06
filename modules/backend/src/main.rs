@@ -12,6 +12,8 @@ use core::logging::init_logging;
 use http::init_http_server;
 use tracing::error;
 
+use crate::core::governor::rate_limiters_cleanup;
+
 fn main() -> Result<(), ServerError> {
   init_logging();
 
@@ -33,6 +35,7 @@ fn main() -> Result<(), ServerError> {
       run_migrations(&pool).await?;
 
       let app_state = AppState::new(app_config, pool);
+      rate_limiters_cleanup(app_state.system_state.rate_limiters.clone());
 
       if let Err(err) = init_http_server(app_state).await {
         sentry::capture_error(&err);

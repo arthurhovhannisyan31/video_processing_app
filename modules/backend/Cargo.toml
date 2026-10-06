@@ -34,6 +34,7 @@ tokio-util = { version = "0.7.19", features = ["io"] }
 tower = { version = "0.5", features = ["limit"] }
 tower-http = { version = "0.7", features = ["full"] }
 tower_governor = "0.8.0"
+governor = "0.10.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "chrono", "time"] }
 utoipa = { version = "5.5", features = ["yaml"] }

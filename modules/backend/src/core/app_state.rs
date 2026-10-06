@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use parking_lot::Mutex;
 use sqlx::PgPool;
 
 use crate::core::app_config::AppConfig;
@@ -33,7 +34,10 @@ impl AppState {
       video_state: Arc::from(VideoState {
         video_service: VideoService::default(),
       }),
-      system_state: Arc::new(SystemState { db_pool: pool }),
+      system_state: Arc::new(SystemState {
+        db_pool: pool,
+        rate_limiters: Arc::new(Mutex::new(vec![])),
+      }),
     }
   }
 }

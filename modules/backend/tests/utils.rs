@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum_test::TestServer;
+use parking_lot::Mutex;
 use serde_json::json;
 use sqlx::PgPool;
 use video_processing_server::core::app_config::AppConfig;
@@ -33,7 +34,10 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
     video_state: Arc::from(VideoState {
       video_service: VideoService::default(),
     }),
-    system_state: Arc::new(SystemState { db_pool: pool }),
+    system_state: Arc::new(SystemState {
+      db_pool: pool,
+      rate_limiters: Arc::new(Mutex::new(vec![])),
+    }),
   };
 
   build_router(app_state)
