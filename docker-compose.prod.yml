@@ -49,7 +49,7 @@ services:
         limits:
           memory: 6G
           cpus: '3.5'
-          pids: 200
+          pids: 6000
         reservations:
           memory: 2G
           cpus: '1.5'
