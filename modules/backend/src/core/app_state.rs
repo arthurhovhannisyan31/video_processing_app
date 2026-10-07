@@ -9,7 +9,7 @@ use crate::features::auth::repository::PostgresUserRepository;
 use crate::features::auth::service::AuthService;
 use crate::features::auth::state::AuthState;
 use crate::features::system::state::SystemState;
-use crate::features::video::process::service::VideoService;
+use crate::features::video::service::VideoService;
 use crate::features::video::state::VideoState;
 
 #[derive(Clone)]

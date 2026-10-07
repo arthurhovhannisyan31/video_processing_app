@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::extract::FromRef;
 
 use crate::core::app_state::AppState;
-use crate::features::video::process::service::VideoService;
+use crate::features::video::service::VideoService;
 
 pub struct VideoState {
   pub video_service: VideoService,

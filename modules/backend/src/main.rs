@@ -7,11 +7,10 @@ use core::app_config::AppConfig;
 use core::app_state::AppState;
 use core::database::{create_pool, run_migrations};
 use core::error::ServerError;
+use core::governor::rate_limiters_cleanup;
 use core::logging::init_logging;
 
 use http::init_http_server;
-
-use crate::core::governor::rate_limiters_cleanup;
 
 fn main() -> Result<(), ServerError> {
   init_logging()?;

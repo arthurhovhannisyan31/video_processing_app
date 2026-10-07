@@ -4,7 +4,7 @@ use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use uuid::Uuid;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
 
 pub const X_USER_ID_HEADER: &str = "x-user-id";
 
@@ -21,14 +21,14 @@ where
       if let Some(user_id) = val.to_str().ok().and_then(|val| Uuid::from_str(val).ok()) {
         Ok(UserIdExtractor(user_id))
       } else {
-        Err(ServerError::DataError(
+        Err(InputError::DataError(
           "`X-USER-ID` header has wrong value".to_string(),
-        ))
+        ))?
       }
     } else {
-      Err(ServerError::DataError(
+      Err(InputError::DataError(
         "`X-USER-ID` header is missing".to_string(),
-      ))
+      ))?
     }
   }
 }

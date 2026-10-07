@@ -14,7 +14,7 @@ use video_processing_server::features::auth::repository::PostgresUserRepository;
 use video_processing_server::features::auth::service::AuthService;
 use video_processing_server::features::auth::state::AuthState;
 use video_processing_server::features::system::state::SystemState;
-use video_processing_server::features::video::process::service::VideoService;
+use video_processing_server::features::video::service::VideoService;
 use video_processing_server::features::video::state::VideoState;
 use video_processing_server::router::{build_router, routes};
 

@@ -26,10 +26,5 @@ export const useWebSocket = (): WebSocketResult => {
     [],
   );
 
-  return useBufferedWebSocket(
-    wsConnectURI,
-    true,
-    wsDelegateConfig,
-    websocketPolicy,
-  );
+  return useBufferedWebSocket(wsConnectURI, wsDelegateConfig, websocketPolicy);
 };

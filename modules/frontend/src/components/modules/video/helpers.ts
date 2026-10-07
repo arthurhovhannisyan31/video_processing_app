@@ -5,7 +5,7 @@ import {
 } from "components/modules/video/constants";
 import { MAX_BODY_SIZE } from "configs/constants";
 
-export const getMaxBodySize = () => {
+export const getMaxBodySizeBytes = () => {
   const bodySize = +(MAX_BODY_SIZE ?? 0);
 
   if (Number.isFinite(bodySize) && bodySize > 0) {
@@ -15,7 +15,7 @@ export const getMaxBodySize = () => {
   return DEFAULT_MAX_BODY_SIZE;
 };
 
-export const validate_file = (
+export const validateFile = (
   file: File,
   errorsDict: ErrorsDict,
   showAlert: (message: string) => void,
@@ -31,7 +31,7 @@ export const validate_file = (
     return false;
   }
 
-  if (file.size > getMaxBodySize()) {
+  if (file.size > getMaxBodySizeBytes()) {
     showAlert(errorsDict.fileSize);
 
     return false;

@@ -11,6 +11,7 @@ import { FileState, type FilesStateMap } from "components/modules/video/types";
 import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
 import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
 import { useAtomValue } from "jotai";
+import { store } from "store";
 import { videoStore } from "store/video";
 
 export default function VideoPage() {
@@ -51,6 +52,7 @@ export default function VideoPage() {
     }
     setFiles([]);
     setFilesStateMap({});
+    store.set(videoStore, {});
   }, [files, filesStateMap]);
 
   const handleCompressFiles = useCallback(async () => {
@@ -71,9 +73,9 @@ export default function VideoPage() {
     }
 
     try {
-      await Promise.all(requests.map((r) => r()));
+      await Promise.allSettled(requests.map((r) => r()));
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }, [files, filesStateMap, triggerUpdate, wsReconnect]);
 
@@ -95,7 +97,7 @@ export default function VideoPage() {
     try {
       await Promise.all(requests.map((r) => r()));
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

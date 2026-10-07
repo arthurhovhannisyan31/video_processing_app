@@ -3,7 +3,7 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
 use crate::features::video::inspect::utils::get_r_frame_rate_from_string;
 use crate::features::video::model::{AudioStream, MediaMetadata, VideoStream};
 
@@ -52,9 +52,9 @@ impl FromStr for CodecType {
     match s {
       "audio" => Ok(CodecType::Audio),
       "video" => Ok(CodecType::Video),
-      _ => Err(ServerError::DataError(format!(
+      _ => Err(InputError::DataError(format!(
         "Codec type is not supported: {s}"
-      ))),
+      )))?,
     }
   }
 }
@@ -65,10 +65,10 @@ impl TryFrom<FfprobeOutput> for MediaMetadata {
   fn try_from(value: FfprobeOutput) -> Result<Self, Self::Error> {
     let FfprobeOutput { format, streams } = value;
 
-    let format = format.ok_or(ServerError::MissingMediaData(
+    let format = format.ok_or(InputError::MissingMediaData(
       "Missing format from ffprobe output".to_string(),
     ))?;
-    let streams = streams.ok_or(ServerError::MissingMediaData(
+    let streams = streams.ok_or(InputError::MissingMediaData(
       "Missing format from ffprobe output".to_string(),
     ))?;
 

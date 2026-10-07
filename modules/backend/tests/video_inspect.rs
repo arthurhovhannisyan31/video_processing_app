@@ -72,7 +72,7 @@ mod test_video_inspect_api {
     assert_eq!(
       serde_json::from_str::<ErrorBody>(&response.text())?,
       ErrorBody {
-        message: "`X-USER-ID` header is missing".to_string()
+        message: "Data error: `X-USER-ID` header is missing".to_string()
       }
     );
 
@@ -103,7 +103,7 @@ mod test_video_inspect_api {
     assert_eq!(
       serde_json::from_str::<ErrorBody>(&response.text())?,
       ErrorBody {
-        message: "Field name is not supported: audio".to_string()
+        message: "Data error: Field name is not supported: audio".to_string()
       }
     );
 
@@ -159,7 +159,7 @@ mod test_video_inspect_api {
     assert_eq!(
       serde_json::from_str::<ErrorBody>(&response.text())?,
       ErrorBody {
-        message: "Error parsing `multipart/form-data` request".to_string()
+        message: "Multipart form error: Error parsing `multipart/form-data` request".to_string()
       }
     );
 

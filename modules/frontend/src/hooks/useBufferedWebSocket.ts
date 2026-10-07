@@ -14,20 +14,19 @@ export interface BufferedWebSocketResult {
 
 export const useBufferedWebSocket = (
   url: string,
-  isReady: boolean,
   delegate: SocketDelegate,
   policy: SocketPolicy,
 ): BufferedWebSocketResult => {
   const ref = useRef<BufferedSocket | null>(null);
 
   const wsReconnect = useCallback(async () => {
-    if (isReady && ref.current && !ref.current?.isOpen()) {
+    if (ref.current && !ref.current?.isOpen()) {
       await ref.current.open();
     }
-  }, [isReady]);
+  }, []);
 
   useEffect(() => {
-    if (isReady && ref.current === null) {
+    if (ref.current === null) {
       ref.current = new BufferedSocket(new StableSocket(url, delegate, policy));
     }
 
@@ -37,7 +36,7 @@ export const useBufferedWebSocket = (
         ref.current = null;
       }
     };
-  }, [delegate, isReady, policy, url]);
+  }, [delegate, policy, url]);
 
   return {
     ref,

@@ -14,10 +14,10 @@ export type ErrorsDict = Record<
   "fileType" | "filesExtension" | "fileSize" | "fileName",
   string
 >;
-export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
+export const getErrorsDict = (maxBodySizeBytes: number): ErrorsDict => ({
   fileType: "File type is not supported",
   filesExtension: `Only the following formats are supported: ${supportedTypesLabel}`,
-  fileSize: `File size limit is ${formatBytes(maxBodySizeMB)}`,
+  fileSize: `File size limit is ${formatBytes(maxBodySizeBytes)}`,
   fileName: "File name is missing",
 });
 

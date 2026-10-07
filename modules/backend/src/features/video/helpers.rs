@@ -11,7 +11,7 @@ use tokio::io;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::MediaDataCache;
 use crate::features::video::inspect;
@@ -46,26 +46,26 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerErro
     )));
   }
   if suffix.is_empty() {
-    return Err(ServerError::DataError("Suffix is empty".to_string()));
+    Err(InputError::DataError("Suffix is empty".to_string()))?;
   }
 
   let path = Path::new(path);
   let stem = path
     .file_stem()
-    .ok_or(ServerError::DataError(
+    .ok_or(InputError::DataError(
       "Failed to read file stem".to_string(),
     ))?
     .to_str()
-    .ok_or(ServerError::DataError(
+    .ok_or(InputError::DataError(
       "Failed to convert file stem to string".to_string(),
     ))?;
   let extension = path
     .extension()
-    .ok_or(ServerError::DataError(
+    .ok_or(InputError::DataError(
       "Failed to read file extension".to_string(),
     ))?
     .to_str()
-    .ok_or(ServerError::DataError(
+    .ok_or(InputError::DataError(
       "Failed to convert file extension to string".to_string(),
     ))?;
   let parent_path = path.parent().ok_or(ServerError::IO(io::Error::new(
@@ -85,13 +85,13 @@ pub async fn read_form_data_to_file(
   let mut meta = ReadFormDataMeta::default();
   let file_name_value = field
     .file_name()
-    .ok_or(ServerError::DataError("Missing file_name".to_string()))?;
+    .ok_or(InputError::DataError("Missing file_name".to_string()))?;
 
   meta.file_name = file_name_value.to_string();
 
   let safe_file_name = Path::new(file_name_value)
     .file_name()
-    .ok_or(ServerError::DataError(format!(
+    .ok_or(InputError::DataError(format!(
       "Invalid filename {}",
       file_name_value
     )))?;
@@ -104,7 +104,7 @@ pub async fn read_form_data_to_file(
 
   let mut written_bytes: usize = 0;
   // Stream chunks directly from the request network buffer into the file
-  while let Some(chunk) = field.chunk().await? {
+  while let Some(chunk) = field.chunk().await.map_err(InputError::Multipart)? {
     written_bytes += chunk.len();
     created_file.write_all(&chunk).await?;
   }
@@ -113,7 +113,7 @@ pub async fn read_form_data_to_file(
   created_file.flush().await?;
 
   if written_bytes == 0 {
-    return Err(ServerError::DataError("Form data is empty".to_string()));
+    Err(InputError::DataError("Form data is empty".to_string()))?;
   }
 
   Ok(meta)
@@ -140,7 +140,7 @@ pub async fn get_file_duration(
   };
 
   if duration <= 0.0 {
-    Err(ServerError::DataError("File has zero duration".to_string()))?;
+    Err(InputError::DataError("File has zero duration".to_string()))?;
   }
 
   Ok(duration)
@@ -221,8 +221,9 @@ mod tests {
     let mut field = multipart.next_field().await.unwrap().unwrap();
 
     let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
-
-    assert!(matches!(result, Err(ServerError::DataError(msg)) if msg == "Missing file_name"));
+    assert!(
+      matches!(result, Err(ServerError::InputError(InputError::DataError(msg))) if msg == "Missing file_name")
+    );
   }
 
   #[tokio::test]
@@ -249,6 +250,9 @@ mod tests {
 
     let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
 
-    assert!(matches!(result, Err(ServerError::DataError(_))));
+    assert!(matches!(
+      result,
+      Err(ServerError::InputError(InputError::DataError(_)))
+    ));
   }
 }

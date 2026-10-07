@@ -1,9 +1,11 @@
 pub mod cache;
+pub mod configs;
 pub mod constants;
 pub mod helpers;
 pub mod inspect;
 pub mod model;
 pub mod process;
 pub mod routes;
+pub mod service;
 pub mod state;
 pub mod types;

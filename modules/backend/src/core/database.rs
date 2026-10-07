@@ -2,7 +2,7 @@ use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use tracing::{error, info};
 
-use crate::core::error::ServerError;
+use crate::core::error::{ServerError, StartupError};
 
 pub async fn create_pool(
   database_url: &str,
@@ -24,9 +24,13 @@ pub async fn create_pool(
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), ServerError> {
   info!("running database migrations");
-  sqlx::migrate!().run(pool).await.inspect_err(|err| {
-    error!("Failed running migration: {err}");
-  })?;
+  sqlx::migrate!()
+    .run(pool)
+    .await
+    .inspect_err(|err| {
+      error!("Failed running migration: {err}");
+    })
+    .map_err(StartupError::MigrateError)?;
 
   info!("migrations completed");
   Ok(())

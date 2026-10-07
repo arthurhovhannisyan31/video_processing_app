@@ -3,9 +3,9 @@ use std::str::FromStr;
 
 use axum::extract::Multipart;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
+use crate::features::video::configs::FieldName;
 use crate::features::video::helpers::read_form_data_to_file;
-use crate::features::video::process::configs::FieldName;
 use crate::features::video::process::types::ProcessVideoMeta;
 
 pub async fn read(
@@ -14,10 +14,14 @@ pub async fn read(
 ) -> Result<ProcessVideoMeta, ServerError> {
   let mut meta = ProcessVideoMeta::default();
 
-  while let Some(mut field) = media_data.next_field().await? {
+  while let Some(mut field) = media_data
+    .next_field()
+    .await
+    .map_err(InputError::Multipart)?
+  {
     let field_name = field
       .name()
-      .ok_or(ServerError::DataError("Missing field name".to_string()))?
+      .ok_or(InputError::DataError("Missing field name".to_string()))?
       .to_string();
 
     let field_name = FieldName::from_str(&field_name)?;
@@ -29,13 +33,13 @@ pub async fn read(
         meta.local_path = read_form_data_meta.local_path;
       }
       FieldName::Operation => {
-        meta.operation = field.text().await?;
+        meta.operation = field.text().await.map_err(InputError::Multipart)?;
       }
     }
   }
 
   if meta.file_name.is_empty() {
-    return Err(ServerError::DataError("Missing 'video' field".to_string()));
+    Err(InputError::DataError("Missing 'video' field".to_string()))?;
   }
 
   Ok(meta)

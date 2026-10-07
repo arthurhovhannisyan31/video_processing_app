@@ -15,8 +15,8 @@ import {
   MAX_FILES_COUNT,
 } from "components/modules/video/constants";
 import {
-  getMaxBodySize,
-  validate_file,
+  getMaxBodySizeBytes,
+  validateFile,
 } from "components/modules/video/helpers";
 import { useHoverEvent } from "hooks/useHoverEvent";
 import { toast } from "sonner";
@@ -33,8 +33,11 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
   const showAlert = useCallback((msg: string) => {
     toast.error(msg);
   }, []);
-  const maxBodySize = useMemo(() => getMaxBodySize(), []);
-  const errorsDict = useMemo(() => getErrorsDict(maxBodySize), [maxBodySize]);
+  const maxBodySizeBytes = useMemo(() => getMaxBodySizeBytes(), []);
+  const errorsDict = useMemo(
+    () => getErrorsDict(maxBodySizeBytes),
+    [maxBodySizeBytes],
+  );
 
   const processFiles = async (files: FileList) => {
     let count = 0;
@@ -45,7 +48,7 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
     const validFiles: File[] = [];
 
     for (const file of files) {
-      if (!validate_file(file, errorsDict, showAlert)) {
+      if (!validateFile(file, errorsDict, showAlert)) {
         continue;
       }
       count++;
@@ -102,7 +105,7 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
         <input
           ref={inputRef}
           type="file"
-          accept="video/*"
+          accept="video/mp4"
           className="hidden"
           onChange={handleInputChange}
           multiple={true}

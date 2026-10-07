@@ -54,11 +54,11 @@ const getDebouncedUpdater = (fileName: string) => {
 };
 
 export const getWsDelegateConfig = (
-  retryCoundRef: RefObject<number>,
+  retryCountRef: RefObject<number>,
 ): SocketDelegate => ({
   socketDidOpen: (_) => {
     // Connection is successfully opened
-    retryCoundRef.current = WS_RECONNECT_ATTEMPTS;
+    retryCountRef.current = WS_RECONNECT_ATTEMPTS;
   },
   socketDidReceiveMessage: (_socket: Socket, message: string) => {
     try {
@@ -83,8 +83,8 @@ export const getWsDelegateConfig = (
       return false;
     }
 
-    retryCoundRef.current -= 1;
-    return retryCoundRef.current > 0;
+    retryCountRef.current -= 1;
+    return retryCountRef.current > 0;
   },
   socketDidFinish: (_socket: Socket) => {},
 });

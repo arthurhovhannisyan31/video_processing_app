@@ -10,7 +10,7 @@ import { inspectVideo } from "generated/client";
 import { getErrorMessage } from "helpers/utils";
 import { toast } from "sonner";
 
-export const getInspectVideoPromise = (
+export const getInspectVideoPromise = async (
   file: File,
   fileState: FileState,
   triggerUpdate: () => void,

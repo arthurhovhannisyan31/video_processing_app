@@ -7,5 +7,5 @@ Sentry.init({
     process.env.NODE_ENV === "production" &&
     process.env.NEXT_PUBLIC_LOCAL_ENV !== "true",
   dsn: SENTRY_DSN,
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 1.0 : 0.1,
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 });

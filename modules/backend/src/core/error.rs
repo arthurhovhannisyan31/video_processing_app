@@ -18,24 +18,6 @@ pub struct ErrorBody {
   pub message: String,
 }
 
-/* Domain objects errors */
-#[derive(Debug, Error)]
-pub enum DomainError {
-  #[error("Access is forbidden")]
-  Forbidden,
-  #[error("Invalid credentials")]
-  InvalidCredentials,
-  #[error("internal error: {0}")]
-  Internal(String),
-  #[error("User already exists")]
-  UserAlreadyExists,
-  #[error("User not found: {0}")]
-  UserNotFound(i64),
-  #[error("Sqlx error")]
-  SqlxError(#[from] sqlx::Error),
-}
-
-/* API errors */
 #[derive(Debug, Error)]
 pub enum ApplicationError {
   #[error("Bad request: {0}")]
@@ -52,55 +34,82 @@ pub enum ApplicationError {
   Internal(String),
   #[error("Validation error")]
   Validation(#[from] ValidationErrors),
-  #[error("Service unavailable")]
+  #[error("Service unavailable: {0}")]
   ServiceUnavailable(String),
 }
 
-/* Server errors */
 #[derive(Debug, Error)]
-pub enum ServerError {
-  #[error("Parse addr error: {0}")]
-  AddrParseError(#[from] AddrParseError),
-  #[error("IO Error: {0}")]
-  IO(#[from] io::Error),
-  #[error("Parse int error: {0}")]
-  ParseIntError(#[from] ParseIntError),
-  #[error("Parse int error: {0}")]
-  ParseFloatError(#[from] ParseFloatError),
-  #[error("Sqlx error: {0}")]
+pub enum DomainError {
+  #[error("Access is forbidden")]
+  Forbidden,
+  #[error("Invalid credentials")]
+  InvalidCredentials,
+  #[error("internal error: {0}")]
+  Internal(String),
+  #[error("User already exists")]
+  UserAlreadyExists,
+  #[error("User not found: {0}")]
+  UserNotFound(i64),
+  #[error("Sqlx error")]
   SqlxError(#[from] sqlx::Error),
-  #[error("Database migration error: {0}")]
-  MigrateError(#[from] MigrateError),
+}
+
+#[derive(Debug, Error)]
+pub enum StartupError {
   #[error("Failed to read env variable: {0}")]
   VarError(String),
   #[error("Failed loading .env file: {0}")]
   Dotenv(#[from] dotenvy::Error),
-  #[error("Tokio task error: {0}")]
-  TokioTaskJoinError(#[from] tokio::task::JoinError),
-  #[error("Multipart form error: {0}")]
-  Multipart(#[from] MultipartError),
+  #[error("Database migration error: {0}")]
+  MigrateError(#[from] MigrateError),
+}
+
+#[derive(Debug, Error)]
+pub enum InputError {
   #[error("Data error: {0}")]
   DataError(String),
-  #[error("Processing error: {0}")]
-  Processing(String),
-  #[error("Serde_json error: {0}")]
-  SerdeJson(#[from] serde_json::Error),
-  #[error("JWT error: {0}")]
-  Jwt(#[from] jsonwebtoken::errors::Error),
-  #[error("password hash error: {0}")]
-  PasswordHash(#[from] argon2::password_hash::Error),
-  #[error("Http error: {0}")]
-  HttpError(#[from] http::Error),
   #[error("Media data not found: {0}")]
   MissingMediaData(String),
+  #[error("Multipart form error: {0}")]
+  Multipart(#[from] MultipartError),
+}
+
+#[derive(Debug, Error)]
+pub enum ServerError {
+  #[error("Parse addr error: {0}")]
+  AddrParseError(#[from] AddrParseError),
+  #[error("Http error: {0}")]
+  HttpError(#[from] http::Error),
+  #[error(transparent)]
+  InputError(#[from] InputError),
+  #[error("JWT error: {0}")]
+  Jwt(#[from] jsonwebtoken::errors::Error),
+  #[error("IO Error: {0}")]
+  IO(#[from] io::Error),
+  #[error(transparent)]
+  OtherError(#[from] anyhow::Error),
+  #[error("Parse int error: {0}")]
+  ParseIntError(#[from] ParseIntError),
+  #[error("Parse float error: {0}")]
+  ParseFloatError(#[from] ParseFloatError),
+  #[error("password hash error: {0}")]
+  PasswordHash(#[from] argon2::password_hash::Error),
+  #[error("Processing error: {0}")]
+  Processing(String),
+  #[error("Sqlx error: {0}")]
+  SqlxError(#[from] sqlx::Error),
+  #[error("Serde_json error: {0}")]
+  SerdeJson(#[from] serde_json::Error),
   #[error("Stale cache. Run inspection again: {0}")]
   StaleCache(String),
   #[error("Failed sending message with ws sink: {0}")]
   SocketSink(#[from] axum::Error),
+  #[error(transparent)]
+  StartupError(#[from] StartupError),
+  #[error("Tokio task error: {0}")]
+  TokioTaskJoinError(#[from] tokio::task::JoinError),
   #[error("Failed parsing tracing env: {0}")]
   TracingParseError(#[from] ParseError),
-  #[error(transparent)]
-  OtherError(#[from] anyhow::Error),
 }
 
 impl IntoResponse for ApplicationError {
@@ -169,18 +178,14 @@ impl From<ServerError> for ApplicationError {
       ServerError::ParseIntError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::ParseFloatError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::SqlxError(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::MigrateError(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::VarError(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::Dotenv(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::StartupError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::TokioTaskJoinError(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::Multipart(err) => ApplicationError::BadRequest(err.to_string()),
-      ServerError::DataError(err) => ApplicationError::BadRequest(err.to_string()),
+      ServerError::InputError(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::Processing(err) => ApplicationError::Internal(err.to_string()),
       ServerError::SerdeJson(err) => ApplicationError::Internal(err.to_string()),
       ServerError::Jwt(err) => ApplicationError::Internal(err.to_string()),
       ServerError::PasswordHash(err) => ApplicationError::Internal(err.to_string()),
       ServerError::HttpError(err) => ApplicationError::Internal(err.to_string()),
-      ServerError::MissingMediaData(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::StaleCache(err) => ApplicationError::BadRequest(err.to_string()),
       ServerError::SocketSink(err) => ApplicationError::Internal(err.to_string()),
       ServerError::TracingParseError(err) => ApplicationError::Internal(err.to_string()),

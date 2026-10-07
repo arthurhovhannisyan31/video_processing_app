@@ -3,18 +3,22 @@ use std::str::FromStr;
 
 use axum::extract::Multipart;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
+use crate::features::video::configs::FieldName;
 use crate::features::video::helpers::read_form_data_to_file;
 use crate::features::video::inspect::types::ReadFileMeta;
-use crate::features::video::process::configs::FieldName;
 
 pub async fn read(mut media_data: Multipart, temp_dir: &Path) -> Result<ReadFileMeta, ServerError> {
   let mut meta = ReadFileMeta::default();
 
-  while let Some(mut field) = media_data.next_field().await? {
+  while let Some(mut field) = media_data
+    .next_field()
+    .await
+    .map_err(InputError::Multipart)?
+  {
     let field_name = field
       .name()
-      .ok_or(ServerError::DataError("Missing field name".to_string()))?
+      .ok_or(InputError::DataError("Missing field name".to_string()))?
       .to_string();
 
     if FieldName::from_str(&field_name)? == FieldName::Video {
@@ -28,7 +32,7 @@ pub async fn read(mut media_data: Multipart, temp_dir: &Path) -> Result<ReadFile
   }
 
   if meta.file_name.is_empty() {
-    return Err(ServerError::DataError("Missing 'video' field".to_string()));
+    Err(InputError::DataError("Missing 'video' field".to_string()))?;
   }
 
   Ok(meta)

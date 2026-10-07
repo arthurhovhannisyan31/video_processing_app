@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
+use crate::features::video::configs::FieldName;
 
 pub const OUTPUT_PATH_SUFFIX: &str = "_output";
 
@@ -14,17 +15,11 @@ impl FromStr for OperationType {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "compress" => Ok(OperationType::Compress),
-      _ => Err(ServerError::DataError(format!(
+      _ => Err(InputError::DataError(format!(
         "Form operation type is not supported: {s}"
-      ))),
+      )))?,
     }
   }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum FieldName {
-  Video,
-  Operation,
 }
 
 impl FromStr for FieldName {
@@ -33,9 +28,9 @@ impl FromStr for FieldName {
     match s {
       "video" => Ok(FieldName::Video),
       "operation" => Ok(FieldName::Operation),
-      _ => Err(ServerError::DataError(format!(
+      _ => Err(InputError::DataError(format!(
         "Field name is not supported: {s}"
-      ))),
+      )))?,
     }
   }
 }
