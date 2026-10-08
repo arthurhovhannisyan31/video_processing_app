@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ProgressType } from "components/modules/video/constants";
+import {
+  DOWNLOAD_ALL_DELAY_MS,
+  ProgressType,
+} from "components/modules/video/constants";
 import { ControlsBar } from "components/modules/video/controls-bar";
 import { DropZone } from "components/modules/video/drop-zone";
 import { FilesList } from "components/modules/video/files-list";
 import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
 import { FileState, type FilesStateMap } from "components/modules/video/types";
+import { downloadFile } from "helpers/api/downloadFile";
 import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
 import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
 import { useAtomValue } from "jotai";
@@ -79,6 +83,22 @@ export default function VideoPage() {
     }
   }, [files, filesStateMap, triggerUpdate, wsReconnect]);
 
+  const handleDownloadAll = useCallback(async () => {
+    for (const file of files) {
+      const processedData = filesStateMap[file.name]?.processedData;
+
+      if (!processedData) {
+        continue;
+      }
+
+      downloadFile(file, processedData);
+      // Browsers drop back-to-back programmatic downloads without a short gap.
+      await new Promise((resolve) =>
+        setTimeout(resolve, DOWNLOAD_ALL_DELAY_MS),
+      );
+    }
+  }, [files, filesStateMap]);
+
   const handleInspectFiles = async () => {
     const requests = [];
 
@@ -131,6 +151,7 @@ export default function VideoPage() {
           <>
             <ControlsBar
               compressFiles={handleCompressFiles}
+              downloadAll={handleDownloadAll}
               reset={handleReset}
               filesStateMap={filesStateMap}
             />

@@ -19,6 +19,7 @@ import {
   validateFile,
 } from "components/modules/video/helpers";
 import { useHoverEvent } from "hooks/useHoverEvent";
+import { formatBytesToMB } from "lib/utils";
 import { toast } from "sonner";
 
 interface VideoDropZoneProps {
@@ -33,10 +34,13 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
   const showAlert = useCallback((msg: string) => {
     toast.error(msg);
   }, []);
-  const maxBodySizeBytes = useMemo(() => getMaxBodySizeBytes(), []);
+  const maxBodySizeMB = useMemo(
+    () => formatBytesToMB(getMaxBodySizeBytes()),
+    [],
+  );
   const errorsDict = useMemo(
-    () => getErrorsDict(maxBodySizeBytes),
-    [maxBodySizeBytes],
+    () => getErrorsDict(maxBodySizeMB),
+    [maxBodySizeMB],
   );
 
   const processFiles = async (files: FileList) => {
@@ -122,6 +126,9 @@ export function DropZone({ addFiles }: VideoDropZoneProps) {
           </p>
           <p className="text-muted-foreground text-xs mt-1">
             {MAX_FILES_COUNT} files max
+          </p>
+          <p className="text-muted-foreground text-xs mt-1">
+            Max file size is {maxBodySizeMB}
           </p>
         </div>
       </div>
