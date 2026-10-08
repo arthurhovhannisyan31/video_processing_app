@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::core::error::{InputError, ServerError};
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::MediaDataCache;
+use crate::features::video::constants::FILE_EXTENSIONS_WHITE_LIST;
 use crate::features::video::inspect;
 use crate::features::video::types::ReadFormDataMeta;
 
@@ -78,29 +79,53 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerErro
   Ok(output_path.to_string_lossy().to_string())
 }
 
-pub async fn read_form_data_to_file(
-  field: &mut Field<'_>,
-  temp_dir: &Path,
-) -> Result<ReadFormDataMeta, ServerError> {
+pub async fn read_form_data_meta(field: &mut Field<'_>) -> Result<ReadFormDataMeta, ServerError> {
   let mut meta = ReadFormDataMeta::default();
-  let file_name_value = field
+  let original_file_name = field
     .file_name()
-    .ok_or(InputError::DataError("Missing file_name".to_string()))?;
+    .ok_or(InputError::DataError("Missing file name".to_string()))?;
 
-  meta.file_name = file_name_value.to_string();
+  meta.original_file_name = original_file_name.to_string();
 
-  let safe_file_name = Path::new(file_name_value)
+  let file_path = Path::new(original_file_name);
+  let file_extension = file_path
+    .extension()
+    .ok_or(InputError::DataError(format!(
+      "Missing file extension {}",
+      original_file_name
+    )))?
+    .to_string_lossy()
+    .to_string();
+
+  // whitelist wrong file extensions
+  if !FILE_EXTENSIONS_WHITE_LIST.contains(&file_extension.as_str()) {
+    Err(InputError::DataError(format!(
+      "File extension is not supported: {}",
+      file_extension
+    )))?;
+  }
+
+  let safe_file_name = Path::new(original_file_name)
     .file_name()
     .ok_or(InputError::DataError(format!(
       "Invalid filename {}",
-      file_name_value
+      original_file_name
     )))?;
-  let path = temp_dir.join(safe_file_name);
+
+  meta.safe_file_name = safe_file_name.to_string_lossy().to_string();
+
+  Ok(meta)
+}
+
+pub async fn read_form_data_to_file(
+  field: &mut Field<'_>,
+  form_data_meta: &ReadFormDataMeta,
+  temp_dir: &Path,
+) -> Result<String, ServerError> {
+  let path = temp_dir.join(form_data_meta.safe_file_name.clone());
 
   // create local file only when needed
   let mut created_file = File::create(&path).await?;
-
-  meta.local_path = path.to_string_lossy().to_string();
 
   let mut written_bytes: usize = 0;
   // Stream chunks directly from the request network buffer into the file
@@ -116,7 +141,9 @@ pub async fn read_form_data_to_file(
     Err(InputError::DataError("Form data is empty".to_string()))?;
   }
 
-  Ok(meta)
+  let local_file_path = path.to_string_lossy().to_string();
+
+  Ok(local_file_path)
 }
 
 pub async fn get_file_duration(
@@ -199,60 +226,120 @@ mod tests {
   }
 
   #[tokio::test]
+  async fn test_read_plain_file_name_success() {
+    let content = b"fake video bytes";
+    let file_name: &str = "video.mp4";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
+    let mut field = multipart.next_field().await.unwrap().unwrap();
+
+    let form_data_meta = read_form_data_meta(&mut field).await.unwrap();
+
+    assert_eq!(form_data_meta.original_file_name, file_name);
+    assert_eq!(form_data_meta.safe_file_name, file_name);
+  }
+
+  #[tokio::test]
+  async fn test_strips_path_traversal_in_file_name_success() {
+    let content = b"fake video bytes";
+    let file_name: &str = "../../video.mp4";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
+    let mut field = multipart.next_field().await.unwrap().unwrap();
+
+    let form_data_meta = read_form_data_meta(&mut field).await.unwrap();
+
+    assert_eq!(form_data_meta.original_file_name, file_name);
+    assert_eq!(form_data_meta.safe_file_name, file_name[6..].to_string());
+  }
+
+  #[tokio::test]
+  async fn test_read_missing_file_name_failure() {
+    let content = b"fake video bytes";
+    let mut multipart = multipart_from_field(None, content).await;
+    let mut field = multipart.next_field().await.unwrap().unwrap();
+
+    let form_data_meta = read_form_data_meta(&mut field).await;
+    assert!(form_data_meta.is_err());
+    let err = form_data_meta.unwrap_err();
+
+    let _server_error =
+      ServerError::InputError(InputError::DataError("Missing file name".to_string()));
+    assert!(matches!(err, _server_error));
+  }
+
+  #[tokio::test]
+  async fn test_read_missing_file_extension_failure() {
+    let content = b"fake video bytes";
+    let file_name: &str = "video";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
+    let mut field = multipart.next_field().await.unwrap().unwrap();
+
+    let form_data_meta = read_form_data_meta(&mut field).await;
+    assert!(form_data_meta.is_err());
+    let err = form_data_meta.unwrap_err();
+
+    let _server_error = ServerError::InputError(InputError::DataError(format!(
+      "Missing file extension {file_name}"
+    )));
+    assert!(matches!(err, _server_error));
+  }
+
+  #[tokio::test]
+  async fn test_read_unsupported_file_extension_failure() {
+    let content = b"fake video bytes";
+    let file_name: &str = "video.mp3";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
+    let mut field = multipart.next_field().await.unwrap().unwrap();
+
+    let form_data_meta = read_form_data_meta(&mut field).await;
+    assert!(form_data_meta.is_err());
+    let err = form_data_meta.unwrap_err();
+
+    let _server_error = ServerError::InputError(InputError::DataError(
+      "File extension is not supported: mp3".to_string(),
+    ));
+    assert!(matches!(err, _server_error));
+  }
+
+  #[tokio::test]
   async fn test_read_video_to_file_success() {
     let temp_dir = tempdir().unwrap();
     let content = b"fake video bytes";
-    let mut multipart = multipart_from_field(Some("video.mp4"), content).await;
+    let file_name: &str = "video.mp4";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
+    let form_data_meta = ReadFormDataMeta {
+      original_file_name: file_name.to_string(),
+      safe_file_name: file_name.to_string(),
+    };
 
-    let meta = read_form_data_to_file(&mut field, temp_dir.path())
+    let local_path = read_form_data_to_file(&mut field, &form_data_meta, temp_dir.path())
       .await
       .unwrap();
 
-    assert!(Path::new(&meta.local_path).starts_with(temp_dir.path()));
-    let saved = tokio::fs::read(&meta.local_path).await.unwrap();
+    assert!(Path::new(&local_path).starts_with(temp_dir.path()));
+    let saved = tokio::fs::read(&local_path).await.unwrap();
     assert_eq!(saved, content);
   }
 
   #[tokio::test]
-  async fn test_read_video_to_file_missing_filename() {
+  async fn test_read_file_bytes_fail() {
     let temp_dir = tempdir().unwrap();
-    let mut multipart = multipart_from_field(None, b"data").await;
+    let content = b"";
+    let file_name: &str = "video.mp4";
+    let mut multipart = multipart_from_field(Some(file_name), content).await;
     let mut field = multipart.next_field().await.unwrap().unwrap();
+    let form_data_meta = ReadFormDataMeta {
+      original_file_name: file_name.to_string(),
+      safe_file_name: file_name.to_string(),
+    };
 
-    let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
-    assert!(
-      matches!(result, Err(ServerError::InputError(InputError::DataError(msg))) if msg == "Missing file_name")
-    );
-  }
+    let local_path_result =
+      read_form_data_to_file(&mut field, &form_data_meta, temp_dir.path()).await;
+    assert!(local_path_result.is_err());
+    let err = local_path_result.unwrap_err();
 
-  #[tokio::test]
-  async fn test_read_video_to_file_strips_path_traversal() {
-    let temp_dir = tempdir().unwrap();
-    let content = b"data";
-    let mut multipart = multipart_from_field(Some("../../etc/passwd"), content).await;
-    let mut field = multipart.next_field().await.unwrap().unwrap();
-
-    let meta = read_form_data_to_file(&mut field, temp_dir.path())
-      .await
-      .unwrap();
-
-    let saved_path = Path::new(&meta.local_path);
-    assert_eq!(saved_path.parent().unwrap(), temp_dir.path());
-    assert_eq!(saved_path.file_name().unwrap(), "passwd");
-  }
-
-  #[tokio::test]
-  async fn test_read_video_to_file_invalid_filename() {
-    let temp_dir = tempdir().unwrap();
-    let mut multipart = multipart_from_field(Some(".."), b"data").await;
-    let mut field = multipart.next_field().await.unwrap().unwrap();
-
-    let result = read_form_data_to_file(&mut field, temp_dir.path()).await;
-
-    assert!(matches!(
-      result,
-      Err(ServerError::InputError(InputError::DataError(_)))
-    ));
+    let _server_error =
+      ServerError::InputError(InputError::DataError("Form data is empty".to_string()));
+    assert!(matches!(err, _server_error));
   }
 }

@@ -5,7 +5,7 @@ use axum::extract::Multipart;
 
 use crate::core::error::{InputError, ServerError};
 use crate::features::video::configs::FieldName;
-use crate::features::video::helpers::read_form_data_to_file;
+use crate::features::video::helpers::{read_form_data_meta, read_form_data_to_file};
 use crate::features::video::inspect::types::ReadFileMeta;
 
 pub async fn read(mut media_data: Multipart, temp_dir: &Path) -> Result<ReadFileMeta, ServerError> {
@@ -22,10 +22,11 @@ pub async fn read(mut media_data: Multipart, temp_dir: &Path) -> Result<ReadFile
       .to_string();
 
     if FieldName::from_str(&field_name)? == FieldName::Video {
-      let read_form_data_meta = read_form_data_to_file(&mut field, temp_dir).await?;
+      let form_data_meta = read_form_data_meta(&mut field).await?;
+      let local_path = read_form_data_to_file(&mut field, &form_data_meta, temp_dir).await?;
 
-      meta.file_name = read_form_data_meta.file_name;
-      meta.local_path = read_form_data_meta.local_path;
+      meta.file_name = form_data_meta.original_file_name;
+      meta.local_path = local_path;
 
       break;
     }

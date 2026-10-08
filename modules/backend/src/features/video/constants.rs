@@ -6,3 +6,4 @@ pub const VIDEO_RATE_LIMIT_PERIOD: u64 = 60;
 pub const VIDEO_RATE_LIMIT_SIZE: u32 = 100;
 pub const VIDEO_MIN_PROGRESS_VALUE: f64 = 0.0;
 pub const VIDEO_MAX_PROGRESS_VALUE: f64 = 1.0;
+pub static FILE_EXTENSIONS_WHITE_LIST: &[&str] = &["mp4"];
