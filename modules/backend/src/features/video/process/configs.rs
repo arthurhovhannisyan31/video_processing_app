@@ -15,6 +15,9 @@ impl FromStr for OperationType {
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
       "compress" => Ok(OperationType::Compress),
+      "" => Err(InputError::DataError(
+        "Form operation type is missing".to_string(),
+      ))?,
       _ => Err(InputError::DataError(format!(
         "Form operation type is not supported: {s}"
       )))?,

@@ -4,9 +4,8 @@ mod utils;
 #[cfg(test)]
 mod test_video_process_api {
   use axum::http::{StatusCode, header};
+  use axum_test::TestServer;
   use axum_test::multipart::{MultipartForm, Part};
-  use axum_test::{TestServer, expect_json};
-  use serde_json::json;
   use sqlx::PgPool;
   use video_processing_server::core::error::{ErrorBody, ServerError};
   use video_processing_server::core::extractors::X_USER_ID_HEADER;
@@ -44,6 +43,42 @@ mod test_video_process_api {
     );
 
     Ok(())
+  }
+
+  async fn assert_error_response(
+    server: TestServer,
+    form: MultipartForm,
+    status: StatusCode,
+    message: &str,
+  ) -> Result<(), ServerError> {
+    let response = server
+      .post(&with_base_route(routes::VIDEO_JOBS))
+      .multipart(form)
+      .add_header(header::AUTHORIZATION, "temporary-disabled")
+      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
+      .expect_failure()
+      .await;
+
+    assert_eq!(response.status_code(), status);
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: message.to_string()
+      }
+    );
+
+    Ok(())
+  }
+
+  fn video_form(file_bytes: &[u8], file_name: &str) -> MultipartForm {
+    let part_bytes = Part::bytes(file_bytes.to_vec())
+      .file_name(file_name.to_string())
+      .mime_type("video/mp4");
+    MultipartForm::new().add_part("video", part_bytes)
+  }
+
+  fn compress_form(file_bytes: &[u8], file_name: &str) -> MultipartForm {
+    video_form(file_bytes, file_name).add_text("operation", "compress")
   }
 
   #[sqlx::test(fixtures("create_user"))]
@@ -193,9 +228,168 @@ mod test_video_process_api {
       .await;
 
     assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
-    response.assert_json(&json!({
-      "message": expect_json::string(),
-    }));
+    assert_eq!(
+      serde_json::from_str::<ErrorBody>(&response.text())?,
+      ErrorBody {
+        message: "Data error: Missing 'video' field".to_string()
+      }
+    );
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_operation(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
+    let form = video_form(file_bytes, "sample_av.mp4").add_text("operation", "explode");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Form operation type is not supported: explode",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_missing_operation(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
+    let form = video_form(file_bytes, "sample_av.mp4");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Form operation type is missing",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_extension_m4a(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/audio_only.m4a");
+    let form = compress_form(file_bytes, "audio_only.m4a");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: File extension is not supported: m4a",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_extension_webm(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    // Extension is checked before the content is read, so any bytes work here
+    let form = compress_form(b"webm content", "sample.webm");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: File extension is not supported: webm",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_extension_mov(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let form = compress_form(b"mov content", "sample.mov");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: File extension is not supported: mov",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_extension_txt(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let form = compress_form(b"plain text notes", "notes.txt");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: File extension is not supported: txt",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_empty_file(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let form = compress_form(&[], "empty.mp4");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Form data is empty",
+    )
+    .await
+  }
+
+  /// Pins current behavior: invalid media is reported as 500 (test report issue #1)
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_random_bytes_mp4(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_bytes: Vec<u8> = (0..200_000u32).map(|i| (i * 31 % 251) as u8).collect();
+    let form = compress_form(&file_bytes, "fake.mp4");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::INTERNAL_SERVER_ERROR,
+      "Internal server error",
+    )
+    .await
+  }
+
+  /// Pins current behavior: invalid media is reported as 500 (test report issue #1)
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_text_content_as_mp4(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let form = compress_form(b"plain text notes", "notes.mp4");
+
+    assert_error_response(
+      server,
+      form,
+      StatusCode::INTERNAL_SERVER_ERROR,
+      "Internal server error",
+    )
+    .await
+  }
+
+  /// Pins current behavior: audio-only input is compressed and labelled as video/mp4
+  /// (test report issue #2)
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_audio_only_content_as_mp4(pool: PgPool) -> Result<(), ServerError> {
+    let router = setup_router(pool)?;
+    let server = TestServer::new(router);
+    let file_bytes: &[u8] = include_bytes!("./fixtures/media/audio_only.m4a");
+    let form = compress_form(file_bytes, "audio_only.mp4");
+
+    assert_success_response(server, form, "temporary-disabled".to_string()).await?;
 
     Ok(())
   }
