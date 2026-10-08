@@ -5,5 +5,7 @@ export const downloadFile = (file: File, blob: Blob) => {
   a.href = url;
   a.download = `${stem}_compressed.mp4`;
   a.click();
-  URL.revokeObjectURL(url);
+  requestIdleCallback(() => {
+    URL.revokeObjectURL(url);
+  });
 };

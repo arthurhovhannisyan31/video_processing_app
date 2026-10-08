@@ -22,11 +22,11 @@ Next.js web client.
 
 ## Tech stack
 
-|          |                                                                                    |
-|----------|------------------------------------------------------------------------------------|
-| Backend  | Rust, Axum, SQLx/PostgreSQL, JWT auth, `ffmpeg`/`ffprobe`                          |
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Jotai, better-auth |
-| Infra    | Docker Compose, nginx, GitHub Actions CI/CD                                        |
+|          |                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------|
+| Backend  | Rust, Axum, SQLx/PostgreSQL, JWT auth, `ffmpeg`/`ffprobe`, Utoipa (OpenAPI)                           |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Jotai, better-auth, hey-api (OpenAPI) |
+| Infra    | VPS, Docker Compose, nginx, GitHub Actions CI/CD, Sentry                                              |
 
 ## Repository layout
 

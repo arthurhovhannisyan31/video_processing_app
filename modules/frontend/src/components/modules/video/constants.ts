@@ -1,9 +1,8 @@
-import { formatBytes } from "lib/utils";
-
 export const DEFAULT_MAX_BODY_SIZE: number = 10 * 1024 * 1024;
 export const WS_RECONNECT_TIMEOUT_TIME = 4000;
 export const WS_RECONNECT_ATTEMPTS = 4;
 export const MAX_FILES_COUNT = 4;
+export const DOWNLOAD_ALL_DELAY_MS = 200;
 
 export const supportedMimeTypes: string[] = ["video/mp4"];
 const supportedTypesLabel = supportedMimeTypes
@@ -14,10 +13,10 @@ export type ErrorsDict = Record<
   "fileType" | "filesExtension" | "fileSize" | "fileName",
   string
 >;
-export const getErrorsDict = (maxBodySizeMB: number): ErrorsDict => ({
+export const getErrorsDict = (maxBodySizeMB: string): ErrorsDict => ({
   fileType: "File type is not supported",
   filesExtension: `Only the following formats are supported: ${supportedTypesLabel}`,
-  fileSize: `File size limit is ${formatBytes(maxBodySizeMB)}`,
+  fileSize: `File size limit is ${maxBodySizeMB}`,
   fileName: "File name is missing",
 });
 

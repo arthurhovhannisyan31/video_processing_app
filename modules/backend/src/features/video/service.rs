@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::io::ErrorKind;
 use std::time::Duration;
 
@@ -8,17 +9,17 @@ use axum::extract::ws::{CloseFrame, Message, WebSocket, close_code};
 use axum::http::Response;
 use futures_util::stream::SplitSink;
 use futures_util::{SinkExt, StreamExt};
-use mini_moka::sync::Cache;
 use parking_lot::RwLock;
 use serde_json::json;
 use tempfile::TempDir;
 use tokio::io;
 use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 use uuid::Uuid;
 
 use crate::core::error::ServerError;
-use crate::features::video::cache::build_media_data_cache;
+use crate::core::hash::calculate_hash;
+use crate::features::video::cache::{MediaDataCache, build_media_data_cache};
 use crate::features::video::helpers::{append_path_suffix, get_file_duration};
 use crate::features::video::model::{MediaMetadata, VideoStateProgress};
 use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
@@ -27,7 +28,6 @@ use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::{inspect, process};
 
 pub type VideoWsConnectionsMap = RwLock<HashMap<Uuid, mpsc::Sender<VideoStateProgress>>>;
-pub type MediaDataCache = Cache<String, MediaMetadata>;
 
 pub struct VideoService {
   pub connections_map: VideoWsConnectionsMap,
@@ -47,6 +47,7 @@ impl VideoService {
   pub async fn inspect(
     &self,
     media_data: Multipart,
+    user_id: Uuid,
     video_inspect_timeout: Duration,
   ) -> Result<MediaMetadata, ServerError> {
     let temp_dir = TempDir::new().map_err(|err| {
@@ -61,10 +62,10 @@ impl VideoService {
       inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path, video_inspect_timeout)
         .await?;
     let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
-
+    let file_hash = calculate_hash(&format!("{}{}", inspect_meta.file_name, user_id));
     self
       .media_data_cache
-      .insert(inspect_meta.file_name, media_meta_data.clone());
+      .insert(file_hash, media_meta_data.clone());
 
     Ok(media_meta_data)
   }
@@ -91,6 +92,7 @@ impl VideoService {
     let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
     let duration = get_file_duration(
       &file_name,
+      user_id,
       &local_path,
       &self.media_data_cache,
       video_inspect_timeout,
@@ -114,71 +116,88 @@ impl VideoService {
     let (mut sink, mut stream) = socket.split();
     let (tx, mut rx) = mpsc::channel::<VideoStateProgress>(10);
 
+    let mut has_conflict = false;
     {
       let mut connections_map = self.connections_map.write();
-      if connections_map.contains_key(&user_id) {
-        warn!(user_id = %user_id, "Conflicting key for video WS connections map");
-
-        return;
+      match connections_map.entry(user_id) {
+        Entry::Vacant(v) => {
+          v.insert(tx);
+        }
+        Entry::Occupied(_o) => {
+          has_conflict = true;
+          warn!(user_id = %user_id, "Conflicting key for video WS connections map");
+        }
       }
-      connections_map.insert(user_id, tx);
+    }
+
+    if has_conflict {
+      if let Err(err) = send_close_message(
+        &mut sink,
+        close_code::NORMAL,
+        "Duplicated connections are not allowed: Closing channel",
+      )
+      .await
+      {
+        error!(error = %err, "Failed sending ws close message");
+      }
+
+      return;
     }
 
     loop {
       tokio::select! {
         progress_msg = rx.recv() => {
-          match progress_msg{
-            Some(msg) => {
-              let message = Message::from(json!(msg).to_string());
+          if let Some(msg) = progress_msg {
+            let message = Message::from(json!(msg).to_string());
 
-              if let Err(err) = sink.send(message).await {
-                error!(user_id = %user_id, error = %err, "Failed to send message to user");
+            if let Err(err) = sink.send(message).await {
+              error!(user_id = %user_id, error = %err, "Failed to send message to user");
 
-                break; // Disconnect if the socket is broken
-              }
-            }
-            None => {
-              let mut connections_map = self.connections_map.write();
-              connections_map.remove(&user_id);
-
-              break;
+              break; // Disconnect if the socket is broken
             }
           }
+          // Err case is not needed. Sender is not dropped by ffmpeg runner so channel only closed
+          // when removed from connections_map.
         }
         client_msg = stream.next() => {
           match client_msg{
             // Ping, Pong, Close are handled
-            Some(Ok(msg)) => {
-              info!("Regular message:  {user_id} {msg:?}");
-            }
+            Some(Ok(_msg)) => {}
+            // Connection reset without closing handshake
             Some(Err(err)) => {
               warn!(user_id = %user_id, err = %err, "Error receiving message from user");
-              send_close_message(&mut sink, close_code::ERROR, &format!("Error occured: {}", err)).await;
+
+              if let Err(err) = send_close_message(&mut sink, close_code::ERROR, "Error occurred: Closing channel").await {
+                error!(error = %err, "Failed sending ws close message");
+              }
 
               break;
             }
+            // Connection closed
             None => {
-              info!(user_id = %user_id, "WebSocket connection has been closed by user");
-              let mut connections_map = self.connections_map.write();
-              connections_map.remove(&user_id);
-
+              warn!(user_id = %user_id, "WebSocket connection has been closed by user");
               break;
             }
           }
         }
       }
     }
+
+    let mut connections_map = self.connections_map.write();
+    connections_map.remove(&user_id);
   }
 }
 async fn send_close_message(
   socket_sink: &mut SplitSink<WebSocket, Message>,
   code: u16,
   reason: &str,
-) {
-  _ = socket_sink
+) -> Result<(), ServerError> {
+  socket_sink
     .send(Message::Close(Some(CloseFrame {
       code,
       reason: reason.into(),
     })))
-    .await;
+    .await?;
+
+  Ok(())
 }

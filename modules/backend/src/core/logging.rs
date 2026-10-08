@@ -1,16 +1,22 @@
-use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::{EnvFilter, fmt, registry};
 
-pub fn init_logging() {
+use crate::core::error::ServerError;
+
+pub fn init_logging() -> Result<(), ServerError> {
   let filter = EnvFilter::try_from_default_env()
-    .or_else(|_| EnvFilter::try_new("info,backend=info,tower_http=trace"))
-    .unwrap();
+    .or_else(|_| EnvFilter::try_new("info,video_processing_server=info,tower_http=trace"))?;
 
-  let subscriber = fmt()
-    .with_env_filter(filter)
+  let fmt_layer = fmt::layer()
     .with_target(false)
     .with_level(true)
-    .with_timer(fmt::time::UtcTime::rfc_3339())
-    .finish();
+    .with_timer(fmt::time::UtcTime::rfc_3339());
 
-  let _ = tracing::subscriber::set_global_default(subscriber);
+  registry()
+    .with(filter)
+    .with(fmt_layer)
+    .with(sentry::integrations::tracing::layer())
+    .init();
+
+  Ok(())
 }

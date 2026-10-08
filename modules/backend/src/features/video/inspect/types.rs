@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
 use crate::features::video::inspect::utils::get_r_frame_rate_from_string;
 use crate::features::video::model::{AudioStream, MediaMetadata, VideoStream};
 
@@ -26,14 +27,17 @@ pub struct FfprobeFormat {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct FfprobeStream {
-  pub id: String,
-  #[serde(deserialize_with = "crate::features::video::helpers::deserialize_string_to_type")]
-  pub bit_rate: i32,
+  pub id: Option<String>,
+  #[serde(
+    default,
+    deserialize_with = "crate::features::video::helpers::deserialize_string_to_option_type"
+  )]
+  pub bit_rate: Option<i32>,
   pub codec_type: String,
-  pub codec_long_name: String,
+  pub codec_long_name: Option<String>,
   pub width: Option<i32>,
   pub height: Option<i32>,
-  pub r_frame_rate: String,
+  pub r_frame_rate: Option<String>,
 }
 
 #[derive(PartialEq)]
@@ -48,9 +52,9 @@ impl FromStr for CodecType {
     match s {
       "audio" => Ok(CodecType::Audio),
       "video" => Ok(CodecType::Video),
-      _ => Err(ServerError::DataError(format!(
+      _ => Err(InputError::DataError(format!(
         "Codec type is not supported: {s}"
-      ))),
+      )))?,
     }
   }
 }
@@ -61,10 +65,10 @@ impl TryFrom<FfprobeOutput> for MediaMetadata {
   fn try_from(value: FfprobeOutput) -> Result<Self, Self::Error> {
     let FfprobeOutput { format, streams } = value;
 
-    let format = format.ok_or(ServerError::MissingMediaData(
+    let format = format.ok_or(InputError::MissingMediaData(
       "Missing format from ffprobe output".to_string(),
     ))?;
-    let streams = streams.ok_or(ServerError::MissingMediaData(
+    let streams = streams.ok_or(InputError::MissingMediaData(
       "Missing format from ffprobe output".to_string(),
     ))?;
 
@@ -77,24 +81,29 @@ impl TryFrom<FfprobeOutput> for MediaMetadata {
     };
 
     for stream in streams {
-      let codec_type = CodecType::from_str(stream.codec_type.as_str())?;
-
-      match codec_type {
-        CodecType::Audio => {
-          media_metadata.audio_streams.push(AudioStream {
+      match CodecType::from_str(stream.codec_type.as_str()) {
+        Ok(codec) => match codec {
+          CodecType::Audio => {
+            media_metadata.audio_streams.push(AudioStream {
+              id: stream.id,
+              bit_rate: stream.bit_rate,
+              codec: stream.codec_long_name.unwrap_or_default(),
+            });
+          }
+          CodecType::Video => media_metadata.video_streams.push(VideoStream {
             id: stream.id,
             bit_rate: stream.bit_rate,
-            codec: stream.codec_long_name,
-          });
+            codec: stream.codec_long_name.unwrap_or_default(),
+            width: stream.width.unwrap_or_default(),
+            height: stream.height.unwrap_or_default(),
+            fps: get_r_frame_rate_from_string(stream.r_frame_rate.unwrap_or_default())?,
+          }),
+        },
+        Err(err) => {
+          error!(error = %err, "Missing codec type for stream");
+
+          continue;
         }
-        CodecType::Video => media_metadata.video_streams.push(VideoStream {
-          id: stream.id,
-          bit_rate: stream.bit_rate,
-          codec: stream.codec_long_name,
-          width: stream.width.unwrap_or_default(),
-          height: stream.height.unwrap_or_default(),
-          fps: get_r_frame_rate_from_string(stream.r_frame_rate)?,
-        }),
       }
     }
 

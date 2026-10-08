@@ -25,8 +25,7 @@ pub async fn build_response(
       header::CONTENT_DISPOSITION,
       format!("attachment; filename=\"{}\"", original_name),
     )
-    .body(Body::from_stream(stream))
-    .map_err(ServerError::HttpError)?;
+    .body(Body::from_stream(stream))?;
 
   Ok(response)
 }

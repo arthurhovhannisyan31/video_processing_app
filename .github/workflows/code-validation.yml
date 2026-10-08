@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   code-validation:
     name: Code validation
@@ -16,7 +19,7 @@ jobs:
     environment: ci-test
     services:
       postgres:
-        image: postgres
+        image: postgres:18.4
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: video_processing_app
@@ -29,10 +32,11 @@ jobs:
           - 5432:5432
     env:
       CONTAINER: true
-      DATABASE_URL: ${{ vars.DATABASE_URL }}
-      BACKEND_JWT_SECRET: ${{ vars.BACKEND_JWT_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BACKEND_JWT_SECRET: ${{ secrets.BACKEND_JWT_SECRET }}
       BACKEND_CORS_ORIGINS: ${{ vars.BACKEND_CORS_ORIGINS }}
       BACKEND_VIDEO_MOCK_PASSWORD_HASH: ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

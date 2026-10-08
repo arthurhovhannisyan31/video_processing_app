@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::core::error::ServerError;
 use crate::features::video::constants::{VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE};
 use crate::features::video::model::VideoStateProgress;
-use crate::features::video::process::service::VideoWsConnectionsMap;
+use crate::features::video::service::VideoWsConnectionsMap;
 
 pub async fn process_file(
   args: Vec<&str>,
@@ -75,7 +75,7 @@ pub async fn process_file(
 
                 if let Some(message) = message {
                   let tx = connections_map.read().get(&user_id).cloned();
-                  if let Some(tx) = tx && let Err(err) = tx.send(message).await {
+                  if let Some(tx) = tx && let Err(err) = tx.try_send(message) {
                     warn!("Error while sending message to video state stream: {err}");
                   }
                 }

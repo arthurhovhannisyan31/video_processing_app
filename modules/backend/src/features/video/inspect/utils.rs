@@ -1,6 +1,4 @@
-use anyhow::anyhow;
-
-use crate::core::error::ServerError;
+use crate::core::error::{InputError, ServerError};
 
 pub fn get_r_frame_rate_from_string(input: String) -> Result<f32, ServerError> {
   if let Some((val1, val2)) = input.split_once("/") {
@@ -10,7 +8,7 @@ pub fn get_r_frame_rate_from_string(input: String) -> Result<f32, ServerError> {
     return Ok(val1 / val2);
   }
 
-  Err(ServerError::OtherError(anyhow!(
-    "Failed to parse r_frame_rate from string"
-  )))?
+  Err(InputError::DataError(
+    "Failed to parse r_frame_rate from string".to_string(),
+  ))?
 }

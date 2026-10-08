@@ -15,3 +15,4 @@ export const MAX_BODY_SIZE = process.env.NEXT_PUBLIC_MAX_BODY_SIZE;
 export const PROXY_AUTH_CHECK_ENABLED =
   process.env.NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED === "true";
 export const X_USER_ID_HEADER = "X-USER-ID";
+export const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;

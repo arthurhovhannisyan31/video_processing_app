@@ -2,21 +2,27 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ProgressType } from "components/modules/video/constants";
+import {
+  DOWNLOAD_ALL_DELAY_MS,
+  ProgressType,
+} from "components/modules/video/constants";
 import { ControlsBar } from "components/modules/video/controls-bar";
 import { DropZone } from "components/modules/video/drop-zone";
 import { FilesList } from "components/modules/video/files-list";
 import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
 import { FileState, type FilesStateMap } from "components/modules/video/types";
+import { downloadFile } from "helpers/api/downloadFile";
 import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
 import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
 import { useAtomValue } from "jotai";
+import { store } from "store";
 import { videoStore } from "store/video";
 
 export default function VideoPage() {
   const videoState = useAtomValue(videoStore);
   const [files, setFiles] = useState<File[]>([]);
   const [filesStateMap, setFilesStateMap] = useState<FilesStateMap>({});
+  const { wsReconnect } = useWebSocket();
 
   const handleAddFiles = useCallback((newFiles: File[]) => {
     setFiles((files) => [...files, ...newFiles]);
@@ -50,9 +56,12 @@ export default function VideoPage() {
     }
     setFiles([]);
     setFilesStateMap({});
+    store.set(videoStore, {});
   }, [files, filesStateMap]);
 
   const handleCompressFiles = useCallback(async () => {
+    await wsReconnect();
+
     const requests = [];
 
     for (const file of files) {
@@ -68,11 +77,27 @@ export default function VideoPage() {
     }
 
     try {
-      await Promise.all(requests.map((r) => r()));
+      await Promise.allSettled(requests.map((r) => r()));
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
-  }, [files, filesStateMap, triggerUpdate]);
+  }, [files, filesStateMap, triggerUpdate, wsReconnect]);
+
+  const handleDownloadAll = useCallback(async () => {
+    for (const file of files) {
+      const processedData = filesStateMap[file.name]?.processedData;
+
+      if (!processedData) {
+        continue;
+      }
+
+      downloadFile(file, processedData);
+      // Browsers drop back-to-back programmatic downloads without a short gap.
+      await new Promise((resolve) =>
+        setTimeout(resolve, DOWNLOAD_ALL_DELAY_MS),
+      );
+    }
+  }, [files, filesStateMap]);
 
   const handleInspectFiles = async () => {
     const requests = [];
@@ -92,7 +117,7 @@ export default function VideoPage() {
     try {
       await Promise.all(requests.map((r) => r()));
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -119,8 +144,6 @@ export default function VideoPage() {
     });
   }, [videoState]);
 
-  useWebSocket();
-
   return (
     <div className="flex flex-1 w-full justify-center">
       <div className={"flex flex-1 flex-col p-4 md:p-6 gap-8 max-w-200"}>
@@ -128,6 +151,7 @@ export default function VideoPage() {
           <>
             <ControlsBar
               compressFiles={handleCompressFiles}
+              downloadAll={handleDownloadAll}
               reset={handleReset}
               filesStateMap={filesStateMap}
             />

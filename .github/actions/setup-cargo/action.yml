@@ -22,7 +22,3 @@ runs:
     - name: Install SQLx CLI via binstall
       run: cargo binstall sqlx-cli --secure -y
       shell: bash
-    - name: Install dependencies
-      run: |
-        make cargo-update
-      shell: bash

@@ -5,7 +5,7 @@ services:
     env_file:
       - .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1
       interval: 10s
@@ -35,8 +35,6 @@ services:
       db:
         condition: service_healthy
         restart: true
-    ports:
-      - "${BACKEND_HTTP_PORT}:${BACKEND_HTTP_PORT}"
     environment:
       - CONTAINER=true
       - IS_PRODUCTION=true
@@ -51,7 +49,7 @@ services:
         limits:
           memory: 6G
           cpus: '3.5'
-          pids: 200
+          pids: 6000
         reservations:
           memory: 2G
           cpus: '1.5'
@@ -93,7 +91,6 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/certbot
-    restart: unless-stopped
 
 volumes:
   certbot-etc:

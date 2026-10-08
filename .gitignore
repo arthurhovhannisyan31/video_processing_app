@@ -1,16 +1,18 @@
-#rust
+# rust artifacts
 **/*/target
 **/*.rs.bk
 
-# editor
+# env files
+*.env*
+!.env.template
+
+# ide
 **/*.idea
 
 # local
 **/*notes
-*.env*
-!.env.template
 **/*openapi.json
 **/*hints
 configs/.ssh
-modules/backend/tests/fixtures/media
 temp_docs
+**/*http-client.env.json

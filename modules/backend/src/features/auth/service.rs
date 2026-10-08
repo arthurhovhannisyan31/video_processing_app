@@ -51,7 +51,7 @@ where
     password: &str,
     mock_password_hash: &str,
   ) -> Result<(User, String), ApplicationError> {
-    let user_res = self.repo.find_by_email(email).await?;
+    let user_res = self.repo.find_by_email(&email.to_lowercase()).await?;
 
     let password_hash = user_res
       .as_ref()

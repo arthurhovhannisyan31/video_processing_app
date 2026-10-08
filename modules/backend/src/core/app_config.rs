@@ -6,7 +6,7 @@ use axum::extract::FromRef;
 use serde::Deserialize;
 
 use crate::core::app_state::AppState;
-use crate::core::error::ServerError;
+use crate::core::error::{ServerError, StartupError};
 use crate::features::video::constants::{
   VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_PROCESS_TIMEOUT, VIDEO_RATE_LIMIT_PERIOD,
   VIDEO_RATE_LIMIT_SIZE,
@@ -27,6 +27,7 @@ pub struct AppConfig {
   pub video_inspect_timeout: Duration,
   pub video_process_timeout: Duration,
   pub mock_password_hash: String,
+  pub sentry_dsn: String,
 }
 
 impl AppConfig {
@@ -36,20 +37,20 @@ impl AppConfig {
       .eq("true");
     // Load variables when run locally
     if !is_container {
-      dotenvy::dotenv()?;
+      dotenvy::dotenv().map_err(StartupError::Dotenv)?;
     }
 
     let host = env::var("BACKEND_HOST").unwrap_or("localhost".into());
     let http_port = env::var("BACKEND_HTTP_PORT")
       .unwrap_or("8080".to_string())
       .parse()
-      .map_err(|e| ServerError::VarError(format!("Invalid BACKEND_HTTP_PORT variable: {e}")))?;
+      .map_err(|e| StartupError::VarError(format!("Invalid BACKEND_HTTP_PORT variable: {e}")))?;
     let database_url = env::var("DATABASE_URL")
-      .map_err(|e| ServerError::VarError(format!("Missing DATABASE_URL: {e}")))?;
+      .map_err(|e| StartupError::VarError(format!("Missing DATABASE_URL: {e}")))?;
     let jwt_secret = env::var("BACKEND_JWT_SECRET")
-      .map_err(|e| ServerError::VarError(format!("Missing BACKEND_JWT_SECRET: {e}")))?;
+      .map_err(|e| StartupError::VarError(format!("Missing BACKEND_JWT_SECRET: {e}")))?;
     let cors_origins = env::var("BACKEND_CORS_ORIGINS")
-      .map_err(|e| ServerError::VarError(format!("Missing BACKEND_CORS_ORIGINS: {e}")))?
+      .map_err(|e| StartupError::VarError(format!("Missing BACKEND_CORS_ORIGINS: {e}")))?
       .split(',')
       .map(|s| s.trim().to_string())
       .filter(|s| !s.is_empty())
@@ -58,7 +59,7 @@ impl AppConfig {
       .unwrap_or("10".to_string())
       .parse::<u32>()
       .map_err(|e| {
-        ServerError::VarError(format!("Failed parsing BACKEND_DB_MAX_CONNECTIONS: {e}"))
+        StartupError::VarError(format!("Failed parsing BACKEND_DB_MAX_CONNECTIONS: {e}"))
       })?;
     let is_production = env::var("IS_PRODUCTION")
       .unwrap_or("false".to_string())
@@ -79,8 +80,10 @@ impl AppConfig {
       .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
       .parse::<u64>()?;
     let mock_password_hash = env::var("BACKEND_VIDEO_MOCK_PASSWORD_HASH").map_err(|e| {
-      ServerError::VarError(format!("Missing BACKEND_VIDEO_MOCK_PASSWORD_HASH: {e}"))
+      StartupError::VarError(format!("Missing BACKEND_VIDEO_MOCK_PASSWORD_HASH: {e}"))
     })?;
+    let sentry_dsn = env::var("SENTRY_DSN")
+      .map_err(|e| StartupError::VarError(format!("Missing SENTRY_DSN: {e}")))?;
 
     Ok(Self {
       host,
@@ -96,6 +99,7 @@ impl AppConfig {
       video_inspect_timeout: Duration::from_secs(video_inspect_timeout),
       video_process_timeout: Duration::from_secs(video_process_timeout),
       mock_password_hash,
+      sentry_dsn,
     })
   }
 }

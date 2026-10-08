@@ -1,0 +1,21 @@
+# rust artifacts
+**/*/target
+
+# env files
+*.env*
+.env.template
+
+# vcs & ide
+.git
+.gitignore
+.github/
+.idea/
+
+# local
+**/*notes
+**/*openapi.json
+**/*hints
+configs/.ssh
+modules/backend/tests/fixtures/media
+temp_docs
+**/*http-client.env.json

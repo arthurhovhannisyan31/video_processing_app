@@ -34,6 +34,7 @@ pub fn build_cors_layer(app_config: Arc<AppConfig>) -> CorsLayer {
       header::AUTHORIZATION,
       header::CONTENT_TYPE,
       header::ACCEPT,
+      header::UPGRADE,
       x_user_id_header,
     ])
     .allow_credentials(true)
