@@ -60,12 +60,12 @@
     "@hey-api/openapi-ts": "^0.99.0",
     "@types/lodash": "^4.17.25",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^26.5.0",
+    "@types/node": "^26.6.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
-    "@types/react-is": "^19.2.0",
+    "@types/react-is": "^19.3.0",
     "babel-plugin-react-compiler": "1.0.0",
     "shadcn": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   }
 }
