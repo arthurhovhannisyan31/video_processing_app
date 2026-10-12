@@ -74,6 +74,8 @@ pub async fn get_authorization_token(server: &TestServer) -> String {
   format!("Bearer {}", auth_response.token)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 pub fn get_session_cookie_jar() -> CookieJar {
   let mut jar = CookieJar::new();
 
