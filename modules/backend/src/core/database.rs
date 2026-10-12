@@ -4,7 +4,7 @@ use tracing::{error, info};
 
 use crate::core::error::{ServerError, StartupError};
 
-pub async fn create_pool(
+pub async fn create_db_pool(
   database_url: &str,
   db_max_connections: u32,
 ) -> Result<PgPool, ServerError> {

@@ -5,7 +5,6 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::time::timeout;
 use tracing::warn;
-use uuid::Uuid;
 
 use crate::core::error::ServerError;
 use crate::features::video::constants::{VIDEO_MAX_PROGRESS_VALUE, VIDEO_MIN_PROGRESS_VALUE};
@@ -16,7 +15,7 @@ pub async fn process_file(
   args: Vec<&str>,
   file_name: &str,
   connections_map: &VideoWsConnectionsMap,
-  user_id: Uuid,
+  session_id: &str,
   duration_seconds: f64,
   process_timeout: Duration,
 ) -> Result<(), ServerError> {
@@ -74,7 +73,7 @@ pub async fn process_file(
                 }
 
                 if let Some(message) = message {
-                  let tx = connections_map.read().get(&user_id).cloned();
+                  let tx = connections_map.read().get(session_id).cloned();
                   if let Some(tx) = tx && let Err(err) = tx.try_send(message) {
                     warn!("Error while sending message to video state stream: {err}");
                   }

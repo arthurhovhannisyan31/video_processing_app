@@ -6,6 +6,7 @@ use axum::Json;
 use axum::extract::multipart::MultipartError;
 use axum::http::{self, StatusCode};
 use axum::response::{IntoResponse, Response};
+use axum_session::SessionError;
 use serde::{Deserialize, Serialize};
 use sqlx::migrate::MigrateError;
 use thiserror::Error;
@@ -62,6 +63,8 @@ pub enum StartupError {
   Dotenv(#[from] dotenvy::Error),
   #[error("Database migration error: {0}")]
   MigrateError(#[from] MigrateError),
+  #[error("Axum session error")]
+  SessionError(#[from] SessionError),
 }
 
 #[derive(Debug, Error)]

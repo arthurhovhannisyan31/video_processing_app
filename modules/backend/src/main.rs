@@ -5,12 +5,14 @@ mod router;
 
 use core::app_config::AppConfig;
 use core::app_state::AppState;
-use core::database::{create_pool, run_migrations};
+use core::database::{create_db_pool, run_migrations};
 use core::error::ServerError;
 use core::governor::rate_limiters_cleanup;
 use core::logging::init_logging;
 
 use http::init_http_server;
+
+use crate::core::session::build_session_store;
 
 fn main() -> Result<(), ServerError> {
   init_logging()?;
@@ -27,23 +29,26 @@ fn main() -> Result<(), ServerError> {
   tokio::runtime::Builder::new_multi_thread()
     .enable_all()
     .build()?
-    .block_on(async {
-      let pool = create_pool(&app_config.database_url, app_config.db_max_connections).await?;
-
-      run_migrations(&pool).await?;
-
-      let app_state = AppState::new(app_config, pool);
-      rate_limiters_cleanup(app_state.system_state.rate_limiters.clone());
-
-      init_http_server(app_state).await.inspect_err(|err| {
-        sentry::capture_error(&err);
-      })?;
-
-      Ok::<(), ServerError>(())
-    })
+    .block_on(async { app(app_config).await })
     .inspect_err(|err| {
       sentry::capture_error(&err);
     })?;
 
   Ok(())
+}
+
+async fn app(app_config: AppConfig) -> Result<(), ServerError> {
+  let pool = create_db_pool(&app_config.database_url, app_config.db_max_connections).await?;
+  let session_store = build_session_store(pool.clone(), app_config.is_production).await?;
+
+  run_migrations(&pool).await?;
+
+  let app_state = AppState::new(app_config, pool.clone());
+  rate_limiters_cleanup(app_state.system_state.rate_limiters.clone());
+
+  init_http_server(app_state, session_store)
+    .await
+    .inspect_err(|err| {
+      sentry::capture_error(&err);
+    })
 }
