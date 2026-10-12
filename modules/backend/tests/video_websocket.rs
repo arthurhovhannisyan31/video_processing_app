@@ -1,27 +1,24 @@
-mod utils;
+mod common;
+use common::utils;
 
 #[cfg(test)]
 mod test_video_websocket {
   use axum::body::Bytes;
   use axum_test::{TestServer, WsMessage};
   use sqlx::PgPool;
-  use uuid::Uuid;
   use video_processing_server::core::error::ApplicationError;
   use video_processing_server::router::routes;
 
-  use crate::utils::{setup_router, with_base_route};
+  use crate::utils::{get_session_cookie_jar, setup_router, with_base_route};
 
   #[sqlx::test()]
   async fn test_ping_pong(pool: PgPool) -> Result<(), ApplicationError> {
-    let router = setup_router(pool)?;
+    let router = setup_router(pool).await?;
     let server = TestServer::builder().http_transport().build(router);
 
     let mut client = server
-      .get_websocket(&with_base_route(&format!(
-        "{}/{}",
-        routes::VIDEO_WEB_SOCKET,
-        Uuid::new_v4()
-      )))
+      .get_websocket(&with_base_route(routes::VIDEO_WEB_SOCKET))
+      .add_cookies(get_session_cookie_jar())
       .await
       .into_websocket()
       .await;
@@ -35,24 +32,18 @@ mod test_video_websocket {
 
   #[sqlx::test()]
   async fn test_duplicate_connection(pool: PgPool) -> Result<(), ApplicationError> {
-    let router = setup_router(pool)?;
+    let router = setup_router(pool).await?;
     let server = TestServer::builder().http_transport().build(router);
-    let user_id = Uuid::new_v4();
+    let cookie = get_session_cookie_jar();
 
     let _client_1 = server
-      .get_websocket(&with_base_route(&format!(
-        "{}/{}",
-        routes::VIDEO_WEB_SOCKET,
-        user_id
-      )))
+      .get_websocket(&with_base_route(routes::VIDEO_WEB_SOCKET))
+      .add_cookies(cookie.clone())
       .await;
 
     let mut client_2 = server
-      .get_websocket(&with_base_route(&format!(
-        "{}/{}",
-        routes::VIDEO_WEB_SOCKET,
-        user_id
-      )))
+      .get_websocket(&with_base_route(routes::VIDEO_WEB_SOCKET))
+      .add_cookies(cookie.clone())
       .await
       .into_websocket()
       .await;
@@ -65,16 +56,13 @@ mod test_video_websocket {
 
   #[sqlx::test()]
   async fn test_reconnect(pool: PgPool) -> Result<(), ApplicationError> {
-    let router = setup_router(pool)?;
+    let router = setup_router(pool).await?;
     let server = TestServer::builder().http_transport().build(router);
-    let user_id = Uuid::new_v4();
+    let cookie = get_session_cookie_jar();
 
     let connection = server
-      .get_websocket(&with_base_route(&format!(
-        "{}/{}",
-        routes::VIDEO_WEB_SOCKET,
-        user_id
-      )))
+      .get_websocket(&with_base_route(routes::VIDEO_WEB_SOCKET))
+      .add_cookies(cookie.clone())
       .await;
     connection.assert_status_switching_protocols();
 
@@ -82,11 +70,8 @@ mod test_video_websocket {
     client.close().await;
 
     let new_connection = server
-      .get_websocket(&with_base_route(&format!(
-        "{}/{}",
-        routes::VIDEO_WEB_SOCKET,
-        user_id
-      )))
+      .get_websocket(&with_base_route(routes::VIDEO_WEB_SOCKET))
+      .add_cookies(cookie.clone())
       .await;
     new_connection.assert_status_switching_protocols();
 

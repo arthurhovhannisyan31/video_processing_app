@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum_test::TestServer;
+use cookie::CookieJar;
 use parking_lot::Mutex;
 use serde_json::json;
 use sqlx::PgPool;
@@ -9,6 +10,7 @@ use video_processing_server::core::app_config::AppConfig;
 use video_processing_server::core::app_state::AppState;
 use video_processing_server::core::error::ServerError;
 use video_processing_server::core::jwt::JwtService;
+use video_processing_server::core::session::build_session_store;
 use video_processing_server::features::auth::dto::{AuthRequest, AuthResponse};
 use video_processing_server::features::auth::repository::PostgresUserRepository;
 use video_processing_server::features::auth::service::AuthService;
@@ -18,10 +20,14 @@ use video_processing_server::features::video::service::VideoService;
 use video_processing_server::features::video::state::VideoState;
 use video_processing_server::router::{build_router, routes};
 
+use super::constants::MOCK_SESSION_ID;
+
 #[cfg(test)]
 #[allow(dead_code)]
-pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
+pub async fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
   let app_config = AppConfig::from_env()?;
+  let session_store = build_session_store(pool.clone(), app_config.is_production).await?;
+
   let jwt_service = JwtService::new(app_config.jwt_secret.clone());
   let users_repo = PostgresUserRepository::new(pool.clone());
   let auth_service = AuthService::new(users_repo, jwt_service.clone());
@@ -40,7 +46,7 @@ pub fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
     }),
   };
 
-  build_router(app_state)
+  build_router(app_state, session_store)
 }
 
 #[cfg(test)]
@@ -66,4 +72,12 @@ pub async fn get_authorization_token(server: &TestServer) -> String {
   let auth_response = response.json::<AuthResponse>();
 
   format!("Bearer {}", auth_response.token)
+}
+
+pub fn get_session_cookie_jar() -> CookieJar {
+  let mut jar = CookieJar::new();
+
+  jar.add(("session", MOCK_SESSION_ID));
+
+  jar
 }

@@ -1,5 +1,5 @@
-mod constants;
-mod utils;
+mod common;
+use common::utils;
 
 #[cfg(test)]
 mod test_rate_limiter {
@@ -10,10 +10,8 @@ mod test_rate_limiter {
   use axum_test::TestServer;
   use sqlx::PgPool;
   use video_processing_server::core::error::ApplicationError;
-  use video_processing_server::core::extractors::X_USER_ID_HEADER;
   use video_processing_server::router::routes;
 
-  use crate::constants::MOCK_USER_ID;
   use crate::utils::{setup_router, with_base_route};
 
   #[sqlx::test()]
@@ -24,13 +22,12 @@ mod test_rate_limiter {
       env::set_var("BACKEND_VIDEO_RATE_LIMIT_SIZE", rate_limit_size.to_string());
     }
 
-    let router = setup_router(pool)?;
+    let router = setup_router(pool).await?;
     let server = TestServer::new(router);
 
     for _ in 0..rate_limit_size {
       let response = server
         .post(&with_base_route(routes::VIDEO_INSPECT))
-        .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
         .add_header("X-Forwarded-For", "0.0.0.0")
         .await;
       assert_ne!(response.status_code(), StatusCode::TOO_MANY_REQUESTS);
@@ -38,7 +35,6 @@ mod test_rate_limiter {
 
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
-      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .add_header("X-Forwarded-For", "0.0.0.0")
       .await;
     assert_eq!(response.status_code(), StatusCode::TOO_MANY_REQUESTS);
@@ -59,14 +55,13 @@ mod test_rate_limiter {
       );
     }
 
-    let router = setup_router(pool)?;
+    let router = setup_router(pool).await?;
     let server = TestServer::new(router);
 
     // Spend all available requests quota
     for _ in 0..rate_limit_size {
       let response = server
         .post(&with_base_route(routes::VIDEO_INSPECT))
-        .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
         .add_header("X-Forwarded-For", "0.0.0.0")
         .await;
       assert_ne!(response.status_code(), StatusCode::TOO_MANY_REQUESTS);
@@ -77,7 +72,6 @@ mod test_rate_limiter {
 
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
-      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .add_header("X-Forwarded-For", "0.0.0.0")
       .await;
     assert_eq!(response.status_code(), StatusCode::TOO_MANY_REQUESTS);
@@ -87,7 +81,6 @@ mod test_rate_limiter {
 
     let response = server
       .post(&with_base_route(routes::VIDEO_INSPECT))
-      .add_header(X_USER_ID_HEADER, MOCK_USER_ID)
       .add_header("X-Forwarded-For", "0.0.0.0")
       .await;
     assert_ne!(response.status_code(), StatusCode::TOO_MANY_REQUESTS);
