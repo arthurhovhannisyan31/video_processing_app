@@ -145,8 +145,12 @@ export default function VideoPage() {
   }, [videoState]);
 
   return (
-    <div className="flex flex-1 w-full justify-center">
-      <div className={"flex flex-1 flex-col p-4 md:p-6 gap-8 max-w-200"}>
+    <div className="flex flex-1 w-full justify-center flex-wrap">
+      <div
+        className={
+          "flex flex-1 flex-col p-4 md:p-6 gap-8 max-w-200 max-[800px]:max-w-full mb-12"
+        }
+      >
         {files.length ? (
           <>
             <ControlsBar

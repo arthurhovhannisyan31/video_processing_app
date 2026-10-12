@@ -19,7 +19,7 @@ export const ControlsBar: FC<ControlsBarProps> = ({
   downloadAll,
   reset,
 }) => {
-  const isCompressing = useMemo(
+  const isProcessing = useMemo(
     () =>
       !!Object.values(filesStateMap).filter(
         (fileState) =>
@@ -46,22 +46,25 @@ export const ControlsBar: FC<ControlsBarProps> = ({
   );
 
   return (
-    <div className={"flex gap-4 w-full justify-between"}>
-      <Button
-        className="sm:w-auto h-10 text-base backdrop-blur-xs"
-        onClick={compressFiles}
-        disabled={isInspecting || isCompressing}
-      >
-        {isCompressing ? <Spinner /> : "Compress files"}
-      </Button>
-      <Button
-        className="sm:w-auto h-10 text-base backdrop-blur-xs"
-        onClick={downloadAll}
-        disabled={isCompressing || !hasProcessedFiles}
-      >
-        <DownloadIcon />
-        Download all
-      </Button>
+    <div className={"flex gap-4 w-full justify-center flex-wrap"}>
+      {!hasProcessedFiles ? (
+        <Button
+          className="sm:w-auto h-10 text-base backdrop-blur-xs"
+          onClick={compressFiles}
+          disabled={isInspecting || isProcessing}
+        >
+          {isProcessing ? <Spinner /> : "Process files"}
+        </Button>
+      ) : (
+        <Button
+          className="sm:w-auto h-10 text-base backdrop-blur-xs"
+          onClick={downloadAll}
+          disabled={isProcessing || !hasProcessedFiles}
+        >
+          <DownloadIcon />
+          Download all
+        </Button>
+      )}
       <Button
         variant={"destructive"}
         className="sm:w-auto h-10 text-base backdrop-blur-xs"
