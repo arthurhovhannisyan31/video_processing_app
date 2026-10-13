@@ -1,4 +1,5 @@
-mod utils;
+mod common;
+use common::utils;
 
 #[cfg(test)]
 mod test_public_api {
@@ -24,7 +25,7 @@ mod test_public_api {
 
   #[sqlx::test]
   async fn test_health(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool)?;
+    let router = utils::setup_router(pool).await?;
     let server = TestServer::new(router);
 
     let response = server
@@ -43,7 +44,7 @@ mod test_public_api {
 
   #[sqlx::test]
   async fn test_openapi(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool)?;
+    let router = utils::setup_router(pool).await?;
     let server = TestServer::new(router);
 
     let response = server
@@ -65,7 +66,7 @@ mod test_public_api {
   #[ignore]
   #[sqlx::test]
   async fn test_register(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool)?;
+    let router = utils::setup_router(pool).await?;
     let server = TestServer::new(router);
 
     let create_user_request = CreateUserRequest {
@@ -92,7 +93,7 @@ mod test_public_api {
   #[ignore]
   #[sqlx::test(fixtures("create_user"))]
   async fn test_login(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool)?;
+    let router = utils::setup_router(pool).await?;
     let server = TestServer::new(router);
 
     let authentication_request = AuthRequest {

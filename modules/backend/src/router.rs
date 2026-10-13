@@ -1,6 +1,8 @@
 use axum::Router;
 use axum::body::Body;
 use axum::http::Request;
+use axum_session::{SessionLayer, SessionStore};
+use axum_session_sqlx::SessionPgPool;
 use sentry::integrations::tower::NewSentryLayer;
 use tower::ServiceBuilder;
 use tower_http::compression::predicate::NotForContentType;
@@ -25,10 +27,12 @@ pub mod routes {
   pub const VIDEO_JOBS_BY_ID: &str = "/video/jobs/{id}";
   pub const VIDEO_JOBS_BY_ID_LOGS: &str = "/video/jobs/{id}/logs";
   pub const VIDEO_WEB_SOCKET: &str = "/video/ws";
-  pub const VIDEO_WEB_SOCKET_BY_ID: &str = "/video/ws/{user_id}";
 }
 
-pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
+pub fn build_router(
+  app_state: AppState,
+  session_store: SessionStore<SessionPgPool>,
+) -> Result<Router, ServerError> {
   let merged_router = Router::new()
     .merge(get_system_router())
     .merge(get_video_router(app_state.clone())?)
@@ -36,6 +40,7 @@ pub fn build_router(app_state: AppState) -> Result<Router, ServerError> {
 
   let router = Router::new()
     .nest("/api", merged_router)
+    .layer(SessionLayer::new(session_store))
     .layer(TraceLayer::new_for_http())
     .layer(
       CompressionLayer::new()

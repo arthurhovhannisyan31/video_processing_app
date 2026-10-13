@@ -10,21 +10,21 @@ import {
   type BufferedWebSocketResult,
   useBufferedWebSocket,
 } from "hooks/useBufferedWebSocket";
-import { getUserId } from "lib/helpers/getUserId";
 
 export type WebSocketResult = BufferedWebSocketResult;
 
+const WS_CONNECT_URI = `${API_WS_URL}/video/ws`;
+
 export const useWebSocket = (): WebSocketResult => {
   const retryCountRef = useRef(WS_RECONNECT_ATTEMPTS);
-  const wsConnectURI = useMemo(() => {
-    const userId = getUserId();
-
-    return `${API_WS_URL}/video/ws/${userId}`;
-  }, []);
   const wsDelegateConfig = useMemo(
     () => getWsDelegateConfig(retryCountRef),
     [],
   );
 
-  return useBufferedWebSocket(wsConnectURI, wsDelegateConfig, websocketPolicy);
+  return useBufferedWebSocket(
+    WS_CONNECT_URI,
+    wsDelegateConfig,
+    websocketPolicy,
+  );
 };

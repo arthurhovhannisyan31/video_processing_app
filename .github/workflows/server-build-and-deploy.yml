@@ -95,26 +95,26 @@ jobs:
             mkdir -p /root/server
             touch /root/server/.env
             {
-              printf "%s='%s'\n" IMAGE_TAG $IMAGE_TAG
-              printf "%s='%s'\n" IS_PRODUCTION true
-              printf "%s='%s'\n" POSTGRES_DB ${{ vars.POSTGRES_DB }}
-              printf "%s='%s'\n" POSTGRES_HOST ${{ vars.POSTGRES_HOST }}
-              printf "%s='%s'\n" POSTGRES_PASSWORD ${{ secrets.POSTGRES_PASSWORD }}
-              printf "%s='%s'\n" POSTGRES_PORT ${{ vars.POSTGRES_PORT }}
-              printf "%s='%s'\n" POSTGRES_USER ${{ vars.POSTGRES_USER }}
-              printf "%s='%s'\n" DATABASE_URL ${{ secrets.DATABASE_URL }}
-              printf "%s='%s'\n" BACKEND_HOST ${{ vars.BACKEND_HOST }}
-              printf "%s='%s'\n" BACKEND_HTTP_PORT ${{ vars.BACKEND_HTTP_PORT }}
-              printf "%s='%s'\n" BACKEND_JWT_SECRET ${{ secrets.BACKEND_JWT_SECRET }}
-              printf "%s='%s'\n" BACKEND_CORS_ORIGINS ${{ vars.BACKEND_CORS_ORIGINS }}
-              printf "%s='%s'\n" BACKEND_DB_MAX_CONNECTIONS ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
-              printf "%s='%s'\n" BACKEND_VIDEO_MAX_BODY_SIZE ${{ vars.BACKEND_VIDEO_MAX_BODY_SIZE }}
-              printf "%s='%s'\n" BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC ${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
-              printf "%s='%s'\n" BACKEND_VIDEO_RATE_LIMIT_SIZE ${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
-              printf "%s='%s'\n" BACKEND_VIDEO_INSPECT_TIMEOUT ${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
-              printf "%s='%s'\n" BACKEND_VIDEO_PROCESS_TIMEOUT ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
-              printf "%s='%s'\n" BACKEND_VIDEO_MOCK_PASSWORD_HASH ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
-              printf "%s='%s'\n" SENTRY_DSN ${{ secrets.SENTRY_DSN }}
+              printf "%s=%s\n" IMAGE_TAG $IMAGE_TAG
+              printf "%s=%s\n" IS_PRODUCTION true
+              printf "%s=%s\n" POSTGRES_DB ${{ vars.POSTGRES_DB }}
+              printf "%s=%s\n" POSTGRES_HOST ${{ vars.POSTGRES_HOST }}
+              printf "%s=%s\n" POSTGRES_PASSWORD ${{ secrets.POSTGRES_PASSWORD }}
+              printf "%s=%s\n" POSTGRES_PORT ${{ vars.POSTGRES_PORT }}
+              printf "%s=%s\n" POSTGRES_USER ${{ vars.POSTGRES_USER }}
+              printf "%s=%s\n" DATABASE_URL ${{ secrets.DATABASE_URL }}
+              printf "%s=%s\n" BACKEND_HOST ${{ vars.BACKEND_HOST }}
+              printf "%s=%s\n" BACKEND_HTTP_PORT ${{ vars.BACKEND_HTTP_PORT }}
+              printf "%s=%s\n" BACKEND_JWT_SECRET ${{ secrets.BACKEND_JWT_SECRET }}
+              printf "%s=%s\n" BACKEND_CORS_ORIGINS ${{ vars.BACKEND_CORS_ORIGINS }}
+              printf "%s=%s\n" BACKEND_DB_MAX_CONNECTIONS ${{ vars.BACKEND_DB_MAX_CONNECTIONS }}
+              printf "%s=%s\n" BACKEND_VIDEO_MAX_BODY_SIZE ${{ vars.BACKEND_VIDEO_MAX_BODY_SIZE }}
+              printf "%s=%s\n" BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC ${{ vars.BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC }}
+              printf "%s=%s\n" BACKEND_VIDEO_RATE_LIMIT_SIZE ${{ vars.BACKEND_VIDEO_RATE_LIMIT_SIZE }}
+              printf "%s=%s\n" BACKEND_VIDEO_INSPECT_TIMEOUT ${{ vars.BACKEND_VIDEO_INSPECT_TIMEOUT }}
+              printf "%s=%s\n" BACKEND_VIDEO_PROCESS_TIMEOUT ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
+              printf "%s=%s\n" BACKEND_VIDEO_MOCK_PASSWORD_HASH ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
+              printf "%s=%s\n" SENTRY_DSN ${{ secrets.SENTRY_DSN }}
             } > /root/server/.env.new
             
             # replace old env file with new one

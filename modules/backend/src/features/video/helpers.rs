@@ -9,7 +9,6 @@ use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io;
 use tokio::io::AsyncWriteExt;
-use uuid::Uuid;
 
 use crate::core::error::{InputError, ServerError};
 use crate::core::hash::calculate_hash;
@@ -148,12 +147,12 @@ pub async fn read_form_data_to_file(
 
 pub async fn get_file_duration(
   file_name: &str,
-  user_id: Uuid,
+  session_id: &str,
   local_path: &str,
   media_data_cache: &MediaDataCache,
   video_inspect_timeout: Duration,
 ) -> Result<f64, ServerError> {
-  let file_hash = calculate_hash(&format!("{}{}", file_name, user_id));
+  let file_hash = calculate_hash(&format!("{}{}", file_name, session_id));
 
   let duration = match media_data_cache.get(&file_hash) {
     Some(meta) => meta.duration_seconds,

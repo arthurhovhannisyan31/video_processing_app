@@ -21,6 +21,7 @@ import {
   AttachmentTitle,
 } from "components/ui/attachment";
 import { Button } from "components/ui/button";
+import { Card } from "components/ui/card";
 import { Progress } from "components/ui/progress";
 import { Spinner } from "components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
@@ -30,7 +31,7 @@ import { ArrowLeft, DownloadIcon, VideoIcon } from "lucide-react";
 
 enum FileCardTab {
   Preview = "preview",
-  Inspection = "inspection",
+  Details = "details",
 }
 
 export interface FileCardProps {
@@ -44,7 +45,7 @@ export interface FileCardProps {
   processedData?: Blob;
 }
 
-const FileCard: FC<FileCardProps> = ({
+export const FileCard: FC<FileCardProps> = ({
   file,
   progress,
   progressType,
@@ -60,11 +61,9 @@ const FileCard: FC<FileCardProps> = ({
   const isInspecting = isPending && jobType === JobType.Inspect;
   const hasPreview = !!previewUrl;
   const hasInspection = !!inspectData || isInspecting;
-
   const [selectedTab, setSelectedTab] = useState<FileCardTab>();
-  // Follow the newest available result until the user picks a tab.
   const activeTab =
-    selectedTab ?? (hasPreview ? FileCardTab.Preview : FileCardTab.Inspection);
+    selectedTab ?? (hasPreview ? FileCardTab.Preview : FileCardTab.Details);
 
   const handleDownloadFile = () => {
     if (processedData) {
@@ -73,27 +72,31 @@ const FileCard: FC<FileCardProps> = ({
   };
 
   return (
-    <div className={"flex flex-col w-full gap-1.5 backdrop-blur-xs"}>
+    <Card className="flex flex-col w-full backdrop-blur-xs p-2">
       <Attachment
         state={statusToAttachmentStateMap[status]}
         className="flex-1 gap-4 w-full"
       >
-        <AttachmentMedia variant={!isPending && thumbnail ? "image" : "icon"}>
-          {isPending ? (
-            <Spinner />
-          ) : thumbnail ? (
-            <img src={thumbnail} alt={file.name} />
-          ) : (
-            <VideoIcon />
-          )}
-        </AttachmentMedia>
         <AttachmentContent
-          className={"flex gap-2 items-center justify-between p-2"}
+          className={"flex gap-2 items-center justify-between p-2 flex-wrap"}
         >
+          <AttachmentMedia variant={!isPending && thumbnail ? "image" : "icon"}>
+            {isPending ? (
+              <Spinner />
+            ) : thumbnail ? (
+              <img src={thumbnail} alt={file.name} />
+            ) : (
+              <VideoIcon />
+            )}
+          </AttachmentMedia>
           <AttachmentTitle className={"text-base max-w-sm"}>
             {file.name}
           </AttachmentTitle>
-          <div className={"flex gap-4 items-center"}>
+          <div
+            className={
+              "flex flex-auto min-w-0 gap-4 items-center justify-between"
+            }
+          >
             {progressType && (
               <AttachmentDescription className={"text-base capitalize"}>
                 {`${progressType} - ${progress}%`}
@@ -127,43 +130,40 @@ const FileCard: FC<FileCardProps> = ({
           <Progress className="w-full" value={progress} />
         )}
       </Attachment>
-      {(hasPreview || hasInspection) && (
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setSelectedTab(value as FileCardTab)}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setSelectedTab(value as FileCardTab)}
+      >
+        <TabsList>
+          <TabsTrigger value={FileCardTab.Preview} disabled={!previewUrl}>
+            Preview
+          </TabsTrigger>
+          <TabsTrigger value={FileCardTab.Details} disabled={!hasInspection}>
+            Details
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value={FileCardTab.Preview}
+          className={"flex flex-col gap-1.5"}
         >
-          <TabsList>
-            <TabsTrigger value={FileCardTab.Preview} disabled={!hasPreview}>
-              Preview
-            </TabsTrigger>
-            <TabsTrigger
-              value={FileCardTab.Inspection}
-              disabled={!hasInspection}
+          {previewUrl && (
+            <video
+              src={previewUrl}
+              poster={thumbnail}
+              controls
+              playsInline
+              preload={"metadata"}
+              className={"w-full max-h-96 rounded-lg border bg-black"}
             >
-              Inspection
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value={FileCardTab.Preview}>
-            {previewUrl && (
-              <video
-                src={previewUrl}
-                poster={thumbnail}
-                controls
-                playsInline
-                preload={"metadata"}
-                className={"w-full max-h-96 rounded-lg border bg-black"}
-              >
-                <track kind="captions" />
-              </video>
-            )}
-          </TabsContent>
-          <TabsContent value={FileCardTab.Inspection}>
-            <VideoInspectResult data={inspectData} isLoading={isInspecting} />
-          </TabsContent>
-        </Tabs>
-      )}
+              <track kind="captions" />
+            </video>
+          )}
+        </TabsContent>
+        <TabsContent value={FileCardTab.Details}>
+          <VideoInspectResult data={inspectData} isLoading={isInspecting} />
+        </TabsContent>
+      </Tabs>
       {error && <VideoInspectError message={error} />}
-    </div>
+    </Card>
   );
 };
-export default FileCard;

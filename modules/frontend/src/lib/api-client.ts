@@ -5,28 +5,20 @@ import {
   HttpStatusCode,
   type InternalAxiosRequestConfig,
 } from "axios";
-import { API_HTTP_URL, X_USER_ID_HEADER } from "configs/constants";
+import { API_HTTP_URL } from "configs/constants";
 import { RootPath } from "configs/routes/constants";
 import { client } from "generated/client/client.gen";
-import { getUserId } from "lib/helpers/getUserId";
 import { isSSR } from "lib/utils";
 import Router from "next/router";
 
 if (!isSSR()) {
   client.setConfig({
     baseURL: API_HTTP_URL,
+    withCredentials: true,
   });
 
   client.instance.interceptors.request.use(
-    async (requestConfig: InternalAxiosRequestConfig) => {
-      const userId = getUserId();
-
-      if (userId) {
-        requestConfig.headers[X_USER_ID_HEADER] = userId;
-      }
-
-      return requestConfig;
-    },
+    async (requestConfig: InternalAxiosRequestConfig) => requestConfig,
   );
 
   client.instance.interceptors.response.use(

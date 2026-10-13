@@ -15,7 +15,6 @@ use tempfile::TempDir;
 use tokio::io;
 use tokio::sync::mpsc;
 use tracing::{error, warn};
-use uuid::Uuid;
 
 use crate::core::error::ServerError;
 use crate::core::hash::calculate_hash;
@@ -27,7 +26,7 @@ use crate::features::video::process::helpers::get_args;
 use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::{inspect, process};
 
-pub type VideoWsConnectionsMap = RwLock<HashMap<Uuid, mpsc::Sender<VideoStateProgress>>>;
+pub type VideoWsConnectionsMap = RwLock<HashMap<String, mpsc::Sender<VideoStateProgress>>>;
 
 pub struct VideoService {
   pub connections_map: VideoWsConnectionsMap,
@@ -47,7 +46,7 @@ impl VideoService {
   pub async fn inspect(
     &self,
     media_data: Multipart,
-    user_id: Uuid,
+    session_id: String,
     video_inspect_timeout: Duration,
   ) -> Result<MediaMetadata, ServerError> {
     let temp_dir = TempDir::new().map_err(|err| {
@@ -62,7 +61,7 @@ impl VideoService {
       inspect::ffprobe_runner::inspect_file(&inspect_meta.local_path, video_inspect_timeout)
         .await?;
     let media_meta_data = inspect::ffprobe_mapper::map_media_meta(inspection_raw_data)?;
-    let file_hash = calculate_hash(&format!("{}{}", inspect_meta.file_name, user_id));
+    let file_hash = calculate_hash(&format!("{}{}", inspect_meta.file_name, session_id));
     self
       .media_data_cache
       .insert(file_hash, media_meta_data.clone());
@@ -73,7 +72,7 @@ impl VideoService {
   pub async fn process(
     &self,
     media_data: Multipart,
-    user_id: Uuid,
+    session_id: String,
     video_inspect_timeout: Duration,
     video_process_timeout: Duration,
   ) -> Result<Response<Body>, ServerError> {
@@ -92,7 +91,7 @@ impl VideoService {
     let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
     let duration = get_file_duration(
       &file_name,
-      user_id,
+      &session_id,
       &local_path,
       &self.media_data_cache,
       video_inspect_timeout,
@@ -103,7 +102,7 @@ impl VideoService {
       ffmpeg_args,
       &file_name,
       &self.connections_map,
-      user_id,
+      &session_id,
       duration,
       video_process_timeout,
     )
@@ -112,20 +111,20 @@ impl VideoService {
     process::build_response::build_response(&local_path, &output_path).await
   }
 
-  pub async fn handle_socket(&self, socket: WebSocket, user_id: Uuid) {
+  pub async fn handle_socket(&self, socket: WebSocket, session_id: String) {
     let (mut sink, mut stream) = socket.split();
     let (tx, mut rx) = mpsc::channel::<VideoStateProgress>(10);
 
     let mut has_conflict = false;
     {
       let mut connections_map = self.connections_map.write();
-      match connections_map.entry(user_id) {
+      match connections_map.entry(session_id.clone()) {
         Entry::Vacant(v) => {
           v.insert(tx);
         }
         Entry::Occupied(_o) => {
           has_conflict = true;
-          warn!(user_id = %user_id, "Conflicting key for video WS connections map");
+          warn!(user_id = %session_id, "Conflicting key for video WS connections map");
         }
       }
     }
@@ -151,7 +150,7 @@ impl VideoService {
             let message = Message::from(json!(msg).to_string());
 
             if let Err(err) = sink.send(message).await {
-              error!(user_id = %user_id, error = %err, "Failed to send message to user");
+              error!(user_id = %session_id, error = %err, "Failed to send message to user");
 
               break; // Disconnect if the socket is broken
             }
@@ -165,7 +164,7 @@ impl VideoService {
             Some(Ok(_msg)) => {}
             // Connection reset without closing handshake
             Some(Err(err)) => {
-              warn!(user_id = %user_id, err = %err, "Error receiving message from user");
+              warn!(user_id = %session_id, err = %err, "Error receiving message from user");
 
               if let Err(err) = send_close_message(&mut sink, close_code::ERROR, "Error occurred: Closing channel").await {
                 error!(error = %err, "Failed sending ws close message");
@@ -175,7 +174,7 @@ impl VideoService {
             }
             // Connection closed
             None => {
-              warn!(user_id = %user_id, "WebSocket connection has been closed by user");
+              warn!(user_id = %session_id, "WebSocket connection has been closed by user");
               break;
             }
           }
@@ -184,7 +183,7 @@ impl VideoService {
     }
 
     let mut connections_map = self.connections_map.write();
-    connections_map.remove(&user_id);
+    connections_map.remove(&session_id);
   }
 }
 async fn send_close_message(

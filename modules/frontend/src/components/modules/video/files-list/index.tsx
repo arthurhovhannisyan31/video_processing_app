@@ -1,7 +1,7 @@
 import type { FilesStateMap } from "components/modules/video/types";
 import { type FC, useMemo } from "react";
 
-import FileCard from "components/modules/video/file-card";
+import { FileCard } from "components/modules/video/file-card";
 
 export interface FilesListProps {
   files: File[];
