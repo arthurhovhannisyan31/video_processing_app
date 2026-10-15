@@ -16,3 +16,4 @@
 configs/.ssh
 temp_docs
 **/*http-client.env.json
+.claude/memory
