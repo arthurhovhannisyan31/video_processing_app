@@ -25,11 +25,7 @@ pub struct AppConfig {
   pub cors_origins: Vec<String>,
   pub db_max_connections: u32,
   pub is_production: bool,
-  pub video_max_body_size: usize,
-  pub video_rate_limit_period: u64,
-  pub video_rate_limit_size: u32,
-  pub video_inspect_timeout: Duration,
-  pub video_process_timeout: Duration,
+  pub video: VideoConfig,
   pub mock_password_hash: String,
   pub sentry_dsn: String,
   pub smtp: SmtpConfig,
@@ -71,21 +67,6 @@ impl AppConfig {
     let is_production = env::var("IS_PRODUCTION")
       .unwrap_or("false".to_string())
       .eq("true");
-    let video_max_body_size = env::var("BACKEND_VIDEO_MAX_BODY_SIZE")
-      .unwrap_or(VIDEO_MAX_BODY_SIZE.to_string())
-      .parse::<usize>()?;
-    let video_rate_limit_period = env::var("BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC")
-      .unwrap_or(VIDEO_RATE_LIMIT_PERIOD.to_string())
-      .parse::<u64>()?;
-    let video_rate_limit_size = env::var("BACKEND_VIDEO_RATE_LIMIT_SIZE")
-      .unwrap_or(VIDEO_RATE_LIMIT_SIZE.to_string())
-      .parse::<u32>()?;
-    let video_inspect_timeout = env::var("BACKEND_VIDEO_INSPECT_TIMEOUT")
-      .unwrap_or(VIDEO_INSPECT_TIMEOUT.to_string())
-      .parse::<u64>()?;
-    let video_process_timeout = env::var("BACKEND_VIDEO_PROCESS_TIMEOUT")
-      .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
-      .parse::<u64>()?;
     let mock_password_hash = env::var("BACKEND_VIDEO_MOCK_PASSWORD_HASH").map_err(|e| {
       StartupError::VarError(format!("Missing BACKEND_VIDEO_MOCK_PASSWORD_HASH: {e}"))
     })?;
@@ -99,6 +80,7 @@ impl AppConfig {
     let password_reset_ttl = env::var("BACKEND_PASSWORD_RESET_TTL_MIN")
       .unwrap_or(PASSWORD_RESET_TTL_MIN.to_string())
       .parse::<u64>()?;
+    let video = VideoConfig::from_env()?;
 
     Ok(Self {
       host,
@@ -108,14 +90,10 @@ impl AppConfig {
       cors_origins,
       db_max_connections,
       is_production,
-      video_max_body_size,
-      video_rate_limit_period,
-      video_rate_limit_size,
-      video_inspect_timeout: Duration::from_secs(video_inspect_timeout),
-      video_process_timeout: Duration::from_secs(video_process_timeout),
       mock_password_hash,
       sentry_dsn,
       smtp,
+      video,
       frontend_url,
       password_reset_ttl: Duration::from_secs(password_reset_ttl * 60),
     })
@@ -175,6 +153,51 @@ fn env_or_warn_in_production(
   }
 
   Ok(value)
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct VideoConfig {
+  pub max_body_size: usize,
+  pub rate_limit_period: u64,
+  pub rate_limit_size: u32,
+  pub inspect_timeout: Duration,
+  pub process_timeout: Duration,
+}
+
+impl VideoConfig {
+  pub fn from_env() -> Result<Self, ServerError> {
+    let is_container = env::var("CONTAINER")
+      .unwrap_or("false".to_owned())
+      .eq("true");
+    // Load variables when run locally
+    if !is_container {
+      dotenvy::dotenv().map_err(StartupError::Dotenv)?;
+    }
+
+    let max_body_size = env::var("BACKEND_VIDEO_MAX_BODY_SIZE")
+      .unwrap_or(VIDEO_MAX_BODY_SIZE.to_string())
+      .parse::<usize>()?;
+    let rate_limit_period = env::var("BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC")
+      .unwrap_or(VIDEO_RATE_LIMIT_PERIOD.to_string())
+      .parse::<u64>()?;
+    let rate_limit_size = env::var("BACKEND_VIDEO_RATE_LIMIT_SIZE")
+      .unwrap_or(VIDEO_RATE_LIMIT_SIZE.to_string())
+      .parse::<u32>()?;
+    let inspect_timeout = env::var("BACKEND_VIDEO_INSPECT_TIMEOUT")
+      .unwrap_or(VIDEO_INSPECT_TIMEOUT.to_string())
+      .parse::<u64>()?;
+    let process_timeout = env::var("BACKEND_VIDEO_PROCESS_TIMEOUT")
+      .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
+      .parse::<u64>()?;
+
+    Ok(Self {
+      max_body_size,
+      rate_limit_period,
+      rate_limit_size,
+      inspect_timeout: Duration::from_secs(inspect_timeout),
+      process_timeout: Duration::from_secs(process_timeout),
+    })
+  }
 }
 
 impl FromRef<AppState> for Arc<AppConfig> {

@@ -7,18 +7,10 @@ mod test_system_api {
   use axum_test::{TestServer, expect_json};
   use serde_json::json;
   use sqlx::PgPool;
-  use uuid::{Uuid, Version};
   use video_processing_server::core::error::ServerError;
   use video_processing_server::router::routes;
 
   use crate::utils;
-
-  fn is_valid_v4_uuid(input: &str) -> bool {
-    match Uuid::parse_str(input) {
-      Ok(parsed_uuid) => parsed_uuid.get_version() == Some(Version::Random),
-      Err(_) => false,
-    }
-  }
 
   #[sqlx::test]
   async fn test_health(pool: PgPool) -> Result<(), ServerError> {
