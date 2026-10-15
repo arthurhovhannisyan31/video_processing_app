@@ -4,7 +4,7 @@ import {
   PROXY_AUTH_CHECK_ENABLED,
   SESSION_DATA_KEY,
 } from "configs/constants";
-import { RootPath } from "configs/routes/constants";
+import { PUBLIC_PATHS, RootPath } from "configs/routes/constants";
 import { getTokenExpired } from "lib/helpers/auth";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -23,7 +23,7 @@ export default async function proxy(
 
   const callbackUrl = searchParams.get(CALLBACK_URL);
 
-  if ([RootPath.SignIn, RootPath.Signup].includes(rootPath)) {
+  if (PUBLIC_PATHS.includes(rootPath)) {
     return undefined;
   }
 
