@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO users (username, email, password_hash)\n        VALUES ($1, $2, $3)\n        RETURNING users.id as \"id: UserId\", users.username, users.email, users.password_hash, users.created_at\n      ",
+  "query": "\n        SELECT users.id as \"id: UserId\", users.username, users.email, users.password_hash, users.created_at, users.password_changed_at\n        FROM users\n        WHERE users.id = $1\n      ",
   "describe": {
     "columns": [
       {
@@ -57,13 +57,22 @@
             "name": "created_at"
           }
         }
+      },
+      {
+        "ordinal": 5,
+        "name": "password_changed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "password_changed_at"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -71,8 +80,9 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "3d83a77eb6045071ffca79640e911cf972438088aa6d4571b7424da9a353560e"
+  "hash": "db764b14f9565a764f74e79da6f40f72b1b0e54f9a5bc6ea77ba6dd08047198f"
 }

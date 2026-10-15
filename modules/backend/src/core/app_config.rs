@@ -4,9 +4,13 @@ use std::time::Duration;
 
 use axum::extract::FromRef;
 use serde::Deserialize;
+use tracing::warn;
 
 use crate::core::app_state::AppState;
 use crate::core::error::{ServerError, StartupError};
+use crate::features::auth::constants::{
+  PASSWORD_RESET_TTL_MIN, SMTP_DEV_FROM, SMTP_DEV_HOST, SMTP_DEV_PORT,
+};
 use crate::features::video::constants::{
   VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_PROCESS_TIMEOUT, VIDEO_RATE_LIMIT_PERIOD,
   VIDEO_RATE_LIMIT_SIZE,
@@ -28,6 +32,9 @@ pub struct AppConfig {
   pub video_process_timeout: Duration,
   pub mock_password_hash: String,
   pub sentry_dsn: String,
+  pub smtp: SmtpConfig,
+  pub frontend_url: String,
+  pub password_reset_ttl: Duration,
 }
 
 impl AppConfig {
@@ -84,6 +91,14 @@ impl AppConfig {
     })?;
     let sentry_dsn = env::var("SENTRY_DSN")
       .map_err(|e| StartupError::VarError(format!("Missing SENTRY_DSN: {e}")))?;
+    let smtp = SmtpConfig::from_env(is_production)?;
+    let frontend_url = env_or_warn_in_production("BACKEND_FRONTEND_URL", is_production)?
+      .unwrap_or("http://localhost:3000".to_string())
+      .trim_end_matches('/')
+      .to_string();
+    let password_reset_ttl = env::var("BACKEND_PASSWORD_RESET_TTL_MIN")
+      .unwrap_or(PASSWORD_RESET_TTL_MIN.to_string())
+      .parse::<u64>()?;
 
     Ok(Self {
       host,
@@ -100,8 +115,66 @@ impl AppConfig {
       video_process_timeout: Duration::from_secs(video_process_timeout),
       mock_password_hash,
       sentry_dsn,
+      smtp,
+      frontend_url,
+      password_reset_ttl: Duration::from_secs(password_reset_ttl * 60),
     })
   }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SmtpConfig {
+  pub host: String,
+  pub port: u16,
+  pub username: Option<String>,
+  pub password: Option<String>,
+  pub from: String,
+  pub tls: bool,
+}
+
+impl SmtpConfig {
+  /// Local development falls back to an unauthenticated plain SMTP server (e.g. Mailpit)
+  pub fn from_env(is_production: bool) -> Result<Self, ServerError> {
+    let host = env_or_warn_in_production("BACKEND_SMTP_HOST", is_production)?;
+    let tls = host.is_some();
+    let host = host.unwrap_or(SMTP_DEV_HOST.to_string());
+    let port = match env::var("BACKEND_SMTP_PORT") {
+      Ok(port) => port
+        .parse::<u16>()
+        .map_err(|e| StartupError::VarError(format!("Invalid BACKEND_SMTP_PORT variable: {e}")))?,
+      Err(_) if tls => lettre::transport::smtp::SUBMISSIONS_PORT,
+      Err(_) => SMTP_DEV_PORT,
+    };
+    let username = env::var("BACKEND_SMTP_USERNAME")
+      .ok()
+      .filter(|s| !s.is_empty());
+    let password = env::var("BACKEND_SMTP_PASSWORD")
+      .ok()
+      .filter(|s| !s.is_empty());
+    let from = env_or_warn_in_production("BACKEND_SMTP_FROM", is_production)?
+      .unwrap_or(SMTP_DEV_FROM.to_string());
+
+    Ok(SmtpConfig {
+      host,
+      port,
+      username,
+      password,
+      from,
+      tls,
+    })
+  }
+}
+
+fn env_or_warn_in_production(
+  name: &str,
+  is_production: bool,
+) -> Result<Option<String>, ServerError> {
+  let value = env::var(name).ok().filter(|s| !s.is_empty());
+  if value.is_none() && is_production {
+    warn!("{name} is not set, falling back to local development value");
+  }
+
+  Ok(value)
 }
 
 impl FromRef<AppState> for Arc<AppConfig> {

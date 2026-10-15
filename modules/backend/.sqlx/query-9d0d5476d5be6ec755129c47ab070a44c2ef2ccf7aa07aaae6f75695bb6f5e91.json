@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM password_reset_tokens\n        WHERE token_hash = $1 AND expires_at > NOW()\n        RETURNING user_id as \"user_id: UserId\"\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id: UserId",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "password_reset_tokens",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9d0d5476d5be6ec755129c47ab070a44c2ef2ccf7aa07aaae6f75695bb6f5e91"
+}

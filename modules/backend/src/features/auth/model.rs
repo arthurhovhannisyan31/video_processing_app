@@ -22,6 +22,7 @@ pub struct User {
   pub email: String,
   pub password_hash: String,
   pub created_at: DateTime<Utc>,
+  pub password_changed_at: Option<DateTime<Utc>>,
 }
 
 impl User {
@@ -32,6 +33,7 @@ impl User {
       email,
       password_hash,
       created_at: Utc::now(),
+      password_changed_at: None,
     }
   }
 }

@@ -19,6 +19,8 @@ use crate::features::video::routes::get_video_router;
 pub mod routes {
   pub const LOGIN: &str = "/auth/login";
   pub const REGISTER: &str = "/auth/register";
+  pub const PASSWORD_FORGOT: &str = "/auth/password/forgot";
+  pub const PASSWORD_RESET: &str = "/auth/password/reset";
   pub const HEALTH: &str = "/health";
   pub const READY: &str = "/ready";
   pub const OPENAPI: &str = "/openapi";

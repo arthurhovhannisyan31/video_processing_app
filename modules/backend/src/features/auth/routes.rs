@@ -9,23 +9,27 @@ use axum::{Json, Router};
 use serde_json::json;
 use tower_governor::GovernorLayer;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
-use tracing::info;
+use tracing::{error, info};
 use validator::Validate;
 
 use crate::core::app_config::AppConfig;
 use crate::core::app_state::AppState;
 use crate::core::error::{ApplicationError, ServerError};
 use crate::core::governor::build_rate_limiter_config;
-use crate::features::auth::dto::{AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest};
+use crate::features::auth::dto::{
+  AuthRequest, AuthResponse, AuthenticatedUser, CreateUserRequest, ForgotPasswordRequest,
+  ResetPasswordRequest,
+};
 use crate::features::auth::model::User;
 use crate::features::auth::state::AuthState;
 use crate::router::routes;
 
-#[allow(dead_code)]
 pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerError> {
   let mut router = Router::new()
     .route(routes::LOGIN, post(login))
-    .route(routes::REGISTER, post(register));
+    .route(routes::REGISTER, post(register))
+    .route(routes::PASSWORD_FORGOT, post(forgot_password))
+    .route(routes::PASSWORD_RESET, post(reset_password));
 
   if app_state.app_config.is_production {
     let governor_conf = build_rate_limiter_config(SmartIpKeyExtractor, None, None)?;
@@ -50,7 +54,6 @@ pub fn get_auth_router(app_state: AppState) -> Result<Router<AppState>, ServerEr
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-#[allow(dead_code)]
 pub async fn login(
   State(auth_state): State<Arc<AuthState>>,
   State(app_config): State<Arc<AppConfig>>,
@@ -79,8 +82,7 @@ pub async fn login(
     (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
   )
 )]
-#[allow(dead_code)]
-async fn register(
+pub async fn register(
   State(auth_state): State<Arc<AuthState>>,
   Json(payload): Json<CreateUserRequest>,
 ) -> Result<impl IntoResponse, ApplicationError> {
@@ -107,7 +109,59 @@ async fn register(
   )?)
 }
 
-#[allow(dead_code)]
+#[utoipa::path(
+  post,
+  path = routes::PASSWORD_FORGOT,
+  request_body = ForgotPasswordRequest,
+  responses(
+    (status = ACCEPTED, description = "Reset email is sent if the user exists"),
+    (status = BAD_REQUEST, description = "Email is invalid", body = Object, content_type = "application/json"),
+  )
+)]
+pub async fn forgot_password(
+  State(auth_state): State<Arc<AuthState>>,
+  Json(payload): Json<ForgotPasswordRequest>,
+) -> Result<impl IntoResponse, ApplicationError> {
+  payload.validate()?;
+
+  // Respond immediately regardless of user existence to prevent user enumeration
+  tokio::spawn(async move {
+    if let Err(err) = auth_state
+      .auth_service
+      .request_password_reset(&payload.email)
+      .await
+    {
+      error!(error = %err, "failed to process password reset request");
+    }
+  });
+
+  Ok(StatusCode::ACCEPTED)
+}
+
+#[utoipa::path(
+  post,
+  path = routes::PASSWORD_RESET,
+  request_body = ResetPasswordRequest,
+  responses(
+    (status = NO_CONTENT, description = "Password is updated"),
+    (status = BAD_REQUEST, description = "Token is invalid or expired, or password requirements are not met", body = Object, content_type = "application/json"),
+    (status = INTERNAL_SERVER_ERROR, description = "Server internal error", body = Object, content_type = "application/json")
+  )
+)]
+pub async fn reset_password(
+  State(auth_state): State<Arc<AuthState>>,
+  Json(payload): Json<ResetPasswordRequest>,
+) -> Result<impl IntoResponse, ApplicationError> {
+  payload.validate()?;
+
+  auth_state
+    .auth_service
+    .reset_password(&payload.token, &payload.password)
+    .await?;
+
+  Ok(StatusCode::NO_CONTENT)
+}
+
 fn build_auth_response(
   status: StatusCode,
   token: String,
