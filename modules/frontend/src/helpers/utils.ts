@@ -5,11 +5,14 @@ export const stopImmediatePropagation = (e: Event): void => {
   e.stopPropagation();
 };
 
-export const getErrorMessage = (err: ApiError, defaultMessage: string) => {
+export const getErrorMessage = (err: ApiError, defaultMessage?: string) => {
   switch (err.status) {
     case 429:
       return "Too many requests. Please try again later";
     default:
-      return (err.message || err.status || defaultMessage).toString();
+      return (
+        (err.error?.message || err.status || defaultMessage) ??
+        "Unexpected error occurred"
+      ).toString();
   }
 };
