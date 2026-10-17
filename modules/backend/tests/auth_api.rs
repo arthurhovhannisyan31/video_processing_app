@@ -2,9 +2,9 @@ mod common;
 use common::utils;
 
 #[cfg(test)]
-mod test_public_api {
+mod test_auth_api {
   use axum::http::StatusCode;
-  use axum_test::{TestServer, expect_json};
+  use axum_test::TestServer;
   use serde_json::json;
   use sqlx::PgPool;
   use uuid::{Uuid, Version};
@@ -23,47 +23,6 @@ mod test_public_api {
     }
   }
 
-  #[sqlx::test]
-  async fn test_health(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool).await?;
-    let server = TestServer::new(router);
-
-    let response = server
-      .get(&utils::with_base_route(routes::HEALTH))
-      .expect_success()
-      .await;
-
-    assert_eq!(response.status_code(), StatusCode::OK);
-    response.assert_json(&json!({
-      "status": expect_json::string(),
-      "timestamp": expect_json::string(),
-    }));
-
-    Ok(())
-  }
-
-  #[sqlx::test]
-  async fn test_openapi(pool: PgPool) -> Result<(), ServerError> {
-    let router = utils::setup_router(pool).await?;
-    let server = TestServer::new(router);
-
-    let response = server
-      .get(&utils::with_base_route(routes::OPENAPI))
-      .expect_success()
-      .await;
-
-    assert_eq!(response.status_code(), StatusCode::OK);
-    response.assert_json(&json!({
-      "openapi": expect_json::string(),
-      "info": expect_json::object(),
-      "paths": expect_json::object(),
-      "components": expect_json::object(),
-    }));
-
-    Ok(())
-  }
-
-  #[ignore]
   #[sqlx::test]
   async fn test_register(pool: PgPool) -> Result<(), ServerError> {
     let router = utils::setup_router(pool).await?;
@@ -90,7 +49,6 @@ mod test_public_api {
     Ok(())
   }
 
-  #[ignore]
   #[sqlx::test(fixtures("create_user"))]
   async fn test_login(pool: PgPool) -> Result<(), ServerError> {
     let router = utils::setup_router(pool).await?;
