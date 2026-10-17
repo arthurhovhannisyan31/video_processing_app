@@ -2,6 +2,7 @@ pub mod app_config;
 pub mod app_state;
 pub mod cors;
 pub mod database;
+pub mod email;
 pub mod error;
 pub mod governor;
 pub mod hash;

@@ -4,9 +4,11 @@ use parking_lot::Mutex;
 use sqlx::PgPool;
 
 use crate::core::app_config::AppConfig;
+use crate::core::email::SmtpEmailSender;
+use crate::core::error::ServerError;
 use crate::core::jwt::JwtService;
 use crate::features::auth::repository::PostgresUserRepository;
-use crate::features::auth::service::AuthService;
+use crate::features::auth::service::{AuthService, PasswordResetConfig};
 use crate::features::auth::state::AuthState;
 use crate::features::system::state::SystemState;
 use crate::features::video::service::VideoService;
@@ -21,11 +23,20 @@ pub struct AppState {
 }
 
 impl AppState {
-  pub fn new(app_config: AppConfig, pool: PgPool) -> Self {
+  pub fn new(app_config: AppConfig, pool: PgPool) -> Result<Self, ServerError> {
     let jwt_service = JwtService::new(app_config.jwt_secret.clone());
     let users_repo = PostgresUserRepository::new(pool.clone());
-    let auth_service = AuthService::new(users_repo, jwt_service.clone());
-    Self {
+    let email_sender = Arc::new(SmtpEmailSender::new(&app_config.smtp)?);
+    let auth_service = AuthService::new(
+      users_repo,
+      jwt_service.clone(),
+      email_sender,
+      PasswordResetConfig {
+        frontend_url: app_config.frontend_url.clone(),
+        token_ttl: app_config.password_reset_ttl,
+      },
+    );
+    Ok(Self {
       auth_state: Arc::new(AuthState {
         auth_service,
         jwt_service,
@@ -38,6 +49,6 @@ impl AppState {
         db_pool: pool,
         rate_limiters: Arc::new(Mutex::new(vec![])),
       }),
-    }
+    })
   }
 }

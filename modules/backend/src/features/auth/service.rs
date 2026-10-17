@@ -7,14 +7,26 @@ use crate::features::auth::repository::UserRepository;
 pub struct AuthService<R: UserRepository + 'static> {
   repo: R,
   jwt_service: JwtService,
+  email_sender: Arc<dyn EmailSender>,
+  password_reset_config: PasswordResetConfig,
 }
 
 impl<R> AuthService<R>
 where
   R: UserRepository + 'static,
 {
-  pub fn new(repo: R, jwt_service: JwtService) -> Self {
-    Self { repo, jwt_service }
+  pub fn new(
+    repo: R,
+    jwt_service: JwtService,
+    email_sender: Arc<dyn EmailSender>,
+    password_reset_config: PasswordResetConfig,
+  ) -> Self {
+    Self {
+      repo,
+      jwt_service,
+      email_sender,
+      password_reset_config,
+    }
   }
 
   pub async fn get(&self, id: UserId) -> Result<User, ApplicationError> {

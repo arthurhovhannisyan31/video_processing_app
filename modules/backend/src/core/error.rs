@@ -81,6 +81,12 @@ pub enum InputError {
 pub enum ServerError {
   #[error("Parse addr error: {0}")]
   AddrParseError(#[from] AddrParseError),
+  #[error("Email address error: {0}")]
+  EmailAddress(#[from] lettre::address::AddressError),
+  #[error("Email message error: {0}")]
+  EmailMessage(#[from] lettre::error::Error),
+  #[error("Email transport error: {0}")]
+  EmailTransport(#[from] lettre::transport::smtp::Error),
   #[error("Http error: {0}")]
   HttpError(#[from] http::Error),
   #[error(transparent)]
@@ -177,6 +183,9 @@ impl From<ServerError> for ApplicationError {
   fn from(value: ServerError) -> Self {
     match value {
       ServerError::AddrParseError(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::EmailAddress(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::EmailMessage(err) => ApplicationError::Internal(err.to_string()),
+      ServerError::EmailTransport(err) => ApplicationError::Internal(err.to_string()),
       ServerError::IO(err) => ApplicationError::Internal(err.to_string()),
       ServerError::ParseIntError(err) => ApplicationError::Internal(err.to_string()),
       ServerError::ParseFloatError(err) => ApplicationError::Internal(err.to_string()),

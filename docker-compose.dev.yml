@@ -37,6 +37,8 @@ services:
       db:
         condition: service_healthy
         restart: true
+      mailpit:
+        condition: service_started
     environment:
       - CONTAINER=true
     healthcheck:
@@ -60,6 +62,14 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
+  #================================================
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: app_mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
   #================================================
   nginx:
     image: nginx:stable-alpine

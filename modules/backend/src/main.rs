@@ -43,7 +43,7 @@ async fn app(app_config: AppConfig) -> Result<(), ServerError> {
 
   run_migrations(&pool).await?;
 
-  let app_state = AppState::new(app_config, pool.clone());
+  let app_state = AppState::new(app_config, pool.clone())?;
   rate_limiters_cleanup(app_state.system_state.rate_limiters.clone());
 
   init_http_server(app_state, session_store)
