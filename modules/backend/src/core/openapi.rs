@@ -1,6 +1,8 @@
 use utoipa::OpenApi;
 
-use crate::features::auth::routes::{__path_login, __path_register};
+use crate::features::auth::routes::{
+  __path_forgot_password, __path_login, __path_register, __path_reset_password,
+};
 use crate::features::system::routes::{__path_health, __path_openapi};
 use crate::features::video::model::VideoStateProgress;
 use crate::features::video::routes::{
@@ -13,6 +15,8 @@ use crate::features::video::routes::{
   paths(
     login,
     register,
+    forgot_password,
+    reset_password,
     health,
     openapi,
     inspect_video,

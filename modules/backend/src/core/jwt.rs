@@ -19,6 +19,7 @@ pub struct Claims {
   pub user_id: UserId,
   pub username: String,
   pub exp: usize,
+  pub iat: usize,
 }
 
 impl JwtService {
@@ -27,10 +28,12 @@ impl JwtService {
   }
 
   pub fn generate_token(&self, user_id: UserId, username: String) -> Result<String, ServerError> {
+    let now = chrono::Utc::now();
     let claims = Claims {
       user_id,
       username,
-      exp: chrono::Utc::now()
+      iat: now.timestamp() as usize,
+      exp: now
         .checked_add_signed(chrono::Duration::hours(TOKEN_EXPIRATION_HOURS))
         .expect("token expiration duration does not overflow")
         .timestamp() as usize,

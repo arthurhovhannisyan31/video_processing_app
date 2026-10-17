@@ -47,6 +47,13 @@ pub async fn authenticate_user(
   let claims = jwt_service.verify_token(token).ok()?;
   let user = auth_service.get(claims.user_id).await.ok()?;
 
+  // Tokens issued before the latest password change are revoked
+  if let Some(password_changed_at) = user.password_changed_at
+    && (claims.iat as i64) < password_changed_at.timestamp()
+  {
+    return None;
+  }
+
   Some(AuthenticatedUser {
     user_id: user.id.to_string(),
     username: user.username,
