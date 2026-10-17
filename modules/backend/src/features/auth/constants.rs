@@ -1,3 +1,11 @@
 pub const USERS_EMAIL_CONSTRAINT: &str = "users_email_key";
 pub const USERS_USERNAME_CONSTRAINT: &str = "users_username_key";
 pub const SESSION_COOKIE_PATH: &str = "/api";
+pub const PASSWORD_RESET_TTL_MIN: u64 = 30;
+pub const PASSWORD_RESET_COOLDOWN_SEC: i64 = 60;
+pub const PASSWORD_RESET_TOKEN_BYTES: usize = 32;
+pub const PASSWORD_RESET_EMAIL_SUBJECT: &str = "Reset your password";
+pub const SMTP_DEV_HOST: &str = "mailpit";
+pub const SMTP_DEV_PORT: u16 = 1025;
+pub const SMTP_DEV_FROM: &str = "Video Processing <no-reply@localhost>";
+pub const INVALID_RESET_TOKEN: &str = "Reset token is invalid or expired";
