@@ -74,6 +74,37 @@ pub struct AuthResponse {
   pub user: AuthenticatedUser,
 }
 
+#[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
+pub struct ForgotPasswordRequest {
+  #[schema(format = "base64", example = "test@test.com", max_length = 255)]
+  #[validate(length(max = 255), email)]
+  pub email: String,
+}
+
+/// ResetPasswordRequest requirements
+///
+/// Token:
+/// - Value received in the password reset email
+///
+/// Password:
+/// - Same requirements as for `CreateUserRequest`
+#[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
+pub struct ResetPasswordRequest {
+  #[validate(length(min = 1, max = 255))]
+  pub token: String,
+  #[schema(
+    format = "base64",
+    example = "Testtest1!",
+    min_length = 8,
+    max_length = 100
+  )]
+  #[validate(
+    length(min = 8, max = 100),
+    custom(function = "validate_password_strength")
+  )]
+  pub password: String,
+}
+
 fn validate_alfa_numeric_username(username: &str) -> Result<(), ValidationError> {
   // String slice length in not validated since it's done in joined test validate(length(min, max))
 
@@ -344,7 +375,6 @@ mod test_create_user_request {
     }
   }
 
-  // Password negative tests
   proptest! {
     #![proptest_config(ProptestConfig::with_cases(100))]
 

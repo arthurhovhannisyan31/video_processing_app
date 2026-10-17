@@ -32,9 +32,9 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
     let governor_conf = build_rate_limiter_config(
       SmartIpKeyExtractor,
       Some(Duration::from_secs(
-        app_state.app_config.video_rate_limit_period,
+        app_state.app_config.video.rate_limit_period,
       )),
-      Some(app_state.app_config.video_rate_limit_size),
+      Some(app_state.app_config.video.rate_limit_size),
     )?;
 
     {
@@ -46,7 +46,7 @@ pub fn get_video_router(app_state: AppState) -> Result<Router<AppState>, ServerE
   }
 
   router = router.layer(DefaultBodyLimit::max(
-    app_state.app_config.video_max_body_size,
+    app_state.app_config.video.max_body_size,
   ));
 
   Ok(router)
@@ -83,7 +83,7 @@ pub async fn inspect_video(
 
   let media_meta_data = video_state
     .video_service
-    .inspect(media_data, session_id, app_config.video_inspect_timeout)
+    .inspect(media_data, session_id, app_config.video.inspect_timeout)
     .await?;
 
   Ok(Json(json!(VideoInspectionResponse::from(media_meta_data))))
@@ -125,8 +125,8 @@ pub async fn process_video(
       .process(
         media_data,
         session_id,
-        app_config.video_inspect_timeout,
-        app_config.video_process_timeout,
+        app_config.video.inspect_timeout,
+        app_config.video.process_timeout,
       )
       .await?,
   )

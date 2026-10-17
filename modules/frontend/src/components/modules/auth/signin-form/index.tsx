@@ -112,6 +112,14 @@ export function SignInForm({
                   {...register("password")}
                 />
                 <FieldError errors={[errors.password]} />
+                <div className="flex items-end">
+                  <Link
+                    href={`/${RootPath.ForgotPassword}`}
+                    className="ml-auto text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
               </Field>
               <Field>
                 <Button disabled={isLoading} type="submit">

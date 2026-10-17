@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PasswordStrength } from "components/modules/auth/signup-form/components/password-strength";
+import { getPasswordStrength } from "components/modules/auth/common/constants";
+import { PasswordStrength } from "components/modules/auth/common/password-strength";
 import {
-  getPasswordStrength,
   type SignupSchema,
   signupSchema,
 } from "components/modules/auth/signup-form/constants";

@@ -1,10 +1,11 @@
+import type { PrimitiveAtom } from "jotai/vanilla/atom";
+
 import { atom } from "jotai";
-import { v4 as uuidv4 } from "uuid";
 
 export interface UserStore {
-  id: string;
+  resetToken: PrimitiveAtom<string>;
 }
 
-export const userStore = atom<UserStore>({
-  id: uuidv4(),
-});
+export const userStore: UserStore = {
+  resetToken: atom(""),
+};
