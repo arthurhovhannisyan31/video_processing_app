@@ -115,6 +115,14 @@ jobs:
               printf "%s=%s\n" BACKEND_VIDEO_PROCESS_TIMEOUT ${{ vars.BACKEND_VIDEO_PROCESS_TIMEOUT }}
               printf "%s=%s\n" BACKEND_VIDEO_MOCK_PASSWORD_HASH ${{ vars.BACKEND_VIDEO_MOCK_PASSWORD_HASH }}
               printf "%s=%s\n" SENTRY_DSN ${{ secrets.SENTRY_DSN }}
+              printf "%s=%s\n" BACKEND_FRONTEND_URL ${{ vars.BACKEND_FRONTEND_URL }}
+              printf "%s=%s\n" BACKEND_PASSWORD_RESET_TTL_MIN ${{ vars.BACKEND_PASSWORD_RESET_TTL_MIN }}
+              printf "%s=%s\n" BACKEND_SMTP_HOST ${{ vars.BACKEND_SMTP_HOST }}
+              printf "%s=%s\n" BACKEND_SMTP_PORT ${{ vars.BACKEND_SMTP_PORT }}
+              printf "%s=%s\n" BACKEND_SMTP_USERNAME ${{ secrets.BACKEND_SMTP_USERNAME }}
+              printf "%s=%s\n" BACKEND_SMTP_PASSWORD ${{ secrets.BACKEND_SMTP_PASSWORD }}
+              printf "%s=%s\n" BACKEND_SMTP_FROM ${{ vars.BACKEND_SMTP_FROM }}
+              printf "%s=%s\n" BACKEND_SMTP_TLS ${{ vars.BACKEND_SMTP_TLS }}
             } > /root/server/.env.new
             
             # replace old env file with new one
