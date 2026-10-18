@@ -1,7 +1,7 @@
 ---
 name: handoff
 description: Compact the current conversation into a handoff document for another agent to pick up.
-argument-hint: "What will the next session be used for?"
+argument-hint: What will the next session be used for?
 ---
 
 Write a handoff document summarizing the current conversation so a fresh agent can continue the work. Save it to a path

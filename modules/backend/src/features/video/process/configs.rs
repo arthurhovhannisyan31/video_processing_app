@@ -3,7 +3,7 @@ pub const OUTPUT_PATH_SUFFIX: &str = "_output";
 pub mod preset {
   use crate::features::video::process::types::{Codec, Preset, Quality};
 
-  pub fn build_compress_args<'a>(codec: Codec, preset: Preset, quality: Quality) -> Vec<String> {
+  pub fn build_compress_args(codec: Codec, preset: Preset, quality: Quality) -> Vec<String> {
     vec![
       "-y".to_string(),
       "-nostdin".to_string(),
