@@ -86,9 +86,12 @@ impl VideoService {
       operation,
       local_path,
       file_name,
+      codec,
+      preset,
+      quality,
     } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
     let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
-    let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
+    let ffmpeg_args = get_args(&local_path, &output_path, operation, codec, preset, quality)?;
     let duration = get_file_duration(
       &file_name,
       &session_id,

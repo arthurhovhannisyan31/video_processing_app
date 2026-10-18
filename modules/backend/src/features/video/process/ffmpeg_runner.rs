@@ -12,7 +12,7 @@ use crate::features::video::model::VideoStateProgress;
 use crate::features::video::service::VideoWsConnectionsMap;
 
 pub async fn process_file(
-  args: Vec<&str>,
+  args: Vec<String>,
   file_name: &str,
   connections_map: &VideoWsConnectionsMap,
   session_id: &str,

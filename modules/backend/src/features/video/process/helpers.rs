@@ -1,26 +1,31 @@
-use std::str::FromStr;
-
 use crate::core::error::ServerError;
-use crate::features::video::process::configs::{OperationType, preset};
+use crate::features::video::process::configs::preset;
+use crate::features::video::process::types::{Codec, Operation, Preset, Quality};
 
-pub fn get_preset_by_name<'a>(operation: &str) -> Result<Vec<&'a str>, ServerError> {
-  let operation_type = OperationType::from_str(operation)?;
-
-  match operation_type {
-    OperationType::Compress => Ok(preset::compress()),
+pub fn get_preset_by_name(
+  operation: Operation,
+  codec: Codec,
+  preset: Preset,
+  quality: Quality,
+) -> Result<Vec<String>, ServerError> {
+  match operation {
+    Operation::Compress => Ok(preset::build_compress_args(codec, preset, quality)),
   }
 }
 
-pub fn get_args<'a>(
-  input: &'a str,
-  output: &'a str,
-  operation: &'a str,
-) -> Result<Vec<&'a str>, ServerError> {
-  let mut args: Vec<&str> = vec!["-i", input];
-  let preset = get_preset_by_name(operation)?;
+pub fn get_args(
+  input: &str,
+  output: &str,
+  operation: Operation,
+  codec: Codec,
+  preset: Preset,
+  quality: Quality,
+) -> Result<Vec<String>, ServerError> {
+  let mut args: Vec<String> = vec!["-i".to_string(), input.to_string()];
+  let preset = get_preset_by_name(operation, codec, preset, quality)?;
 
   args.extend(preset);
-  args.extend([output]);
+  args.extend([output.to_string()]);
 
   Ok(args)
 }

@@ -6,7 +6,7 @@ use axum::extract::Multipart;
 use crate::core::error::{InputError, ServerError};
 use crate::features::video::configs::FieldName;
 use crate::features::video::helpers::{read_form_data_meta, read_form_data_to_file};
-use crate::features::video::process::types::ProcessVideoMeta;
+use crate::features::video::process::types::{Codec, Operation, Preset, ProcessVideoMeta, Quality};
 
 pub async fn read(
   mut media_data: Multipart,
@@ -35,7 +35,20 @@ pub async fn read(
         meta.local_path = local_path;
       }
       FieldName::Operation => {
-        meta.operation = field.text().await.map_err(InputError::Multipart)?;
+        let str = field.text().await.map_err(InputError::Multipart)?;
+        meta.operation = Operation::from_str(&str)?;
+      }
+      FieldName::Codec => {
+        let str = field.text().await.map_err(InputError::Multipart)?;
+        meta.codec = Codec::from_str(&str)?;
+      }
+      FieldName::Preset => {
+        let str = field.text().await.map_err(InputError::Multipart)?;
+        meta.preset = Preset::get_by_codec(&str, &meta.codec)?;
+      }
+      FieldName::Quality => {
+        let str = field.text().await.map_err(InputError::Multipart)?;
+        meta.quality = Quality::from_str(&str)?;
       }
     }
   }

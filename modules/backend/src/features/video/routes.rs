@@ -90,10 +90,14 @@ pub async fn inspect_video(
 }
 
 // Struct used for openapi schema typings
+// TODO Replace strings with enums and check spec result
 #[allow(unused)]
 #[derive(ToSchema)]
 pub struct ProcessVideoPayload {
   pub operation: String,
+  pub codec: String,
+  pub preset: String,
+  pub quality: String,
   #[schema(value_type = String, format = Binary)]
   pub video: Vec<u8>,
 }
