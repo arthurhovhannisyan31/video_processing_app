@@ -1,3 +1,28 @@
+### Register a user
+POST {{api_host}}/auth/register
+X-Forwarded-For: 127.0.0.1
+Accept: application/json
+Content-Type: application/json
+#Origin: http://localhost:3000
+
+{
+  "username": "testtest",
+  "email": "test@test.com",
+  "password": "Testtest1!"
+}
+
+### Login user
+POST {{api_host}}/auth/login
+X-Forwarded-For: 127.0.0.1
+Accept: application/json
+Content-Type: application/json
+Origin: some
+
+{
+  "email": "test@test.com",
+  "password": "Testtest1!"
+}
+
 ### Request password reset email (always 202), check Mailpit UI at http://localhost:8025
 POST {{api_host}}/auth/password/forgot
 X-Forwarded-For: 127.0.0.1
