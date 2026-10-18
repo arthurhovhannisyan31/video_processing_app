@@ -10,11 +10,12 @@
 ## Overview
 
 A full-stack app for inspecting and processing video files: upload a video, get its metadata (via `ffprobe`), run an
-`ffmpeg` operation on it, and watch the job progress live over a WebSocket. It's a monorepo with a Rust API server and a
+`ffmpeg` operation on it (currently `compress`), and watch the job progress live over a WebSocket. Users sign up / sign
+in, and can reset a forgotten password by email. It's a monorepo with a Rust API server and a
 Next.js web client.
 
-- **[`modules/backend`](modules/backend/README.md)** — Rust/Axum API: auth, video inspect/process endpoints, WebSocket
-  progress updates, PostgreSQL storage. See its [README](modules/backend/README.md) for details.
+- **[`modules/backend`](modules/backend/README.md)** — Rust/Axum API: auth and password reset, video inspect/process
+  endpoints, WebSocket progress updates, PostgreSQL storage. See its [README](modules/backend/README.md) for details.
 - **[`modules/frontend`](modules/frontend/README.md)** — Next.js/React web client: upload UI, auth, live job progress.
   See its [README](modules/frontend/README.md) for details.
 
@@ -26,7 +27,7 @@ Next.js web client.
 |----------|-------------------------------------------------------------------------------------------------------|
 | Backend  | Rust, Axum, SQLx/PostgreSQL, JWT auth, `ffmpeg`/`ffprobe`, Utoipa (OpenAPI)                           |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Jotai, better-auth, hey-api (OpenAPI) |
-| Infra    | VPS, Docker Compose, nginx, GitHub Actions CI/CD, Sentry                                              |
+| Infra    | VPS, Docker Compose, nginx, certbot, Mailpit (dev SMTP), GitHub Actions CI/CD, Sentry                 |
 
 ## Repository layout
 
@@ -44,7 +45,7 @@ Next.js web client.
 
 ## Prerequisites
 
-- Rust (stable, edition 2024) — see [`modules/backend/README.md`](modules/backend/README.md)
+- Rust (stable, edition 2024), [`cargo-nextest`](https://nexte.st/), [`sqlx-cli`](https://github.com/launchbadge/sqlx/tree/main/sqlx-cli) — see [`modules/backend/README.md`](modules/backend/README.md)
 - Node.js `^24` and Yarn 4 (Berry) — see [`modules/frontend/README.md`](modules/frontend/README.md)
 - PostgreSQL
 - `ffmpeg` / `ffprobe` on `PATH`
@@ -54,11 +55,15 @@ Next.js web client.
 
 ### 1. Manual setup
 
-1.1 Copy the env template and fill in the values:
+1.1 Copy the env templates and fill in the values:
 
 ```sh
-cp .env.template .env.container
+cp .env.template .env                                   # backend, local `cargo run`
+cp .env.template .env.container                         # backend, Docker Compose
+cp modules/frontend/.env.template modules/frontend/.env # frontend
 ```
+
+The backend loads `.env` itself unless `CONTAINER=true`; Docker Compose injects `.env.container`.
 
 1.2 One-time setup (git hooks, DB query cache, API client generation):
 
@@ -81,7 +86,11 @@ You can run backend services with docker compose:
 docker compose -f docker-compose.dev.yml --env-file .env.container up --build
 ```
 
-This starts Postgres, the backend, and an nginx reverse proxy (dev config in [`configs/nginx`](configs/nginx)).
+This starts Postgres, the backend, [Mailpit](https://mailpit.axllent.org/) (catches password reset emails, web UI at
+http://localhost:8025) and an nginx reverse proxy on port `8080` (dev config in [`configs/nginx`](configs/nginx)).
+The frontend is not part of the compose setup; run it with `make frontend`.
+
+`docker-compose.prod.yml` runs the published backend image (`IMAGE_TAG`) with Postgres, nginx and certbot.
 
 ## Common commands (Makefile)
 
@@ -93,10 +102,18 @@ Run from the repo root; each target delegates into the relevant module.
 | `make backend` / `make frontend`    | run the backend / frontend dev servers                                          |
 | `make check`                        | lint both modules (`cargo clippy`, `yarn check`)                                |
 | `make format` / `make format-check` | format both modules / verify formatting in CI                                   |
-| `make test`                         | run backend tests (`cargo nextest run`)                                         |
+| `make test`                         | run backend tests (`cargo nextest run`, needs Postgres + `ffmpeg`)              |
 | `make audit`                        | dependency vulnerability audits for both modules                                |
 | `make generate-openapi`             | regenerate `openapi.json` from the backend                                      |
 | `make prepare-frontend-local`       | regenerate the frontend's typed API client from the local backend schema        |
+
+## Git hooks
+
+`make prepare` installs hooks from [`configs/git/hooks`](configs/git/hooks):
+
+- **pre-commit** — `make check`, `make format`
+- **pre-push** — `make generate-openapi`, `make prepare-frontend-local`, `make check`, `make format-check`, `make test`,
+  `make audit`
 
 ## CI/CD
 
@@ -106,8 +123,9 @@ GitHub Actions workflows in [`.github/workflows`](.github/workflows):
   modules on every push
 - **packages-validation** — `cargo audit` and `yarn npm audit`
 - **cleanup-caches** — clears GitHub Actions caches for closed branches
-- **server-build-and-deploy** — builds/pushes the backend Docker image and deploys it
-- **release** — automated versioned releases from `develop` to `main`
+- **server-build-and-deploy** — manual: builds/pushes the backend Docker image to Docker Hub and deploys it to the VPS
+  over SSH (option to skip the build and redeploy the current tag)
+- **release** — manual: merges `develop` into `main` and creates a semantic versioned release
 
 ## License
 
