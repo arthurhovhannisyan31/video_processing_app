@@ -4,7 +4,7 @@ use std::str::FromStr;
 use crate::core::error::{InputError, ServerError};
 use crate::features::video::process::configs::{codec, operation, preset, quality};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ProcessVideoMeta {
   pub file_name: String,
   pub local_path: String,
@@ -15,29 +15,25 @@ pub struct ProcessVideoMeta {
   pub quality: Quality,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Operation {
-  #[default]
   Compress,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Codec {
-  #[default]
   X264,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum X264Preset {
-  #[default]
   Fast,
   Medium,
   Slow,
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Quality {
-  #[default]
   Standard,
   High,
   Low,
@@ -77,7 +73,7 @@ impl Display for Codec {
   }
 }
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Preset(pub(crate) String);
 
 impl Preset {
@@ -120,9 +116,9 @@ impl FromStr for Quality {
       quality::STANDARD => Ok(Quality::Standard),
       quality::HIGH => Ok(Quality::High),
       quality::LOW => Ok(Quality::Low),
-      "" => Err(InputError::DataError("Preset is missing".to_string()))?,
+      "" => Err(InputError::DataError("Quality is missing".to_string()))?,
       _ => Err(InputError::DataError(format!(
-        "Preset is not supported: {s}"
+        "Quality is not supported: {s}"
       )))?,
     }
   }
