@@ -31,6 +31,10 @@ pub async fn setup_router(pool: PgPool) -> Result<Router, ServerError> {
   Ok(router)
 }
 
+pub async fn setup_server(pool: PgPool) -> Result<TestServer, ServerError> {
+  Ok(TestServer::new(setup_router(pool).await?))
+}
+
 /// Same as `setup_router`, also returns the email sender capturing sent emails
 #[cfg(test)]
 #[allow(dead_code)]
