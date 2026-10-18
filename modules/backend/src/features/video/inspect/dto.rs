@@ -1,10 +1,11 @@
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::features::video::model::{AudioStream, MediaMetadata, VideoStream};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct VideoInspectionResponse {
   pub original_file_name: String,
   pub file_size_bytes: i64,

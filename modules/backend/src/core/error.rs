@@ -12,9 +12,10 @@ use sqlx::migrate::MigrateError;
 use thiserror::Error;
 use tracing::error;
 use tracing_subscriber::filter::ParseError;
+use utoipa::ToSchema;
 use validator::ValidationErrors;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct ErrorBody {
   pub message: String,
 }
