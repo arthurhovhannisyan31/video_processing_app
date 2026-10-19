@@ -171,7 +171,16 @@ export const FileCard: FC<FileCardProps> = ({
             </video>
           )}
         </TabsContent>
-        <TabsContent value={FileCardTab.Details}>
+        <TabsContent
+          value={FileCardTab.Details}
+          className={"flex flex-col gap-2"}
+        >
+          <ProcessingSummary
+            originalSize={file.size}
+            processedSize={processedData?.size}
+            appliedOptions={appliedOptions}
+            processingTimeMs={processingTimeMs}
+          />
           <VideoInspectResult data={inspectData} isLoading={isInspecting} />
         </TabsContent>
       </Tabs>
