@@ -123,7 +123,7 @@ mod test_video_process_api {
       &server,
       form,
       StatusCode::BAD_REQUEST,
-      "Data error: Field name is not supported: audio",
+      "Data error: Field 'audio' is not supported",
     )
     .await
   }
@@ -137,7 +137,7 @@ mod test_video_process_api {
       &server,
       form,
       StatusCode::BAD_REQUEST,
-      "Data error: Field name is not supported: bitrate",
+      "Data error: Field 'bitrate' is not supported",
     )
     .await
   }
