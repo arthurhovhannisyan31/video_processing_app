@@ -10,7 +10,11 @@ import { ControlsBar } from "components/modules/video/controls-bar";
 import { DropZone } from "components/modules/video/drop-zone";
 import { FilesList } from "components/modules/video/files-list";
 import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
-import { FileState, type FilesStateMap } from "components/modules/video/types";
+import {
+  FileState,
+  type FilesStateMap,
+  type ProcessingOptions,
+} from "components/modules/video/types";
 import { downloadFile } from "helpers/api/downloadFile";
 import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
 import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
@@ -43,6 +47,21 @@ export default function VideoPage() {
       ...state,
     }));
   }, []);
+
+  const handleOptionsChange = useCallback(
+    (fileName: string, options: ProcessingOptions) => {
+      setFilesStateMap((state) => {
+        const fileState = state[fileName];
+
+        if (fileState) {
+          fileState.options = options;
+        }
+
+        return { ...state };
+      });
+    },
+    [],
+  );
 
   const handleReset = useCallback(() => {
     for (const file of files) {
@@ -159,7 +178,11 @@ export default function VideoPage() {
               reset={handleReset}
               filesStateMap={filesStateMap}
             />
-            <FilesList files={files} filesStateMap={filesStateMap} />
+            <FilesList
+              files={files}
+              filesStateMap={filesStateMap}
+              onOptionsChange={handleOptionsChange}
+            />
           </>
         ) : (
           <DropZone addFiles={handleAddFiles} />

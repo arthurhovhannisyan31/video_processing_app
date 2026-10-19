@@ -1,4 +1,7 @@
-import type { InspectionData } from "components/modules/video/types";
+import type {
+  InspectionData,
+  ProcessingOptions,
+} from "components/modules/video/types";
 import { type FC, useState } from "react";
 
 import {
@@ -9,6 +12,8 @@ import {
 import { statusToAttachmentStateMap } from "components/modules/video/file-card/constants";
 import { useObjectUrl } from "components/modules/video/hooks/useObjectUrl";
 import { useVideoThumbnail } from "components/modules/video/hooks/useVideoThumbnail";
+import { ProcessingOptionsSelect } from "components/modules/video/processing-options";
+import { ProcessingSummary } from "components/modules/video/processing-summary";
 import { VideoInspectError } from "components/modules/video/video-inspect-error";
 import { VideoInspectResult } from "components/modules/video/video-inspect-result";
 import {
@@ -26,8 +31,7 @@ import { Progress } from "components/ui/progress";
 import { Spinner } from "components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
 import { downloadFile } from "helpers/api/downloadFile";
-import { formatBytesToMB } from "lib/utils";
-import { ArrowLeft, DownloadIcon, VideoIcon } from "lucide-react";
+import { DownloadIcon, VideoIcon } from "lucide-react";
 
 enum FileCardTab {
   Preview = "preview",
@@ -43,6 +47,10 @@ export interface FileCardProps {
   jobType?: JobType;
   error?: string;
   processedData?: Blob;
+  options: ProcessingOptions;
+  appliedOptions?: ProcessingOptions;
+  processingTimeMs?: number;
+  onOptionsChange: (options: ProcessingOptions) => void;
 }
 
 export const FileCard: FC<FileCardProps> = ({
@@ -54,11 +62,18 @@ export const FileCard: FC<FileCardProps> = ({
   jobType,
   error,
   processedData,
+  options,
+  appliedOptions,
+  processingTimeMs,
+  onOptionsChange,
 }) => {
   const thumbnail = useVideoThumbnail(file);
   const previewUrl = useObjectUrl(processedData);
   const isPending = status === Status.Pending;
   const isInspecting = isPending && jobType === JobType.Inspect;
+  const isProcessing = isPending && jobType === JobType.Compress;
+  // Options apply to the next processing request, so hide them once it starts
+  const showOptions = !processedData && !isProcessing;
   const hasPreview = !!previewUrl;
   const hasInspection = !!inspectData || isInspecting;
   const [selectedTab, setSelectedTab] = useState<FileCardTab>();
@@ -102,15 +117,6 @@ export const FileCard: FC<FileCardProps> = ({
                 {`${progressType} - ${progress}%`}
               </AttachmentDescription>
             )}
-            <AttachmentDescription className={"text-base"}>
-              {formatBytesToMB(file.size, 2)}
-            </AttachmentDescription>
-            {processedData && (
-              <AttachmentDescription className={"text-base flex gap-4"}>
-                <ArrowLeft className={"rotate-180 w-4"} />
-                {formatBytesToMB(processedData.size, 2)}
-              </AttachmentDescription>
-            )}
             {processedData && (
               <AttachmentActions>
                 <AttachmentAction className={"outline"}>
@@ -130,6 +136,9 @@ export const FileCard: FC<FileCardProps> = ({
           <Progress className="w-full" value={progress} />
         )}
       </Attachment>
+      {showOptions && (
+        <ProcessingOptionsSelect options={options} onChange={onOptionsChange} />
+      )}
       <Tabs
         value={activeTab}
         onValueChange={(value) => setSelectedTab(value as FileCardTab)}
@@ -138,7 +147,10 @@ export const FileCard: FC<FileCardProps> = ({
           <TabsTrigger value={FileCardTab.Preview} disabled={!previewUrl}>
             Preview
           </TabsTrigger>
-          <TabsTrigger value={FileCardTab.Details} disabled={!hasInspection}>
+          <TabsTrigger
+            value={FileCardTab.Details}
+            disabled={!hasInspection && !processedData}
+          >
             Details
           </TabsTrigger>
         </TabsList>
