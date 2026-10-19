@@ -102,11 +102,11 @@ pub struct ProcessVideoPayload {
   #[schema(schema_with = operation_schema)]
   pub operation: String,
   #[schema(schema_with = codec_schema)]
-  pub codec: Option<String>,
+  pub codec: String,
   #[schema(schema_with = preset_schema)]
-  pub preset: Option<String>,
+  pub preset: String,
   #[schema(schema_with = quality_schema)]
-  pub quality: Option<String>,
+  pub quality: String,
   #[schema(value_type = String, format = Binary)]
   pub video: Vec<u8>,
 }
@@ -117,21 +117,20 @@ pub struct ProcessVideoPayload {
 #[schema(value_type = String, format = Binary)]
 pub struct ProcessedVideoFile(Vec<u8>);
 
-fn string_enum_schema(description: &str, values: &[&str], default: Option<&str>) -> Schema {
+fn string_enum_schema(description: &str, values: &[&str]) -> Schema {
   ObjectBuilder::new()
     .schema_type(Type::String)
     .description(Some(description))
     .enum_values(Some(values.iter().copied()))
-    .default(default.map(Into::into))
     .into()
 }
 
 fn operation_schema() -> Schema {
-  string_enum_schema("Processing operation", &[operation::COMPRESS], None)
+  string_enum_schema("Processing operation", &[operation::COMPRESS])
 }
 
 fn codec_schema() -> Schema {
-  string_enum_schema("Video codec", &[codec::X264], Some(codec::X264))
+  string_enum_schema("Video codec", &[codec::X264])
 }
 
 fn preset_schema() -> Schema {
@@ -142,7 +141,6 @@ fn preset_schema() -> Schema {
       preset::x_264::BALANCED,
       preset::x_264::BEST_COMPRESSION,
     ],
-    None,
   )
 }
 
@@ -150,7 +148,6 @@ fn quality_schema() -> Schema {
   string_enum_schema(
     "Constant rate factor (CRF): lower is higher quality",
     &[quality::HIGH, quality::STANDARD, quality::LOW],
-    Some(quality::STANDARD),
   )
 }
 

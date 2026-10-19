@@ -12,7 +12,7 @@ mod test_video_process_api {
 
   use crate::common::constants::DEFAULT_FORM_DATA_ARGS;
   use crate::common::utils::setup_server;
-  use crate::utils::{setup_router, with_base_route};
+  use crate::utils::with_base_route;
 
   /// Important
   ///

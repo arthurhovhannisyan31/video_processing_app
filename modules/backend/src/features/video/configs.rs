@@ -16,14 +16,22 @@ impl FromStr for FieldName {
   type Err = ServerError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      "video" => Ok(FieldName::Video),
-      "operation" => Ok(FieldName::Operation),
-      "codec" => Ok(FieldName::Codec),
-      "preset" => Ok(FieldName::Preset),
-      "quality" => Ok(FieldName::Quality),
+      field_name::VIDEO => Ok(FieldName::Video),
+      field_name::OPERATION => Ok(FieldName::Operation),
+      field_name::CODEC => Ok(FieldName::Codec),
+      field_name::PRESET => Ok(FieldName::Preset),
+      field_name::QUALITY => Ok(FieldName::Quality),
       _ => Err(InputError::DataError(format!(
-        "Field name is not supported: {s}"
+        "Field '{s}' is not supported"
       )))?,
     }
   }
+}
+
+pub mod field_name {
+  pub const VIDEO: &str = "video";
+  pub const OPERATION: &str = "operation";
+  pub const CODEC: &str = "codec";
+  pub const PRESET: &str = "preset";
+  pub const QUALITY: &str = "quality";
 }
