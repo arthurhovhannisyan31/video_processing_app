@@ -6,7 +6,9 @@ use axum::extract::Multipart;
 use crate::core::error::{InputError, ServerError};
 use crate::features::video::configs::FieldName;
 use crate::features::video::helpers::{read_form_data_meta, read_form_data_to_file};
-use crate::features::video::process::types::{Codec, Operation, Preset, ProcessVideoMeta, Quality};
+use crate::features::video::process::types::{
+  Codec, Operation, Preset, ProcessVideoMeta, Quality, VideoFormat,
+};
 
 pub async fn read(
   mut media_data: Multipart,
@@ -18,6 +20,7 @@ pub async fn read(
   let mut codec: Option<Codec> = None;
   let mut preset: Option<Preset> = None;
   let mut quality: Option<Quality> = None;
+  let mut format: Option<VideoFormat> = None;
 
   while let Some(mut field) = media_data
     .next_field()
@@ -62,6 +65,10 @@ pub async fn read(
         let str = field.text().await.map_err(InputError::Multipart)?;
         quality = Some(Quality::from_str(&str)?);
       }
+      FieldName::Format => {
+        let str = field.text().await.map_err(InputError::Multipart)?;
+        format = Some(VideoFormat::from_str(&str)?);
+      }
     }
   }
 
@@ -82,6 +89,9 @@ pub async fn read(
   let Some(quality) = quality else {
     return Err(InputError::DataError("Missing 'quality' field".to_string()))?;
   };
+  let Some(format) = format else {
+    return Err(InputError::DataError("Missing 'format' field".to_string()))?;
+  };
 
   Ok(ProcessVideoMeta {
     codec,
@@ -90,5 +100,6 @@ pub async fn read(
     operation,
     preset,
     quality,
+    format,
   })
 }

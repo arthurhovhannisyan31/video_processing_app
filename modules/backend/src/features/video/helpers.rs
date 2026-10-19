@@ -15,6 +15,7 @@ use crate::core::hash::calculate_hash;
 use crate::features::video::cache::MediaDataCache;
 use crate::features::video::constants::FILE_EXTENSIONS_WHITE_LIST;
 use crate::features::video::inspect;
+use crate::features::video::process::types::Extension;
 use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -38,7 +39,11 @@ where
   Ok(Some(value))
 }
 
-pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerError> {
+pub fn build_output_path(
+  path: &str,
+  suffix: &str,
+  extension: &Extension,
+) -> Result<String, ServerError> {
   if path.is_empty() {
     return Err(ServerError::IO(io::Error::new(
       ErrorKind::NotFound,
@@ -58,15 +63,6 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerErro
     .to_str()
     .ok_or(InputError::DataError(
       "Failed to convert file stem to string".to_string(),
-    ))?;
-  let extension = path
-    .extension()
-    .ok_or(InputError::DataError(
-      "Failed to read file extension".to_string(),
-    ))?
-    .to_str()
-    .ok_or(InputError::DataError(
-      "Failed to convert file extension to string".to_string(),
     ))?;
   let parent_path = path.parent().ok_or(ServerError::IO(io::Error::new(
     ErrorKind::NotFound,
@@ -183,17 +179,18 @@ mod tests {
 
   #[test]
   fn test_append_path_suffix() {
-    assert!(append_path_suffix("", "").is_err());
-    assert!(append_path_suffix("/", "").is_err());
-    assert!(append_path_suffix("", "/").is_err());
-    assert!(append_path_suffix("/", "temp").is_err());
-    assert!(append_path_suffix("/dir", "temp").is_err());
+    // TODO update tests
+    assert!(build_output_path("", "", &Extension::Mp4).is_err());
+    assert!(build_output_path("/", "", &Extension::Mp4).is_err());
+    assert!(build_output_path("", "/", &Extension::Mp4).is_err());
+    assert!(build_output_path("/", "temp", &Extension::Mp4).is_err());
+    assert!(build_output_path("/dir", "temp", &Extension::Mp4).is_err());
     assert_eq!(
-      append_path_suffix("/file.ext", "-temp").unwrap(),
+      build_output_path("/file.ext", "-temp", &Extension::Mp4).unwrap(),
       "/file-temp.ext".to_string()
     );
     assert_eq!(
-      append_path_suffix("../file.ext", "-temp").unwrap(),
+      build_output_path("../file.ext", "-temp", &Extension::Mp4).unwrap(),
       "../file-temp.ext".to_string()
     );
   }

@@ -47,3 +47,17 @@ pub mod quality {
   pub const STANDARD: &str = "23";
   pub const LOW: &str = "28";
 }
+
+pub mod muxer {
+  pub const MP4: &str = "mp4";
+  pub const MATROSKA: &str = "matroska";
+  pub const WEBM: &str = "webm";
+  pub const MOV: &str = "mov";
+}
+
+pub mod extension {
+  pub const MP4: &str = "mp4";
+  pub const MATROSKA: &str = "mkv";
+  pub const WEBM: &str = "webm";
+  pub const MOV: &str = "mov";
+}

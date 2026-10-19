@@ -19,7 +19,7 @@ use tracing::{error, warn};
 use crate::core::error::ServerError;
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::{MediaDataCache, build_media_data_cache};
-use crate::features::video::helpers::{append_path_suffix, get_file_duration};
+use crate::features::video::helpers::{build_output_path, get_file_duration};
 use crate::features::video::model::{MediaMetadata, VideoStateProgress};
 use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
 use crate::features::video::process::helpers::get_args;
@@ -89,8 +89,9 @@ impl VideoService {
       codec,
       preset,
       quality,
+      format,
     } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
-    let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
+    let output_path = build_output_path(&local_path, OUTPUT_PATH_SUFFIX, &format.extension)?;
     let ffmpeg_args = get_args(&local_path, &output_path, operation, codec, preset, quality)?;
     let duration = get_file_duration(
       &file_name,

@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use crate::core::error::{InputError, ServerError};
-use crate::features::video::process::configs::{codec, operation, preset, quality};
+use crate::features::video::process::configs::{codec, extension, operation, preset, quality};
 
 #[derive(Debug)]
 pub struct ProcessVideoMeta {
@@ -13,9 +13,10 @@ pub struct ProcessVideoMeta {
   // preset depends on codec field and should be listed in request payload after codec
   pub preset: Preset,
   pub quality: Quality,
+  pub format: VideoFormat,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub enum Operation {
   Compress,
 }
@@ -37,6 +38,28 @@ pub enum Quality {
   Standard,
   High,
   Low,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct VideoFormat {
+  pub extension: Extension,
+  pub muxer: Muxer,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Muxer {
+  Mp4,
+  Matroska,
+  Webm,
+  Mov,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Extension {
+  Mp4,
+  Matroska,
+  Webm,
+  Mov,
 }
 
 impl FromStr for Operation {
@@ -131,5 +154,47 @@ impl Display for Quality {
       Self::High => write!(f, "{}", quality::HIGH),
       Self::Low => write!(f, "{}", quality::LOW),
     }
+  }
+}
+
+impl FromStr for Extension {
+  type Err = ServerError;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      extension::MATROSKA => Ok(Extension::Matroska),
+      extension::MOV => Ok(Extension::Mov),
+      extension::MP4 => Ok(Extension::Mp4),
+      extension::WEBM => Ok(Extension::Webm),
+      "" => Err(InputError::DataError("Extension is missing".to_string()))?,
+      _ => Err(InputError::DataError(format!(
+        "Extension is not supported: {s}"
+      )))?,
+    }
+  }
+}
+
+impl Display for Extension {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Matroska => write!(f, "{}", extension::MATROSKA),
+      Self::Mov => write!(f, "{}", extension::MOV),
+      Self::Mp4 => write!(f, "{}", extension::MP4),
+      Self::Webm => write!(f, "{}", extension::WEBM),
+    }
+  }
+}
+
+impl VideoFormat {
+  pub fn from_str(s: &str) -> Result<Self, ServerError> {
+    let extension = Extension::from_str(s)?;
+
+    let muxer = match extension {
+      Extension::Matroska => Muxer::Matroska,
+      Extension::Mov => Muxer::Mov,
+      Extension::Mp4 => Muxer::Mp4,
+      Extension::Webm => Muxer::Webm,
+    };
+
+    Ok(Self { extension, muxer })
   }
 }
