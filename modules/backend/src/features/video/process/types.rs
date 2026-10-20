@@ -202,8 +202,9 @@ impl Display for Extension {
   }
 }
 
-impl VideoFormat {
-  pub fn from_str(s: &str) -> Result<Self, ServerError> {
+impl FromStr for VideoFormat {
+  type Err = ServerError;
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
     let extension = Extension::from_str(s)?;
 
     let (muxer, mime_type) = match extension {
