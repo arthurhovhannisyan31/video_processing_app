@@ -5,6 +5,7 @@ import type {
 import { type FC, useState } from "react";
 
 import {
+  DEFAULT_FORMAT,
   JobType,
   ProgressType,
   Status,
@@ -82,7 +83,11 @@ export const FileCard: FC<FileCardProps> = ({
 
   const handleDownloadFile = () => {
     if (processedData) {
-      downloadFile(file, processedData);
+      downloadFile(
+        file,
+        processedData,
+        appliedOptions?.format ?? DEFAULT_FORMAT,
+      );
     }
   };
 

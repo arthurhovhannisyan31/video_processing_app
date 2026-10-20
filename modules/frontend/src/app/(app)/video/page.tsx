@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  DEFAULT_FORMAT,
   DOWNLOAD_ALL_DELAY_MS,
   ProgressType,
 } from "components/modules/video/constants";
@@ -104,13 +105,18 @@ export default function VideoPage() {
 
   const handleDownloadAll = useCallback(async () => {
     for (const file of files) {
-      const processedData = filesStateMap[file.name]?.processedData;
+      const fileState = filesStateMap[file.name];
+      const processedData = fileState?.processedData;
 
       if (!processedData) {
         continue;
       }
 
-      downloadFile(file, processedData);
+      downloadFile(
+        file,
+        processedData,
+        fileState.appliedOptions?.format ?? DEFAULT_FORMAT,
+      );
       // Browsers drop back-to-back programmatic downloads without a short gap.
       await new Promise((resolve) =>
         setTimeout(resolve, DOWNLOAD_ALL_DELAY_MS),

@@ -2,7 +2,8 @@ import type { FileState } from "components/modules/video/types";
 import type { ApiError } from "configs/types";
 
 import {
-  Codec,
+  getCodec,
+  getQualityCrf,
   JobType,
   Operation,
   ProgressType,
@@ -24,17 +25,19 @@ export const getCompressVideoPromise = async (
 
   // Capture options at request time so later edits don't change what's reported
   const requestOptions = { ...fileState.options };
+  const codec = getCodec(requestOptions.format);
   const startedAt = performance.now();
 
   try {
     const response = await processVideo({
-      // Fields are sent in key order; the API requires `codec` before `preset`
+      // Fields are sent in key order; the API requires `codec` before `preset` and `quality`
       body: {
         video: file,
         operation: Operation.Compress,
-        codec: Codec.X264,
+        codec,
         preset: requestOptions.preset,
-        quality: requestOptions.quality,
+        quality: getQualityCrf(codec, requestOptions.quality),
+        format: requestOptions.format,
       },
       responseType: "blob",
       onUploadProgress: (progressEvent) => {

@@ -2,6 +2,10 @@ import type { ProcessingOptions } from "components/modules/video/types";
 import { type FC, useId } from "react";
 
 import {
+  type Format,
+  formatOptions,
+  getCodec,
+  hasPreset,
   type Preset,
   presetOptions,
   type Quality,
@@ -80,13 +84,22 @@ export const ProcessingOptionsSelect: FC<ProcessingOptionsSelectProps> = ({
   onChange,
 }) => (
   <div className={"flex flex-wrap gap-4 px-2"}>
-    <OptionSelect<Preset>
-      label={"Preset"}
-      value={options.preset}
-      options={presetOptions}
+    <OptionSelect<Format>
+      label={"Format"}
+      value={options.format}
+      options={formatOptions}
       disabled={disabled}
-      onChange={(preset) => onChange({ ...options, preset })}
+      onChange={(format) => onChange({ ...options, format })}
     />
+    {hasPreset(getCodec(options.format)) && (
+      <OptionSelect<Preset>
+        label={"Preset"}
+        value={options.preset}
+        options={presetOptions}
+        disabled={disabled}
+        onChange={(preset) => onChange({ ...options, preset })}
+      />
+    )}
     <OptionSelect<Quality>
       label={"Quality"}
       value={options.quality}

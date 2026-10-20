@@ -3,8 +3,11 @@ import type { ProcessingOptions } from "components/modules/video/types";
 import { type FC, useMemo } from "react";
 
 import {
-  Codec,
+  formatOptions,
+  getCodec,
   getOptionLabel,
+  getQualityCrf,
+  hasPreset,
   Operation,
   presetOptions,
   qualityOptions,
@@ -78,25 +81,32 @@ export const ProcessingSummary: FC<ProcessingSummaryProps> = ({
           label: "Processing time",
           value: formatDuration(processingTimeMs),
         },
-        {
-          label: "Operation",
-          value: isProcessed
-            ? `${Operation.Compress} (${Codec.X264})`
-            : EMPTY_VALUE,
-        },
-        {
-          label: "Preset",
-          value: appliedOptions
-            ? `${getOptionLabel(presetOptions, appliedOptions.preset)} (${appliedOptions.preset})`
-            : EMPTY_VALUE,
-        },
-        {
-          label: "Quality",
-          value: appliedOptions
-            ? `${getOptionLabel(qualityOptions, appliedOptions.quality)} (CRF ${appliedOptions.quality})`
-            : EMPTY_VALUE,
-        },
       );
+
+      if (appliedOptions) {
+        const codec = getCodec(appliedOptions.format);
+
+        temp.push(
+          {
+            label: "Operation",
+            value: `${Operation.Compress} (${codec})`,
+          },
+          {
+            label: "Format",
+            value: getOptionLabel(formatOptions, appliedOptions.format),
+          },
+        );
+        if (hasPreset(codec)) {
+          temp.push({
+            label: "Preset",
+            value: `${getOptionLabel(presetOptions, appliedOptions.preset)} (${appliedOptions.preset})`,
+          });
+        }
+        temp.push({
+          label: "Quality",
+          value: `${getOptionLabel(qualityOptions, appliedOptions.quality)} (CRF ${getQualityCrf(codec, appliedOptions.quality)})`,
+        });
+      }
     }
 
     return temp;

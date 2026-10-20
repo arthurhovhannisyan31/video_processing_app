@@ -1,6 +1,8 @@
 import {
+  DEFAULT_FORMAT,
   DEFAULT_PRESET,
   DEFAULT_QUALITY,
+  type Format,
   type JobType,
   type Preset,
   type ProgressType,
@@ -11,12 +13,15 @@ import {
 export type InspectionData = Record<string, unknown>;
 
 export interface ProcessingOptions {
+  format: Format;
+  // Sent for every codec, but only used by x264
   preset: Preset;
   quality: Quality;
 }
 
 export class FileState {
   public options: ProcessingOptions = {
+    format: DEFAULT_FORMAT,
     preset: DEFAULT_PRESET,
     quality: DEFAULT_QUALITY,
   };
