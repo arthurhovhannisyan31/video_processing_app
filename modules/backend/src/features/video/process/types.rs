@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use crate::core::error::{InputError, ServerError};
-use crate::features::video::process::configs::{codec, extension, operation, preset, quality};
+use crate::features::video::process::configs::{codec, extension, mime_type, muxer, operation};
 
 #[derive(Debug)]
 pub struct ProcessVideoMeta {
@@ -16,14 +16,21 @@ pub struct ProcessVideoMeta {
   pub format: VideoFormat,
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug)]
+pub struct OutputVideoMeta {
+  pub name: String,
+  pub path: String,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Operation {
   Compress,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub enum Codec {
   X264,
+  VP9,
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,24 +50,20 @@ pub enum Quality {
 #[derive(Debug, PartialEq)]
 pub struct VideoFormat {
   pub extension: Extension,
-  pub muxer: Muxer,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Muxer {
-  Mp4,
-  Matroska,
-  Webm,
-  Mov,
+  pub muxer: String,
+  pub mime_type: String,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Extension {
   Mp4,
-  Matroska,
+  Mkv,
   Webm,
   Mov,
 }
+
+#[derive(Debug, PartialEq)]
+pub struct Preset(pub(crate) String);
 
 impl FromStr for Operation {
   type Err = ServerError;
@@ -79,7 +82,8 @@ impl FromStr for Codec {
   type Err = ServerError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      codec::X264 => Ok(Codec::X264),
+      codec::x264::TYPE => Ok(Codec::X264),
+      codec::vp9::TYPE => Ok(Codec::VP9),
       "" => Err(InputError::DataError("Codec is missing".to_string()))?,
       _ => Err(InputError::DataError(format!(
         "Codec is not supported: {s}"
@@ -91,18 +95,18 @@ impl FromStr for Codec {
 impl Display for Codec {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Self::X264 => write!(f, "{}", codec::X264),
+      Self::X264 => write!(f, "{}", codec::x264::TYPE),
+      Self::VP9 => write!(f, "{}", codec::vp9::TYPE),
     }
   }
 }
-
-#[derive(Debug, PartialEq)]
-pub struct Preset(pub(crate) String);
 
 impl Preset {
   pub fn get_by_codec(s: &str, codec: &Codec) -> Result<Self, ServerError> {
     match codec {
       Codec::X264 => X264Preset::from_str(s).map(|val| Self(val.to_string())),
+      // Skip value
+      _ => Ok(Self("".to_string())),
     }
   }
 }
@@ -111,9 +115,9 @@ impl FromStr for X264Preset {
   type Err = ServerError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      preset::x_264::BALANCED => Ok(X264Preset::Medium),
-      preset::x_264::BEST_COMPRESSION => Ok(X264Preset::Slow),
-      preset::x_264::FAST => Ok(X264Preset::Fast),
+      codec::x264::preset::BALANCED => Ok(X264Preset::Medium),
+      codec::x264::preset::BEST_COMPRESSION => Ok(X264Preset::Slow),
+      codec::x264::preset::FAST => Ok(X264Preset::Fast),
       "" => Err(InputError::DataError("Preset is missing".to_string()))?,
       _ => Err(InputError::DataError(format!(
         "Preset is not supported: {s}"
@@ -125,34 +129,48 @@ impl FromStr for X264Preset {
 impl Display for X264Preset {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Self::Fast => write!(f, "{}", preset::x_264::FAST),
-      Self::Medium => write!(f, "{}", preset::x_264::BALANCED),
-      Self::Slow => write!(f, "{}", preset::x_264::BEST_COMPRESSION),
+      Self::Fast => write!(f, "{}", codec::x264::preset::FAST),
+      Self::Medium => write!(f, "{}", codec::x264::preset::BALANCED),
+      Self::Slow => write!(f, "{}", codec::x264::preset::BEST_COMPRESSION),
     }
   }
 }
 
-impl FromStr for Quality {
-  type Err = ServerError;
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s {
-      quality::STANDARD => Ok(Quality::Standard),
-      quality::HIGH => Ok(Quality::High),
-      quality::LOW => Ok(Quality::Low),
-      "" => Err(InputError::DataError("Quality is missing".to_string()))?,
-      _ => Err(InputError::DataError(format!(
-        "Quality is not supported: {s}"
-      )))?,
+impl Quality {
+  pub(crate) fn from_str(s: &str, codec: &Codec) -> Result<Self, ServerError> {
+    match codec {
+      Codec::X264 => match s {
+        codec::x264::quality::STANDARD => Ok(Quality::Standard),
+        codec::x264::quality::HIGH => Ok(Quality::High),
+        codec::x264::quality::LOW => Ok(Quality::Low),
+        "" => Err(InputError::DataError("Quality is missing".to_string()))?,
+        _ => Err(InputError::DataError(format!(
+          "Quality '{s}' is not supported for x264 codec"
+        )))?,
+      },
+      Codec::VP9 => match s {
+        codec::vp9::quality::STANDARD => Ok(Quality::Standard),
+        codec::vp9::quality::HIGH => Ok(Quality::High),
+        codec::vp9::quality::LOW => Ok(Quality::Low),
+        "" => Err(InputError::DataError("Quality is missing".to_string()))?,
+        _ => Err(InputError::DataError(format!(
+          "Quality '{s}' is not supported for vp9 codec"
+        )))?,
+      },
     }
   }
-}
-
-impl Display for Quality {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Self::Standard => write!(f, "{}", quality::STANDARD),
-      Self::High => write!(f, "{}", quality::HIGH),
-      Self::Low => write!(f, "{}", quality::LOW),
+  pub(crate) fn to_string(&self, codec: &Codec) -> String {
+    match codec {
+      Codec::X264 => match self {
+        Quality::Standard => codec::x264::quality::STANDARD.to_string(),
+        Quality::High => codec::x264::quality::HIGH.to_string(),
+        Quality::Low => codec::x264::quality::LOW.to_string(),
+      },
+      Codec::VP9 => match self {
+        Quality::Standard => codec::vp9::quality::STANDARD.to_string(),
+        Quality::High => codec::vp9::quality::HIGH.to_string(),
+        Quality::Low => codec::vp9::quality::LOW.to_string(),
+      },
     }
   }
 }
@@ -161,7 +179,7 @@ impl FromStr for Extension {
   type Err = ServerError;
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s {
-      extension::MATROSKA => Ok(Extension::Matroska),
+      extension::MKV => Ok(Extension::Mkv),
       extension::MOV => Ok(Extension::Mov),
       extension::MP4 => Ok(Extension::Mp4),
       extension::WEBM => Ok(Extension::Webm),
@@ -176,7 +194,7 @@ impl FromStr for Extension {
 impl Display for Extension {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Self::Matroska => write!(f, "{}", extension::MATROSKA),
+      Self::Mkv => write!(f, "{}", extension::MKV),
       Self::Mov => write!(f, "{}", extension::MOV),
       Self::Mp4 => write!(f, "{}", extension::MP4),
       Self::Webm => write!(f, "{}", extension::WEBM),
@@ -188,13 +206,17 @@ impl VideoFormat {
   pub fn from_str(s: &str) -> Result<Self, ServerError> {
     let extension = Extension::from_str(s)?;
 
-    let muxer = match extension {
-      Extension::Matroska => Muxer::Matroska,
-      Extension::Mov => Muxer::Mov,
-      Extension::Mp4 => Muxer::Mp4,
-      Extension::Webm => Muxer::Webm,
+    let (muxer, mime_type) = match extension {
+      Extension::Mkv => (muxer::MKV, mime_type::MKV),
+      Extension::Mov => (muxer::MOV, mime_type::MOV),
+      Extension::Mp4 => (muxer::MP4, mime_type::MP4),
+      Extension::Webm => (muxer::WEBM, mime_type::WEBM),
     };
 
-    Ok(Self { extension, muxer })
+    Ok(Self {
+      extension,
+      muxer: muxer.to_string(),
+      mime_type: mime_type.to_string(),
+    })
   }
 }
