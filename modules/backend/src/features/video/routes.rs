@@ -21,7 +21,7 @@ use crate::core::error::{ApplicationError, ErrorBody, ServerError};
 use crate::core::governor::build_rate_limiter_config;
 use crate::features::video::inspect::dto::VideoInspectionResponse;
 use crate::features::video::model::VideoStateProgress;
-use crate::features::video::process::configs::{codec, operation, preset, quality};
+use crate::features::video::process::configs::{codec, extension, mime_type, operation};
 use crate::features::video::state::VideoState;
 use crate::router::routes;
 
@@ -107,6 +107,8 @@ pub struct ProcessVideoPayload {
   pub preset: String,
   #[schema(schema_with = quality_schema)]
   pub quality: String,
+  #[schema(schema_with = format_schema)]
+  pub format: String,
   #[schema(value_type = String, format = Binary)]
   pub video: Vec<u8>,
 }
@@ -130,24 +132,46 @@ fn operation_schema() -> Schema {
 }
 
 fn codec_schema() -> Schema {
-  string_enum_schema("Video codec", &[codec::X264])
+  string_enum_schema("Video codec", &[codec::x264::TYPE, codec::vp9::TYPE])
 }
 
 fn preset_schema() -> Schema {
   string_enum_schema(
-    "Encoder preset for the selected codec. Must be sent after the `codec` field.",
+    "Encoder preset. Must be sent after the `codec` field. Required for every codec, but only \
+     libx264 validates and uses it; libvpx-vp9 ignores the value.",
     &[
-      preset::x_264::FAST,
-      preset::x_264::BALANCED,
-      preset::x_264::BEST_COMPRESSION,
+      codec::x264::preset::FAST,
+      codec::x264::preset::BALANCED,
+      codec::x264::preset::BEST_COMPRESSION,
+    ],
+  )
+}
+
+fn format_schema() -> Schema {
+  string_enum_schema(
+    "Output container. Sets the extension and content type of the returned file. webm supports \
+     libvpx-vp9 only.",
+    &[
+      extension::MP4,
+      extension::MKV,
+      extension::WEBM,
+      extension::MOV,
     ],
   )
 }
 
 fn quality_schema() -> Schema {
   string_enum_schema(
-    "Constant rate factor (CRF): lower is higher quality",
-    &[quality::HIGH, quality::STANDARD, quality::LOW],
+    "Constant rate factor (CRF), lower is higher quality. Must be sent after the `codec` field. \
+     libx264: 18 (high), 23 (standard), 28 (low); libvpx-vp9: 24 (high), 31 (standard), 38 (low).",
+    &[
+      codec::x264::quality::HIGH,
+      codec::x264::quality::STANDARD,
+      codec::x264::quality::LOW,
+      codec::vp9::quality::HIGH,
+      codec::vp9::quality::STANDARD,
+      codec::vp9::quality::LOW,
+    ],
   )
 }
 
@@ -162,8 +186,12 @@ fn quality_schema() -> Schema {
     (
       status = OK,
       description = "Processed video file. Progress is pushed to the session's WebSocket.",
-      body = inline(ProcessedVideoFile),
-      content_type = "video/mp4",
+      content(
+        (inline(ProcessedVideoFile) = mime_type::MP4),
+        (inline(ProcessedVideoFile) = mime_type::MKV),
+        (inline(ProcessedVideoFile) = mime_type::WEBM),
+        (inline(ProcessedVideoFile) = mime_type::MOV),
+      ),
       headers(("Content-Disposition" = String, description = "attachment; filename=\"<name>\""))
     ),
     (status = BAD_REQUEST, description = "Invalid form data or unsupported argument", body = ErrorBody),
