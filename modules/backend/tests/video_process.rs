@@ -10,7 +10,7 @@ mod test_video_process_api {
   use video_processing_server::core::error::{ErrorBody, ServerError};
   use video_processing_server::router::routes;
 
-  use crate::common::constants::DEFAULT_FORM_DATA_ARGS;
+  use crate::common::constants::{DEFAULT_FORM_DATA_ARGS, VP9_FORM_DATA_ARGS};
   use crate::common::utils::setup_server;
   use crate::utils::with_base_route;
 
@@ -22,6 +22,7 @@ mod test_video_process_api {
   async fn assert_success_response(
     server: &TestServer,
     form: MultipartForm,
+    content_type: &str,
   ) -> Result<(), ServerError> {
     let response = server
       .post(&with_base_route(routes::VIDEO_JOBS))
@@ -30,7 +31,7 @@ mod test_video_process_api {
       .await;
 
     response.assert_status_ok();
-    response.assert_header("content-type", "video/mp4");
+    response.assert_header("content-type", content_type);
     let content_disposition = response.header("content-disposition");
     assert!(
       content_disposition
@@ -87,12 +88,26 @@ mod test_video_process_api {
       .collect()
   }
 
+  /// Base arguments with one field value replaced
+  fn replace_arg<'a>(
+    base: &[(&'a str, &'a str)],
+    field: &str,
+    value: &'a str,
+  ) -> Vec<(&'a str, &'a str)> {
+    base
+      .iter()
+      .map(|&(name, default)| (name, if name == field { value } else { default }))
+      .collect()
+  }
+
   /// Default arguments with one field value replaced
   fn args_with<'a>(field: &str, value: &'a str) -> Vec<(&'a str, &'a str)> {
-    DEFAULT_FORM_DATA_ARGS
-      .into_iter()
-      .map(|(name, default)| (name, if name == field { value } else { default }))
-      .collect()
+    replace_arg(&DEFAULT_FORM_DATA_ARGS, field, value)
+  }
+
+  /// VP9 arguments with one field value replaced
+  fn vp9_args_with<'a>(field: &str, value: &'a str) -> Vec<(&'a str, &'a str)> {
+    replace_arg(&VP9_FORM_DATA_ARGS, field, value)
   }
 
   /// Video form with all default processing arguments
@@ -175,8 +190,9 @@ mod test_video_process_api {
   #[sqlx::test(fixtures("create_user"))]
   async fn test_fail_missing_codec(pool: PgPool) -> Result<(), ServerError> {
     let server = setup_server(pool).await?;
-    // Preset is validated against codec, so both are left out to reach the missing codec check
-    let form = sample_form(&args_without(&["codec", "preset"]));
+    // Preset and quality are validated against codec, so all are left out to reach the missing
+    // codec check
+    let form = sample_form(&args_without(&["codec", "preset", "quality"]));
 
     assert_error_response(
       &server,
@@ -216,6 +232,40 @@ mod test_video_process_api {
   }
 
   #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_missing_format(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    let form = sample_form(&args_without(&["format"]));
+
+    assert_error_response(
+      &server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Missing 'format' field",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_quality_before_codec(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    let form = sample_form(&[
+      ("operation", "compress"),
+      ("quality", "23"),
+      ("codec", "libx264"),
+      ("preset", "medium"),
+      ("format", "mp4"),
+    ]);
+
+    assert_error_response(
+      &server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Missing 'codec' field, ensure it is listed before 'quality' field",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
   async fn test_fail_preset_before_codec(pool: PgPool) -> Result<(), ServerError> {
     let server = setup_server(pool).await?;
     let form = sample_form(&[
@@ -223,6 +273,7 @@ mod test_video_process_api {
       ("preset", "medium"),
       ("codec", "libx264"),
       ("quality", "23"),
+      ("format", "mp4"),
     ]);
 
     assert_error_response(
@@ -288,7 +339,52 @@ mod test_video_process_api {
       &server,
       form,
       StatusCode::BAD_REQUEST,
-      "Data error: Quality is not supported: 22",
+      "Data error: Quality '22' is not supported for x264 codec",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_x264_quality_with_vp9(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    // Quality values are codec specific: 23 is valid for x264 only
+    let form = sample_form(&vp9_args_with("quality", "23"));
+
+    assert_error_response(
+      &server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Quality '23' is not supported for vp9 codec",
+    )
+    .await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_unsupported_format(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    let form = sample_form(&args_with("format", "avi"));
+
+    assert_error_response(
+      &server,
+      form,
+      StatusCode::BAD_REQUEST,
+      "Data error: Extension is not supported: avi",
+    )
+    .await
+  }
+
+  /// Pins current behavior: codec and container compatibility is not validated, so ffmpeg fails
+  /// to mux x264 into webm and the error is reported as 500
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_fail_x264_in_webm(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    let form = sample_form(&args_with("format", "webm"));
+
+    assert_error_response(
+      &server,
+      form,
+      StatusCode::INTERNAL_SERVER_ERROR,
+      "Internal server error",
     )
     .await
   }
@@ -301,6 +397,7 @@ mod test_video_process_api {
       ("codec", "Data error: Codec is missing"),
       ("preset", "Data error: Preset is missing"),
       ("quality", "Data error: Quality is missing"),
+      ("format", "Data error: Extension is missing"),
     ];
 
     for (field, message) in cases {
@@ -441,7 +538,7 @@ mod test_video_process_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/audio_only.m4a");
     let form = process_form(file_bytes, "audio_only.mp4");
 
-    assert_success_response(&server, form).await
+    assert_success_response(&server, form, "video/mp4").await
   }
 
   #[sqlx::test(fixtures("create_user"))]
@@ -450,7 +547,7 @@ mod test_video_process_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/dual_audio_tracks.mp4");
     let form = process_form(file_bytes, "dual_audio_tracks.mp4");
 
-    assert_success_response(&server, form).await
+    assert_success_response(&server, form, "video/mp4").await
   }
 
   #[sqlx::test(fixtures("create_user"))]
@@ -459,7 +556,7 @@ mod test_video_process_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
     let form = process_form(file_bytes, "sample_av.mp4");
 
-    assert_success_response(&server, form).await
+    assert_success_response(&server, form, "video/mp4").await
   }
 
   #[sqlx::test(fixtures("create_user"))]
@@ -468,7 +565,7 @@ mod test_video_process_api {
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/vertical_no_audio.mp4");
     let form = process_form(file_bytes, "vertical_no_audio.mp4");
 
-    assert_success_response(&server, form).await
+    assert_success_response(&server, form, "video/mp4").await
   }
 
   #[sqlx::test(fixtures("create_user"))]
@@ -476,7 +573,8 @@ mod test_video_process_api {
     let server = setup_server(pool).await?;
 
     for preset in ["superfast", "medium", "slow"] {
-      assert_success_response(&server, sample_form(&args_with("preset", preset))).await?;
+      let form = sample_form(&args_with("preset", preset));
+      assert_success_response(&server, form, "video/mp4").await?;
     }
 
     Ok(())
@@ -487,7 +585,8 @@ mod test_video_process_api {
     let server = setup_server(pool).await?;
 
     for quality in ["18", "23", "28"] {
-      assert_success_response(&server, sample_form(&args_with("quality", quality))).await?;
+      let form = sample_form(&args_with("quality", quality));
+      assert_success_response(&server, form, "video/mp4").await?;
     }
 
     Ok(())
@@ -497,12 +596,13 @@ mod test_video_process_api {
   async fn test_success_field_order(pool: PgPool) -> Result<(), ServerError> {
     let server = setup_server(pool).await?;
     let file_bytes: &[u8] = include_bytes!("./fixtures/media/sample_av.mp4");
-    // Arguments before the file; only 'codec' before 'preset' is required
+    // Arguments before the file; only 'codec' before 'preset' and 'quality' is required
     let form = with_args(
       MultipartForm::new(),
       &[
-        ("quality", "23"),
+        ("format", "mp4"),
         ("codec", "libx264"),
+        ("quality", "23"),
         ("operation", "compress"),
         ("preset", "medium"),
       ],
@@ -514,6 +614,43 @@ mod test_video_process_api {
         .mime_type("video/mp4"),
     );
 
-    assert_success_response(&server, form).await
+    assert_success_response(&server, form, "video/mp4").await
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_success_x264_formats(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+
+    for (format, content_type) in [
+      ("mp4", "video/mp4"),
+      ("mkv", "video/x-matroska"),
+      ("mov", "video/quicktime"),
+    ] {
+      let form = sample_form(&args_with("format", format));
+      assert_success_response(&server, form, content_type).await?;
+    }
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_success_vp9_all_qualities(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+
+    for quality in ["24", "31", "38"] {
+      let form = sample_form(&vp9_args_with("quality", quality));
+      assert_success_response(&server, form, "video/webm").await?;
+    }
+
+    Ok(())
+  }
+
+  #[sqlx::test(fixtures("create_user"))]
+  async fn test_success_vp9_ignores_preset(pool: PgPool) -> Result<(), ServerError> {
+    let server = setup_server(pool).await?;
+    // The field is required, but VP9 accepts any value since it has no x264-style presets
+    let form = sample_form(&vp9_args_with("preset", "anything"));
+
+    assert_success_response(&server, form, "video/webm").await
   }
 }

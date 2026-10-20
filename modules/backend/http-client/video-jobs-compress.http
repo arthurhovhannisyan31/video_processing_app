@@ -27,7 +27,49 @@ medium
 Content-Disposition: form-data; name="quality";
 
 23
+--DualAudioTracks
+Content-Disposition: form-data; name="format";
+
+#mov
+#mkv
+mp4
 --DualAudioTracks--
+
+### Process webm
+POST {{api_host}}/video/jobs
+Content-Type: multipart/form-data; boundary=DualAudioTracks
+Accept: application/json
+Origin: http://localhost:3000
+Authorization: Bearer {{token}}
+X-USER-ID: e2ba73db-2805-4ded-91f8-50193e38dcb3
+
+--DualAudioTracks
+Content-Disposition: form-data; name="video"; filename="dual_audio_tracks.mp4"
+Content-Type: video/mp4
+
+< ../tests/fixtures/media/dual_audio_tracks.mp4
+--DualAudioTracks
+Content-Disposition: form-data; name="operation";
+
+compress
+--DualAudioTracks
+Content-Disposition: form-data; name="codec";
+
+libvpx-vp9
+--DualAudioTracks
+Content-Disposition: form-data; name="preset";
+
+medium
+--DualAudioTracks
+Content-Disposition: form-data; name="quality";
+
+31
+--DualAudioTracks
+Content-Disposition: form-data; name="format";
+
+webm
+--DualAudioTracks--
+
 
 ### Process Video SampleAv
 POST {{api_host}}/video/jobs
