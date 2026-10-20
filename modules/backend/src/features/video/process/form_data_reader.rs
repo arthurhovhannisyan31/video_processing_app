@@ -63,7 +63,16 @@ pub async fn read(
       }
       FieldName::Quality => {
         let str = field.text().await.map_err(InputError::Multipart)?;
-        quality = Some(Quality::from_str(&str)?);
+        match &codec {
+          Some(codec) => {
+            quality = Some(Quality::from_str(&str, codec)?);
+          }
+          None => {
+            Err(InputError::DataError(
+              "Missing 'codec' field, ensure it is listed before 'quality' field".to_string(),
+            ))?;
+          }
+        }
       }
       FieldName::Format => {
         let str = field.text().await.map_err(InputError::Multipart)?;

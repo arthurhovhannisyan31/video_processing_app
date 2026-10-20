@@ -9,6 +9,7 @@ pub enum FieldName {
   Codec,
   // preset depends on codec field and should be listed in request payload after codec
   Preset,
+  // quality depends on codec field and should be listed in request payload after codec
   Quality,
   Format,
 }
