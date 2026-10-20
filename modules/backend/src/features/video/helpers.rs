@@ -15,6 +15,7 @@ use crate::core::hash::calculate_hash;
 use crate::features::video::cache::MediaDataCache;
 use crate::features::video::constants::FILE_EXTENSIONS_WHITE_LIST;
 use crate::features::video::inspect;
+use crate::features::video::process::types::{Extension, OutputVideoMeta};
 use crate::features::video::types::ReadFormDataMeta;
 
 pub fn deserialize_string_to_type<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -38,7 +39,11 @@ where
   Ok(Some(value))
 }
 
-pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerError> {
+pub fn build_output_meta(
+  path: &str,
+  suffix: &str,
+  extension: &Extension,
+) -> Result<OutputVideoMeta, ServerError> {
   if path.is_empty() {
     return Err(ServerError::IO(io::Error::new(
       ErrorKind::NotFound,
@@ -59,23 +64,17 @@ pub fn append_path_suffix(path: &str, suffix: &str) -> Result<String, ServerErro
     .ok_or(InputError::DataError(
       "Failed to convert file stem to string".to_string(),
     ))?;
-  let extension = path
-    .extension()
-    .ok_or(InputError::DataError(
-      "Failed to read file extension".to_string(),
-    ))?
-    .to_str()
-    .ok_or(InputError::DataError(
-      "Failed to convert file extension to string".to_string(),
-    ))?;
   let parent_path = path.parent().ok_or(ServerError::IO(io::Error::new(
     ErrorKind::NotFound,
     "Failed to read file parent directory",
   )))?;
   let new_name = format!("{stem}{suffix}.{extension}");
-  let output_path = parent_path.join(new_name);
+  let output_path = parent_path.join(&new_name);
 
-  Ok(output_path.to_string_lossy().to_string())
+  Ok(OutputVideoMeta {
+    name: new_name,
+    path: output_path.to_string_lossy().to_string(),
+  })
 }
 
 pub async fn read_form_data_meta(field: &mut Field<'_>) -> Result<ReadFormDataMeta, ServerError> {
@@ -183,19 +182,29 @@ mod tests {
 
   #[test]
   fn test_append_path_suffix() {
-    assert!(append_path_suffix("", "").is_err());
-    assert!(append_path_suffix("/", "").is_err());
-    assert!(append_path_suffix("", "/").is_err());
-    assert!(append_path_suffix("/", "temp").is_err());
-    assert!(append_path_suffix("/dir", "temp").is_err());
-    assert_eq!(
-      append_path_suffix("/file.ext", "-temp").unwrap(),
-      "/file-temp.ext".to_string()
-    );
-    assert_eq!(
-      append_path_suffix("../file.ext", "-temp").unwrap(),
-      "../file-temp.ext".to_string()
-    );
+    assert!(build_output_meta("", "", &Extension::Mp4).is_err());
+    assert!(build_output_meta("/", "", &Extension::Mp4).is_err());
+    assert!(build_output_meta("", "/", &Extension::Mp4).is_err());
+    assert!(build_output_meta("/", "temp", &Extension::Mp4).is_err());
+    assert!(build_output_meta("/file.ext", "", &Extension::Mp4).is_err());
+
+    // Output extension comes from the requested format, not the input file
+    let meta = build_output_meta("/file.ext", "-temp", &Extension::Mp4).unwrap();
+    assert_eq!(meta.name, "file-temp.mp4");
+    assert_eq!(meta.path, "/file-temp.mp4");
+
+    let meta = build_output_meta("../file.mp4", "-temp", &Extension::Webm).unwrap();
+    assert_eq!(meta.name, "file-temp.webm");
+    assert_eq!(meta.path, "../file-temp.webm");
+
+    // Input without extension is accepted, the requested one is appended
+    let meta = build_output_meta("/dir", "temp", &Extension::Mp4).unwrap();
+    assert_eq!(meta.name, "dirtemp.mp4");
+    assert_eq!(meta.path, "/dirtemp.mp4");
+
+    let meta = build_output_meta("/tmp/dir/file.mp4", "_output", &Extension::Mkv).unwrap();
+    assert_eq!(meta.name, "file_output.mkv");
+    assert_eq!(meta.path, "/tmp/dir/file_output.mkv");
   }
 
   async fn multipart_from_field(filename: Option<&str>, content: &[u8]) -> Multipart {

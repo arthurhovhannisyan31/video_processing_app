@@ -10,7 +10,7 @@ pub struct MediaMetadata {
   pub audio_streams: Vec<AudioStream>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct VideoStream {
   pub id: Option<String>,
   pub bit_rate: Option<i32>,
@@ -20,7 +20,7 @@ pub struct VideoStream {
   pub width: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AudioStream {
   pub id: Option<String>,
   pub bit_rate: Option<i32>,

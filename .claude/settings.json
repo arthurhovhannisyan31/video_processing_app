@@ -1,2 +1,5 @@
 {
+  "enabledMcpjsonServers": [
+    "chrome-devtools"
+  ]
 }

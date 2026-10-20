@@ -19,11 +19,10 @@ use tracing::{error, warn};
 use crate::core::error::ServerError;
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::{MediaDataCache, build_media_data_cache};
-use crate::features::video::helpers::{append_path_suffix, get_file_duration};
+use crate::features::video::helpers::{build_output_meta, get_file_duration};
 use crate::features::video::model::{MediaMetadata, VideoStateProgress};
 use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
 use crate::features::video::process::helpers::get_args;
-use crate::features::video::process::types::ProcessVideoMeta;
 use crate::features::video::{inspect, process};
 
 pub type VideoWsConnectionsMap = RwLock<HashMap<String, mpsc::Sender<VideoStateProgress>>>;
@@ -82,17 +81,17 @@ impl VideoService {
         format!("Failed to create temp directory: {err}"),
       ))
     })?;
-    let ProcessVideoMeta {
-      operation,
-      local_path,
-      file_name,
-    } = process::form_data_reader::read(media_data, temp_dir.path()).await?;
-    let output_path = append_path_suffix(&local_path, OUTPUT_PATH_SUFFIX)?;
-    let ffmpeg_args = get_args(&local_path, &output_path, &operation)?;
+    let process_meta = process::form_data_reader::read(media_data, temp_dir.path()).await?;
+    let output_meta = build_output_meta(
+      &process_meta.local_path,
+      OUTPUT_PATH_SUFFIX,
+      &process_meta.format.extension,
+    )?;
+    let ffmpeg_args = get_args(&process_meta, &output_meta.path)?;
     let duration = get_file_duration(
-      &file_name,
+      &process_meta.file_name,
       &session_id,
-      &local_path,
+      &process_meta.local_path,
       &self.media_data_cache,
       video_inspect_timeout,
     )
@@ -100,7 +99,7 @@ impl VideoService {
 
     process::ffmpeg_runner::process_file(
       ffmpeg_args,
-      &file_name,
+      &process_meta.file_name,
       &self.connections_map,
       &session_id,
       duration,
@@ -108,7 +107,7 @@ impl VideoService {
     )
     .await?;
 
-    process::build_response::build_response(&local_path, &output_path).await
+    process::build_response::build_response(&output_meta, &process_meta.format.mime_type).await
   }
 
   pub async fn handle_socket(&self, socket: WebSocket, session_id: String) {

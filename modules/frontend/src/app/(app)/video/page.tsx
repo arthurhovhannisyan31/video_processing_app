@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  DEFAULT_FORMAT,
   DOWNLOAD_ALL_DELAY_MS,
   ProgressType,
 } from "components/modules/video/constants";
@@ -10,7 +11,11 @@ import { ControlsBar } from "components/modules/video/controls-bar";
 import { DropZone } from "components/modules/video/drop-zone";
 import { FilesList } from "components/modules/video/files-list";
 import { useWebSocket } from "components/modules/video/hooks/useWebSocket";
-import { FileState, type FilesStateMap } from "components/modules/video/types";
+import {
+  FileState,
+  type FilesStateMap,
+  type ProcessingOptions,
+} from "components/modules/video/types";
 import { downloadFile } from "helpers/api/downloadFile";
 import { getInspectVideoPromise } from "helpers/api/getInspectVideoPromise";
 import { getCompressVideoPromise } from "helpers/api/getProcessingVideoPromise";
@@ -43,6 +48,21 @@ export default function VideoPage() {
       ...state,
     }));
   }, []);
+
+  const handleOptionsChange = useCallback(
+    (fileName: string, options: ProcessingOptions) => {
+      setFilesStateMap((state) => {
+        const fileState = state[fileName];
+
+        if (fileState) {
+          fileState.options = options;
+        }
+
+        return { ...state };
+      });
+    },
+    [],
+  );
 
   const handleReset = useCallback(() => {
     for (const file of files) {
@@ -85,13 +105,18 @@ export default function VideoPage() {
 
   const handleDownloadAll = useCallback(async () => {
     for (const file of files) {
-      const processedData = filesStateMap[file.name]?.processedData;
+      const fileState = filesStateMap[file.name];
+      const processedData = fileState?.processedData;
 
       if (!processedData) {
         continue;
       }
 
-      downloadFile(file, processedData);
+      downloadFile(
+        file,
+        processedData,
+        fileState.appliedOptions?.format ?? DEFAULT_FORMAT,
+      );
       // Browsers drop back-to-back programmatic downloads without a short gap.
       await new Promise((resolve) =>
         setTimeout(resolve, DOWNLOAD_ALL_DELAY_MS),
@@ -159,7 +184,11 @@ export default function VideoPage() {
               reset={handleReset}
               filesStateMap={filesStateMap}
             />
-            <FilesList files={files} filesStateMap={filesStateMap} />
+            <FilesList
+              files={files}
+              filesStateMap={filesStateMap}
+              onOptionsChange={handleOptionsChange}
+            />
           </>
         ) : (
           <DropZone addFiles={handleAddFiles} />

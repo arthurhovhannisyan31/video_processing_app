@@ -2,6 +2,8 @@ import type { FileState } from "components/modules/video/types";
 import type { ApiError } from "configs/types";
 
 import {
+  getCodec,
+  getQualityCrf,
   JobType,
   Operation,
   ProgressType,
@@ -11,54 +13,63 @@ import { processVideo } from "generated/client";
 import { getErrorMessage } from "helpers/utils";
 import { toast } from "sonner";
 
-export const getCompressVideoPromise = (
+export const getCompressVideoPromise = async (
   file: File,
   fileState: FileState,
   triggerUpdate: () => void,
-) =>
-  // Use Promise wrapper to use Promise.all
-  new Promise((res, rej) => {
-    (async () => {
-      try {
-        fileState.jobType = JobType.Compress;
-        fileState.status = Status.Pending;
-        fileState.progressType = ProgressType.Uploaded;
+) => {
+  fileState.jobType = JobType.Compress;
+  fileState.status = Status.Pending;
+  fileState.progressType = ProgressType.Uploaded;
+  triggerUpdate();
+
+  // Capture options at request time so later edits don't change what's reported
+  const requestOptions = { ...fileState.options };
+  const codec = getCodec(requestOptions.format);
+  const startedAt = performance.now();
+
+  try {
+    const response = await processVideo({
+      // Fields are sent in key order; the API requires `codec` before `preset` and `quality`
+      body: {
+        video: file,
+        operation: Operation.Compress,
+        codec,
+        preset: requestOptions.preset,
+        quality: getQualityCrf(codec, requestOptions.quality),
+        format: requestOptions.format,
+      },
+      responseType: "blob",
+      onUploadProgress: (progressEvent) => {
+        const total = progressEvent.total || progressEvent.bytes;
+        const loaded = progressEvent.loaded;
+        fileState.progress = Math.round((loaded / total) * 100);
+
         triggerUpdate();
+      },
+      signal: fileState.abortController.signal,
+    });
 
-        const response = await processVideo({
-          body: { video: file, operation: Operation.Compress },
-          responseType: "blob",
-          onUploadProgress: (progressEvent) => {
-            const total = progressEvent.total || progressEvent.bytes;
-            const loaded = progressEvent.loaded;
-            fileState.progress = Math.round((loaded / total) * 100);
+    if (response.error) {
+      throw response;
+    }
 
-            triggerUpdate();
-          },
-          signal: fileState.abortController.signal,
-        });
+    fileState.progressType = ProgressType.Uploaded;
+    fileState.processedData = response.data as unknown as Blob;
+    fileState.appliedOptions = { ...requestOptions };
+    fileState.processingTimeMs = performance.now() - startedAt;
+    fileState.status = Status.Done;
+  } catch (err) {
+    fileState.status = Status.Error;
 
-        if (response.error) {
-          throw response;
-        }
+    const error = err as ApiError;
+    const errorMessage = getErrorMessage(error, "Processing failed.");
+    fileState.error = errorMessage;
+    toast.error(errorMessage);
 
-        fileState.progressType = ProgressType.Uploaded;
-        fileState.processedData = response.data as unknown as Blob;
-        fileState.status = Status.Done;
-
-        res(null);
-      } catch (err) {
-        fileState.status = Status.Error;
-
-        const error = err as ApiError;
-        const errorMessage = getErrorMessage(error, "Processing failed.");
-        fileState.error = errorMessage;
-        toast.error(errorMessage);
-
-        rej(err);
-      } finally {
-        fileState.jobType = undefined;
-        triggerUpdate();
-      }
-    })();
-  });
+    throw err;
+  } finally {
+    fileState.jobType = undefined;
+    triggerUpdate();
+  }
+};

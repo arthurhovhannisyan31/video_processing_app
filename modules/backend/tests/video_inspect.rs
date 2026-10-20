@@ -99,7 +99,7 @@ mod test_video_inspect_api {
     assert_eq!(
       serde_json::from_str::<ErrorBody>(&response.text())?,
       ErrorBody {
-        message: "Data error: Field name is not supported: audio".to_string()
+        message: "Data error: Field 'audio' is not supported".to_string()
       }
     );
 

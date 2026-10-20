@@ -1,4 +1,7 @@
-import type { FilesStateMap } from "components/modules/video/types";
+import type {
+  FilesStateMap,
+  ProcessingOptions,
+} from "components/modules/video/types";
 import { type FC, useMemo } from "react";
 
 import { FileCard } from "components/modules/video/file-card";
@@ -6,9 +9,14 @@ import { FileCard } from "components/modules/video/file-card";
 export interface FilesListProps {
   files: File[];
   filesStateMap: FilesStateMap;
+  onOptionsChange: (fileName: string, options: ProcessingOptions) => void;
 }
 
-export const FilesList: FC<FilesListProps> = ({ files, filesStateMap }) => {
+export const FilesList: FC<FilesListProps> = ({
+  files,
+  filesStateMap,
+  onOptionsChange,
+}) => {
   const cards = useMemo(
     () =>
       files.map((file) => {
@@ -25,10 +33,14 @@ export const FilesList: FC<FilesListProps> = ({ files, filesStateMap }) => {
             jobType={state.jobType}
             error={state.error}
             processedData={state.processedData}
+            options={state.options}
+            appliedOptions={state.appliedOptions}
+            processingTimeMs={state.processingTimeMs}
+            onOptionsChange={(options) => onOptionsChange(file.name, options)}
           />
         );
       }),
-    [files, filesStateMap],
+    [files, filesStateMap, onOptionsChange],
   );
 
   return (
