@@ -18,7 +18,7 @@ import {
   getMaxBodySizeBytes,
   validateFile,
 } from "components/modules/video/helpers";
-import { useHoverEvent } from "hooks/useHoverEvent";
+import { useHoverEvent } from "hooks/use-hover-event";
 import { formatBytesToMB } from "lib/utils";
 import { toast } from "sonner";
 
