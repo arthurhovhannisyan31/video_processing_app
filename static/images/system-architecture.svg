@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1400" viewBox="0 0 1600 1400" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e5e5e5"/>
+    </marker>
+    <style>
+      .bg { fill: #1a1a1a; }
+      .box { fill: none; stroke-width: 3; rx: 6; }
+      .sub { fill: #202020; stroke-width: 2.5; rx: 6; }
+      .chip { fill: #262626; stroke: #d4d4d4; stroke-width: 2; rx: 10; }
+      .title { fill: #fafafa; font-size: 28px; font-weight: 600; }
+      .h { fill: #fafafa; font-size: 24px; font-weight: 600; }
+      .t { fill: #f5f5f5; font-size: 19px; }
+      .s { fill: #e5e5e5; font-size: 17px; }
+      .muted { fill: #a3a3a3; font-size: 16px; }
+      .line { stroke: #e5e5e5; stroke-width: 2.5; fill: none; }
+      .c { text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="1400"/>
+  <text class="title c" x="800" y="54">Video Processing App · System Architecture</text>
+
+  <!-- Client -->
+  <rect class="box" x="40" y="90" width="1520" height="170" stroke="#22c55e"/>
+  <text class="h c" x="800" y="132">Browser · Next.js app (hosted on Vercel)</text>
+  <rect class="chip" x="70" y="165" width="276" height="60"/><text class="t c" x="208" y="202">React 19 + TypeScript</text>
+  <rect class="chip" x="366" y="165" width="276" height="60"/><text class="t c" x="504" y="202">TanStack Query · Jotai</text>
+  <rect class="chip" x="662" y="165" width="276" height="60"/><text class="t c" x="800" y="202">Typed API client (hey-api)</text>
+  <rect class="chip" x="958" y="165" width="276" height="60"/><text class="t c" x="1096" y="202">Live progress (WebSocket)</text>
+  <rect class="chip" x="1254" y="165" width="276" height="60"/><text class="t c" x="1392" y="202">better-auth session</text>
+
+  <!-- Client to nginx -->
+  <line class="line" x1="560" y1="264" x2="560" y2="376" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="s" x="576" y="358">HTTPS · /api/*</text>
+  <line class="line" x1="1040" y1="264" x2="1040" y2="376" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="s" x="1056" y="358">WSS · /api/video/ws</text>
+
+  <!-- VPS -->
+  <rect class="box" x="40" y="300" width="1520" height="720" stroke="#3b82f6"/>
+  <text class="h" x="70" y="340">Hetzner VPS · Docker Compose</text>
+
+  <!-- nginx -->
+  <rect class="sub" x="80" y="380" width="1060" height="130" stroke="#14b8a6"/>
+  <text class="h" x="110" y="416">nginx · reverse proxy</text>
+  <rect class="chip" x="110" y="432" width="310" height="56"/><text class="s c" x="265" y="466">TLS 1.2 / 1.3 termination</text>
+  <rect class="chip" x="445" y="432" width="310" height="56"/><text class="s c" x="600" y="466">Upload size cap</text>
+  <rect class="chip" x="780" y="432" width="310" height="56"/><text class="s c" x="935" y="466">WebSocket limit per IP</text>
+
+  <!-- certbot -->
+  <rect class="sub" x="1180" y="380" width="340" height="130" stroke="#14b8a6" stroke-dasharray="8 6"/>
+  <text class="h c" x="1350" y="432">certbot</text>
+  <text class="s c" x="1350" y="470">Let's Encrypt certificates</text>
+  <line class="line" x1="1178" y1="445" x2="1144" y2="445" marker-end="url(#arrow)"/>
+
+  <!-- nginx to API -->
+  <line class="line" x1="620" y1="512" x2="620" y2="546" marker-end="url(#arrow)"/>
+  <text class="muted" x="636" y="536">proxy to :8080</text>
+
+  <!-- Rust API -->
+  <rect class="sub" x="80" y="550" width="1060" height="440" stroke="#f97316"/>
+  <text class="h" x="110" y="588">Rust API · Axum + Tokio</text>
+  <text class="muted" x="110" y="622">Tower middleware</text>
+  <rect class="chip" x="110" y="632" width="188" height="50"/><text class="s c" x="204" y="663">Sessions</text>
+  <rect class="chip" x="313" y="632" width="188" height="50"/><text class="s c" x="407" y="663">Rate limiting</text>
+  <rect class="chip" x="516" y="632" width="188" height="50"/><text class="s c" x="610" y="663">CORS</text>
+  <rect class="chip" x="719" y="632" width="188" height="50"/><text class="s c" x="813" y="663">Compression</text>
+  <rect class="chip" x="922" y="632" width="188" height="50"/><text class="s c" x="1016" y="663">Tracing · Sentry</text>
+
+  <text class="muted" x="110" y="712">Features (src/features)</text>
+  <rect class="sub" x="110" y="722" width="290" height="240" stroke="#fde047"/>
+  <text class="h c" x="255" y="758">auth</text>
+  <text class="s c" x="255" y="796">register · login</text>
+  <text class="s c" x="255" y="826">JWT + argon2</text>
+  <text class="s c" x="255" y="856">password reset by email</text>
+  <text class="s c" x="255" y="886">timing-safe login</text>
+
+  <rect class="sub" x="420" y="722" width="480" height="240" stroke="#fde047"/>
+  <text class="h c" x="660" y="758">video</text>
+  <text class="s c" x="660" y="796">POST /video/inspect → ffprobe</text>
+  <text class="s c" x="660" y="826">POST /video/jobs → ffmpeg</text>
+  <text class="s c" x="660" y="856">H.264 / VP9 → MP4 · MKV · MOV · WebM</text>
+  <text class="s c" x="660" y="886">progress → WebSocket (mpsc)</text>
+  <text class="s c" x="660" y="916">metadata cache (mini-moka)</text>
+  <text class="s c" x="660" y="946">temp dir + timeout per job</text>
+
+  <rect class="sub" x="920" y="722" width="190" height="240" stroke="#fde047"/>
+  <text class="h c" x="1015" y="758">system</text>
+  <text class="s c" x="1015" y="796">health</text>
+  <text class="s c" x="1015" y="826">ready</text>
+  <text class="s c" x="1015" y="856">OpenAPI spec</text>
+
+  <!-- Postgres -->
+  <rect class="sub" x="1180" y="550" width="340" height="200" stroke="#a855f7"/>
+  <text class="h c" x="1350" y="590">PostgreSQL 18</text>
+  <text class="s c" x="1350" y="628">users</text>
+  <text class="s c" x="1350" y="656">password reset tokens</text>
+  <text class="s c" x="1350" y="684">sessions</text>
+  <text class="muted c" x="1350" y="724">SQLx · compile-time checked queries</text>
+  <line class="line" x1="1143" y1="650" x2="1177" y2="650" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+  <!-- ffmpeg -->
+  <rect class="sub" x="1180" y="790" width="340" height="200" stroke="#ef4444"/>
+  <text class="h c" x="1350" y="830">ffmpeg / ffprobe</text>
+  <text class="s c" x="1350" y="868">child processes</text>
+  <text class="s c" x="1350" y="896">killed on drop</text>
+  <text class="s c" x="1350" y="924">stderr parsed for progress</text>
+  <line class="line" x1="1143" y1="880" x2="1177" y2="880" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+  <!-- External services -->
+  <line class="line" x1="275" y1="992" x2="275" y2="1056" marker-end="url(#arrow)"/>
+  <line class="line" x1="635" y1="992" x2="635" y2="1056" marker-end="url(#arrow)"/>
+  <rect class="chip" x="110" y="1060" width="330" height="60" stroke="#94a3b8"/><text class="t c" x="275" y="1097">SMTP · reset emails</text>
+  <rect class="chip" x="470" y="1060" width="330" height="60" stroke="#94a3b8"/><text class="t c" x="635" y="1097">Sentry · errors and traces</text>
+
+  <!-- CI/CD -->
+  <rect class="box" x="40" y="1160" width="1520" height="215" stroke="#94a3b8"/>
+  <text class="h" x="70" y="1198">GitHub Actions · CI/CD</text>
+
+  <text class="muted" x="70" y="1228">On every push</text>
+  <rect class="chip" x="70" y="1238" width="170" height="50"/><text class="s c" x="155" y="1269">Postgres service</text>
+  <rect class="chip" x="280" y="1238" width="170" height="50"/><text class="s c" x="365" y="1269">SQL migrations</text>
+  <rect class="chip" x="490" y="1238" width="230" height="50"/><text class="s c" x="605" y="1269">OpenAPI → TS client</text>
+  <rect class="chip" x="760" y="1238" width="230" height="50"/><text class="s c" x="875" y="1269">clippy · biome · fmt</text>
+  <rect class="chip" x="1030" y="1238" width="190" height="50"/><text class="s c" x="1125" y="1269">tests (nextest)</text>
+  <rect class="chip" x="1290" y="1238" width="240" height="50"/><text class="s c" x="1410" y="1269">cargo + npm audit</text>
+  <line class="line" x1="242" y1="1263" x2="276" y2="1263" marker-end="url(#arrow)"/>
+  <line class="line" x1="452" y1="1263" x2="486" y2="1263" marker-end="url(#arrow)"/>
+  <line class="line" x1="722" y1="1263" x2="756" y2="1263" marker-end="url(#arrow)"/>
+  <line class="line" x1="992" y1="1263" x2="1026" y2="1263" marker-end="url(#arrow)"/>
+
+  <text class="muted" x="70" y="1312">Manual deploy</text>
+  <rect class="chip" x="70" y="1320" width="170" height="44"/><text class="s c" x="155" y="1348">Docker build</text>
+  <rect class="chip" x="280" y="1320" width="170" height="44"/><text class="s c" x="365" y="1348">Docker Hub</text>
+  <rect class="chip" x="490" y="1320" width="230" height="44"/><text class="s c" x="605" y="1348">SSH to VPS</text>
+  <rect class="chip" x="760" y="1320" width="230" height="44"/><text class="s c" x="875" y="1348">compose restart</text>
+  <line class="line" x1="242" y1="1342" x2="276" y2="1342" marker-end="url(#arrow)"/>
+  <line class="line" x1="452" y1="1342" x2="486" y2="1342" marker-end="url(#arrow)"/>
+  <line class="line" x1="722" y1="1342" x2="756" y2="1342" marker-end="url(#arrow)"/>
+  <rect class="chip" x="1030" y="1320" width="500" height="44" stroke="#22c55e"/><text class="s c" x="1280" y="1348">Vercel: client from live spec → next build</text>
+</svg>
