@@ -8,8 +8,8 @@ import {
 import { API_WS_URL } from "configs/constants";
 import {
   type BufferedWebSocketResult,
-  useBufferedWebSocket,
-} from "hooks/useBufferedWebSocket";
+  useBufferedWebsocket,
+} from "hooks/use-buffered-websocket";
 
 export type WebSocketResult = BufferedWebSocketResult;
 
@@ -22,7 +22,7 @@ export const useWebSocket = (): WebSocketResult => {
     [],
   );
 
-  return useBufferedWebSocket(
+  return useBufferedWebsocket(
     WS_CONNECT_URI,
     wsDelegateConfig,
     websocketPolicy,

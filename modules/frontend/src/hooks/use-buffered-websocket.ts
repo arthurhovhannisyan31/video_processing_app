@@ -12,7 +12,7 @@ export interface BufferedWebSocketResult {
   wsReconnect: () => Promise<void>;
 }
 
-export const useBufferedWebSocket = (
+export const useBufferedWebsocket = (
   url: string,
   delegate: SocketDelegate,
   policy: SocketPolicy,
