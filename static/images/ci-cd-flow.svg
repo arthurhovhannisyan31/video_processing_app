@@ -1,0 +1,369 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="2040" viewBox="0 0 640 2040" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <!-- Generated: animated CI/CD flow (CSS only, works inside <img>). -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a3a3a3"/>
+    </marker>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+    <style>
+    .bg { fill: #1a1a1a; }
+    .lane { fill: none; stroke-width: 3; rx: 6; }
+    .sub { fill: #202020; stroke-width: 2; rx: 6; }
+    .chip { fill:#262626;stroke:#525252; stroke-width: 2; rx: 10; }
+    .pill { fill: #1f1f1f; stroke: #404040; stroke-width: 2; }
+    .title { fill: #fafafa; font-size: 28px; font-weight: 600; }
+    .h { fill: #fafafa; font-size: 24px; font-weight: 600; }
+    .h2 { fill: #fafafa; font-size: 19px; font-weight: 600; }
+    .t { fill: #f5f5f5; font-size: 19px; }
+    .s { fill: #e5e5e5; font-size: 16px; }
+    .m { fill: #f5f5f5; font-size: 16px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 18px; }
+    .sm { font-size: 14px; }
+    .muted { fill: #a3a3a3; font-size: 15px; }
+    .ok { font-size: 20px; font-weight: 700; text-anchor: end; opacity: 0; }
+    .wire { stroke: #525252; stroke-width: 2; stroke-dasharray: 5 5; fill: none; }
+    .flow { stroke-width: 3; fill: none; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
+    .c { text-anchor: middle; }
+    @keyframes k-hooks { 0%, 1.67% { fill:#262626;stroke:#525252 } 3.61%, 94.44% { fill:#33270f;stroke:#f59e0b } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #hooks { animation: k-hooks 18s linear infinite; }
+    @keyframes k-w-hooks { 0%, 4.44% { stroke-dashoffset:100;opacity:1 } 7.78%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-hooks { animation: k-w-hooks 18s linear infinite; }
+    @keyframes k-push { 0%, 7.78% { fill:#262626;stroke:#525252 } 9.72%, 94.44% { fill:#33270f;stroke:#f59e0b } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #push { animation: k-push 18s linear infinite; }
+    @keyframes k-push-ok { 0%, 8.61% { opacity:0 } 10.56%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #push-ok { animation: k-push-ok 18s linear infinite; }
+    @keyframes k-w-push-pk { 0%, 9.44% { stroke-dashoffset:100;opacity:1 } 12.78%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-push-pk { animation: k-w-push-pk 18s linear infinite; }
+    @keyframes k-w-push-cv { 0%, 9.44% { stroke-dashoffset:100;opacity:1 } 14.44%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-push-cv { animation: k-w-push-cv 18s linear infinite; }
+    @keyframes k-pk0 { 0%, 18.89% { fill:#262626;stroke:#525252 } 20.83%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #pk0 { animation: k-pk0 18s linear infinite; }
+    @keyframes k-pk0-ok { 0%, 19.72% { opacity:0 } 21.67%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #pk0-ok { animation: k-pk0-ok 18s linear infinite; }
+    @keyframes k-pk1 { 0%, 22.22% { fill:#262626;stroke:#525252 } 24.17%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #pk1 { animation: k-pk1 18s linear infinite; }
+    @keyframes k-pk1-ok { 0%, 23.06% { opacity:0 } 25.00%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #pk1-ok { animation: k-pk1-ok 18s linear infinite; }
+    @keyframes k-cv0 { 0%, 13.33% { fill:#262626;stroke:#525252 } 15.28%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv0 { animation: k-cv0 18s linear infinite; }
+    @keyframes k-cv0-ok { 0%, 14.17% { opacity:0 } 16.11%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv0-ok { animation: k-cv0-ok 18s linear infinite; }
+    @keyframes k-cv1 { 0%, 16.39% { fill:#262626;stroke:#525252 } 18.33%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv1 { animation: k-cv1 18s linear infinite; }
+    @keyframes k-cv1-ok { 0%, 17.22% { opacity:0 } 19.17%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv1-ok { animation: k-cv1-ok 18s linear infinite; }
+    @keyframes k-cv2 { 0%, 19.44% { fill:#262626;stroke:#525252 } 21.39%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv2 { animation: k-cv2 18s linear infinite; }
+    @keyframes k-cv2-ok { 0%, 20.28% { opacity:0 } 22.22%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv2-ok { animation: k-cv2-ok 18s linear infinite; }
+    @keyframes k-cv3 { 0%, 22.50% { fill:#262626;stroke:#525252 } 24.44%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv3 { animation: k-cv3 18s linear infinite; }
+    @keyframes k-cv3-ok { 0%, 23.33% { opacity:0 } 25.28%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv3-ok { animation: k-cv3-ok 18s linear infinite; }
+    @keyframes k-cv4 { 0%, 25.56% { fill:#262626;stroke:#525252 } 27.50%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv4 { animation: k-cv4 18s linear infinite; }
+    @keyframes k-cv4-ok { 0%, 26.39% { opacity:0 } 28.33%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv4-ok { animation: k-cv4-ok 18s linear infinite; }
+    @keyframes k-cv5 { 0%, 28.61% { fill:#262626;stroke:#525252 } 30.56%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv5 { animation: k-cv5 18s linear infinite; }
+    @keyframes k-cv5-ok { 0%, 29.44% { opacity:0 } 31.39%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv5-ok { animation: k-cv5-ok 18s linear infinite; }
+    @keyframes k-cv6 { 0%, 31.67% { fill:#262626;stroke:#525252 } 33.61%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv6 { animation: k-cv6 18s linear infinite; }
+    @keyframes k-cv6-ok { 0%, 32.50% { opacity:0 } 34.44%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv6-ok { animation: k-cv6-ok 18s linear infinite; }
+    @keyframes k-cv7 { 0%, 34.72% { fill:#262626;stroke:#525252 } 36.67%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv7 { animation: k-cv7 18s linear infinite; }
+    @keyframes k-cv7-ok { 0%, 35.56% { opacity:0 } 37.50%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv7-ok { animation: k-cv7-ok 18s linear infinite; }
+    @keyframes k-cv8 { 0%, 37.78% { fill:#262626;stroke:#525252 } 39.72%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #cv8 { animation: k-cv8 18s linear infinite; }
+    @keyframes k-cv8-ok { 0%, 38.61% { opacity:0 } 40.56%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #cv8-ok { animation: k-cv8-ok 18s linear infinite; }
+    @keyframes k-pg { 0%, 12.78% { fill:#262626;stroke:#525252 } 14.72%, 94.44% { fill:#0f2e2b;stroke:#14b8a6 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #pg { animation: k-pg 18s linear infinite; }
+    @keyframes k-w-pg-mig { 0%, 25.56% { stroke-dashoffset:100;opacity:1 } 27.22%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-pg-mig { animation: k-w-pg-mig 18s linear infinite; }
+    @keyframes k-w-pg-test { 0%, 37.78% { stroke-dashoffset:100;opacity:1 } 40.00%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-pg-test { animation: k-w-pg-test 18s linear infinite; }
+    @keyframes k-w-cv-pass { 0%, 40.00% { stroke-dashoffset:100;opacity:1 } 41.67%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-cv-pass { animation: k-w-cv-pass 18s linear infinite; }
+    @keyframes k-w-pk-pass { 0%, 24.44% { stroke-dashoffset:100;opacity:1 } 30.00%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-pk-pass { animation: k-w-pk-pass 18s linear infinite; }
+    @keyframes k-passed { 0%, 41.67% { fill:#262626;stroke:#525252 } 43.61%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #passed { animation: k-passed 18s linear infinite; }
+    @keyframes k-passed-ok { 0%, 42.50% { opacity:0 } 44.44%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #passed-ok { animation: k-passed-ok 18s linear infinite; }
+    @keyframes k-w-rel { 0%, 43.33% { stroke-dashoffset:100;opacity:1 } 46.67%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-rel { animation: k-w-rel 18s linear infinite; }
+    @keyframes k-pill-rel { 0%, 44.44% { fill:#1f1f1f;stroke:#404040 } 45.00% { fill:#172338;stroke:#3b82f6 } 46.11% { fill:#1f1f1f;stroke:#404040 } 47.22% { fill:#172338;stroke:#3b82f6 } 48.33% { fill:#1f1f1f;stroke:#404040 } 49.44%, 94.44% { fill:#172338;stroke:#3b82f6 } 97.78%, 100% { fill:#1f1f1f;stroke:#404040 } }
+    #pill-rel { animation: k-pill-rel 18s linear infinite; }
+    @keyframes k-merge { 0%, 49.44% { fill:#262626;stroke:#525252 } 51.39%, 94.44% { fill:#172338;stroke:#3b82f6 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #merge { animation: k-merge 18s linear infinite; }
+    @keyframes k-merge-ok { 0%, 50.28% { opacity:0 } 52.22%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #merge-ok { animation: k-merge-ok 18s linear infinite; }
+    @keyframes k-w-merge { 0%, 51.67% { stroke-dashoffset:100;opacity:1 } 53.33%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-merge { animation: k-w-merge 18s linear infinite; }
+    @keyframes k-release { 0%, 52.78% { fill:#262626;stroke:#525252 } 54.72%, 94.44% { fill:#172338;stroke:#3b82f6 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #release { animation: k-release 18s linear infinite; }
+    @keyframes k-release-ok { 0%, 53.61% { opacity:0 } 55.56%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #release-ok { animation: k-release-ok 18s linear infinite; }
+    @keyframes k-w-release { 0%, 55.00% { stroke-dashoffset:100;opacity:1 } 56.67%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-release { animation: k-w-release 18s linear infinite; }
+    @keyframes k-tag { 0%, 56.11% { fill:#262626;stroke:#525252 } 58.06%, 94.44% { fill:#172338;stroke:#3b82f6 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #tag { animation: k-tag 18s linear infinite; }
+    @keyframes k-tag-ok { 0%, 56.94% { opacity:0 } 58.89%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #tag-ok { animation: k-tag-ok 18s linear infinite; }
+    @keyframes k-w-dep { 0%, 57.78% { stroke-dashoffset:100;opacity:1 } 61.11%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-dep { animation: k-w-dep 18s linear infinite; }
+    @keyframes k-pill-dep { 0%, 58.33% { fill:#1f1f1f;stroke:#404040 } 58.89% { fill:#2a1a3a;stroke:#a855f7 } 60.00% { fill:#1f1f1f;stroke:#404040 } 61.11% { fill:#2a1a3a;stroke:#a855f7 } 62.22% { fill:#1f1f1f;stroke:#404040 } 63.33%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#1f1f1f;stroke:#404040 } }
+    #pill-dep { animation: k-pill-dep 18s linear infinite; }
+    @keyframes k-dp0 { 0%, 63.33% { fill:#262626;stroke:#525252 } 65.28%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp0 { animation: k-dp0 18s linear infinite; }
+    @keyframes k-dp0-ok { 0%, 64.17% { opacity:0 } 66.11%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp0-ok { animation: k-dp0-ok 18s linear infinite; }
+    @keyframes k-dp1 { 0%, 65.83% { fill:#262626;stroke:#525252 } 67.78%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp1 { animation: k-dp1 18s linear infinite; }
+    @keyframes k-dp1-ok { 0%, 66.67% { opacity:0 } 68.61%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp1-ok { animation: k-dp1-ok 18s linear infinite; }
+    @keyframes k-dp2 { 0%, 68.33% { fill:#262626;stroke:#525252 } 70.28%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp2 { animation: k-dp2 18s linear infinite; }
+    @keyframes k-dp2-ok { 0%, 69.17% { opacity:0 } 71.11%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp2-ok { animation: k-dp2-ok 18s linear infinite; }
+    @keyframes k-dp3 { 0%, 70.83% { fill:#262626;stroke:#525252 } 72.78%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp3 { animation: k-dp3 18s linear infinite; }
+    @keyframes k-dp3-ok { 0%, 71.67% { opacity:0 } 73.61%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp3-ok { animation: k-dp3-ok 18s linear infinite; }
+    @keyframes k-dp4 { 0%, 73.33% { fill:#262626;stroke:#525252 } 75.28%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp4 { animation: k-dp4 18s linear infinite; }
+    @keyframes k-dp4-ok { 0%, 74.17% { opacity:0 } 76.11%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp4-ok { animation: k-dp4-ok 18s linear infinite; }
+    @keyframes k-dp5 { 0%, 75.83% { fill:#262626;stroke:#525252 } 77.78%, 94.44% { fill:#2a1a3a;stroke:#a855f7 } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #dp5 { animation: k-dp5 18s linear infinite; }
+    @keyframes k-dp5-ok { 0%, 76.67% { opacity:0 } 78.61%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #dp5-ok { animation: k-dp5-ok 18s linear infinite; }
+    @keyframes k-w-vps { 0%, 77.22% { stroke-dashoffset:100;opacity:1 } 78.89%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-vps { animation: k-w-vps 18s linear infinite; }
+    @keyframes k-vps-glow { 0%, 78.89% { opacity:0 } 81.11% { opacity:0.75 } 84.44% { opacity:0.45 } 94.44% { opacity:0.55 } 97.78%, 100% { opacity:0 } }
+    #vps-glow { animation: k-vps-glow 18s linear infinite; }
+    @keyframes k-vps { 0%, 78.89% { fill:#262626;stroke:#525252 } 80.83%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #vps { animation: k-vps 18s linear infinite; }
+    @keyframes k-vps-ok { 0%, 79.72% { opacity:0 } 81.67%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #vps-ok { animation: k-vps-ok 18s linear infinite; }
+    @keyframes k-w-vercel { 0%, 57.78% { stroke-dashoffset:100;opacity:1 } 63.33%, 94.44% { stroke-dashoffset:0;opacity:1 } 97.78% { stroke-dashoffset:0;opacity:0 } 100% { stroke-dashoffset:100;opacity:0 } }
+    #w-vercel { animation: k-w-vercel 18s linear infinite; }
+    @keyframes k-vercel-glow { 0%, 70.00% { opacity:0 } 72.22% { opacity:0.75 } 75.56% { opacity:0.45 } 94.44% { opacity:0.55 } 97.78%, 100% { opacity:0 } }
+    #vercel-glow { animation: k-vercel-glow 18s linear infinite; }
+    @keyframes k-vercel { 0%, 70.00% { fill:#262626;stroke:#525252 } 71.94%, 94.44% { fill:#15301f;stroke:#22c55e } 97.78%, 100% { fill:#262626;stroke:#525252 } }
+    #vercel { animation: k-vercel 18s linear infinite; }
+    @keyframes k-vercel-ok { 0%, 70.83% { opacity:0 } 72.78%, 94.44% { opacity:1 } 97.78%, 100% { opacity:0 } }
+    #vercel-ok { animation: k-vercel-ok 18s linear infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+      #hooks { fill:#33270f;stroke:#f59e0b }
+      #w-hooks { stroke-dashoffset:0;opacity:1 }
+      #push { fill:#33270f;stroke:#f59e0b }
+      #push-ok { opacity:1 }
+      #w-push-pk { stroke-dashoffset:0;opacity:1 }
+      #w-push-cv { stroke-dashoffset:0;opacity:1 }
+      #pk0 { fill:#15301f;stroke:#22c55e }
+      #pk0-ok { opacity:1 }
+      #pk1 { fill:#15301f;stroke:#22c55e }
+      #pk1-ok { opacity:1 }
+      #cv0 { fill:#15301f;stroke:#22c55e }
+      #cv0-ok { opacity:1 }
+      #cv1 { fill:#15301f;stroke:#22c55e }
+      #cv1-ok { opacity:1 }
+      #cv2 { fill:#15301f;stroke:#22c55e }
+      #cv2-ok { opacity:1 }
+      #cv3 { fill:#15301f;stroke:#22c55e }
+      #cv3-ok { opacity:1 }
+      #cv4 { fill:#15301f;stroke:#22c55e }
+      #cv4-ok { opacity:1 }
+      #cv5 { fill:#15301f;stroke:#22c55e }
+      #cv5-ok { opacity:1 }
+      #cv6 { fill:#15301f;stroke:#22c55e }
+      #cv6-ok { opacity:1 }
+      #cv7 { fill:#15301f;stroke:#22c55e }
+      #cv7-ok { opacity:1 }
+      #cv8 { fill:#15301f;stroke:#22c55e }
+      #cv8-ok { opacity:1 }
+      #pg { fill:#0f2e2b;stroke:#14b8a6 }
+      #w-pg-mig { stroke-dashoffset:0;opacity:1 }
+      #w-pg-test { stroke-dashoffset:0;opacity:1 }
+      #w-cv-pass { stroke-dashoffset:0;opacity:1 }
+      #w-pk-pass { stroke-dashoffset:0;opacity:1 }
+      #passed { fill:#15301f;stroke:#22c55e }
+      #passed-ok { opacity:1 }
+      #w-rel { stroke-dashoffset:0;opacity:1 }
+      #pill-rel { fill:#172338;stroke:#3b82f6 }
+      #merge { fill:#172338;stroke:#3b82f6 }
+      #merge-ok { opacity:1 }
+      #w-merge { stroke-dashoffset:0;opacity:1 }
+      #release { fill:#172338;stroke:#3b82f6 }
+      #release-ok { opacity:1 }
+      #w-release { stroke-dashoffset:0;opacity:1 }
+      #tag { fill:#172338;stroke:#3b82f6 }
+      #tag-ok { opacity:1 }
+      #w-dep { stroke-dashoffset:0;opacity:1 }
+      #pill-dep { fill:#2a1a3a;stroke:#a855f7 }
+      #dp0 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp0-ok { opacity:1 }
+      #dp1 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp1-ok { opacity:1 }
+      #dp2 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp2-ok { opacity:1 }
+      #dp3 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp3-ok { opacity:1 }
+      #dp4 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp4-ok { opacity:1 }
+      #dp5 { fill:#2a1a3a;stroke:#a855f7 }
+      #dp5-ok { opacity:1 }
+      #w-vps { stroke-dashoffset:0;opacity:1 }
+      #vps-glow { opacity:0.55 }
+      #vps { fill:#15301f;stroke:#22c55e }
+      #vps-ok { opacity:1 }
+      #w-vercel { stroke-dashoffset:0;opacity:1 }
+      #vercel-glow { opacity:0.55 }
+      #vercel { fill:#15301f;stroke:#22c55e }
+      #vercel-ok { opacity:1 }
+    }
+    </style>
+  </defs>
+
+  <rect class="bg" width="640" height="2040"/>
+  <text class="title c" x="320" y="48">CI/CD Pipeline</text>
+  <text class="muted c" x="320" y="78">push → validate → release → deploy · GitHub Actions</text>
+
+  <rect class="lane" x="20" y="100" width="600" height="150" stroke="#f59e0b"/>
+  <text class="h" x="38" y="136">Trigger</text>
+  <rect id="hooks" class="chip" x="40" y="154" width="250" height="72"/>
+  <text class="t" x="56" y="186">pre-push hooks</text>
+  <text class="muted" x="56" y="208">check · test · audit</text>
+  <path class="wire" d="M290,190 H328" marker-end="url(#arrow)"/>
+  <path id="w-hooks" class="flow" d="M290,190 H328" pathLength="100" stroke="#f59e0b"/>
+  <rect id="push" class="chip" x="330" y="154" width="270" height="72"/>
+  <text class="m" x="346" y="186">git push</text>
+  <text class="muted" x="346" y="208">any branch</text>
+  <text id="push-ok" class="ok" x="584" y="197" fill="#f59e0b">✓</text>
+  <rect class="lane" x="20" y="290" width="600" height="838" stroke="#22c55e"/>
+  <text class="h" x="38" y="326">On every push</text>
+  <text class="muted" x="602" y="326" text-anchor="end">parallel jobs</text>
+  <path class="wire" d="M465,226 V342" marker-end="url(#arrow)"/>
+  <path id="w-push-pk" class="flow" d="M465,226 V342" pathLength="100" stroke="#f59e0b"/>
+  <path class="wire" d="M465,226 V262 H30 V505 H38" marker-end="url(#arrow)"/>
+  <path id="w-push-cv" class="flow" d="M465,226 V262 H30 V505 H38" pathLength="100" stroke="#f59e0b"/>
+  <rect class="sub" x="40" y="344" width="560" height="116" stroke="#22c55e"/>
+  <text class="h2 m" x="58" y="376">packages-validation</text>
+  <rect id="pk0" class="chip" x="58" y="394" width="254" height="46"/>
+  <text class="m" x="74" y="423">cargo audit</text>
+  <text id="pk0-ok" class="ok" x="296" y="424" fill="#22c55e">✓</text>
+  <rect id="pk1" class="chip" x="328" y="394" width="254" height="46"/>
+  <text class="m" x="344" y="423">yarn npm audit</text>
+  <text id="pk1-ok" class="ok" x="566" y="424" fill="#22c55e">✓</text>
+  <rect class="sub" x="40" y="480" width="400" height="560" stroke="#22c55e"/>
+  <text class="h2 m" x="58" y="512">code-validation</text>
+  <rect id="cv0" class="chip" x="58" y="530" width="364" height="44"/>
+  <text class="t" x="74" y="558">Checkout</text>
+  <text id="cv0-ok" class="ok" x="406" y="559" fill="#22c55e">✓</text>
+  <rect id="cv1" class="chip" x="58" y="586" width="364" height="44"/>
+  <text class="t" x="74" y="614">System deps (ffmpeg)</text>
+  <text id="cv1-ok" class="ok" x="406" y="615" fill="#22c55e">✓</text>
+  <rect id="cv2" class="chip" x="58" y="642" width="364" height="44"/>
+  <text class="t" x="74" y="670">Setup Cargo</text>
+  <text id="cv2-ok" class="ok" x="406" y="671" fill="#22c55e">✓</text>
+  <rect id="cv3" class="chip" x="58" y="698" width="364" height="44"/>
+  <text class="t" x="74" y="726">Setup Node.js</text>
+  <text id="cv3-ok" class="ok" x="406" y="727" fill="#22c55e">✓</text>
+  <rect id="cv4" class="chip" x="58" y="754" width="364" height="44"/>
+  <text class="m" x="74" y="782">sqlx migrate run</text>
+  <text id="cv4-ok" class="ok" x="406" y="783" fill="#22c55e">✓</text>
+  <rect id="cv5" class="chip" x="58" y="810" width="364" height="44"/>
+  <text class="t" x="74" y="838">Generate OpenAPI client</text>
+  <text id="cv5-ok" class="ok" x="406" y="839" fill="#22c55e">✓</text>
+  <rect id="cv6" class="chip" x="58" y="866" width="364" height="44"/>
+  <text class="m" x="74" y="894">make check</text>
+  <text id="cv6-ok" class="ok" x="406" y="895" fill="#22c55e">✓</text>
+  <rect id="cv7" class="chip" x="58" y="922" width="364" height="44"/>
+  <text class="m" x="74" y="950">make format-check</text>
+  <text id="cv7-ok" class="ok" x="406" y="951" fill="#22c55e">✓</text>
+  <rect id="cv8" class="chip" x="58" y="978" width="364" height="44"/>
+  <text class="m" x="74" y="1006">make test</text>
+  <text id="cv8-ok" class="ok" x="406" y="1007" fill="#22c55e">✓</text>
+  <rect id="pg" class="chip" x="460" y="746" width="140" height="60"/>
+  <text class="t" x="476" y="772">Postgres 18</text>
+  <text class="muted" x="476" y="794">service</text>
+  <path class="wire" d="M460,770 H444" marker-end="url(#arrow)"/>
+  <path id="w-pg-mig" class="flow" d="M460,770 H444" pathLength="100" stroke="#14b8a6"/>
+  <path class="wire" d="M460,786 H451 V1000 H444" marker-end="url(#arrow)"/>
+  <path id="w-pg-test" class="flow" d="M460,786 H451 V1000 H444" pathLength="100" stroke="#14b8a6"/>
+  <path class="wire" d="M240,1040 V1060" marker-end="url(#arrow)"/>
+  <path id="w-cv-pass" class="flow" d="M240,1040 V1060" pathLength="100" stroke="#22c55e"/>
+  <path class="wire" d="M600,417 H610 V1085 H392" marker-end="url(#arrow)"/>
+  <path id="w-pk-pass" class="flow" d="M600,417 H610 V1085 H392" pathLength="100" stroke="#22c55e"/>
+  <rect id="passed" class="chip" x="90" y="1062" width="300" height="46"/>
+  <text class="t" x="106" y="1091">all checks passed</text>
+  <text id="passed-ok" class="ok" x="374" y="1092" fill="#22c55e">✓</text>
+  <rect class="lane" x="20" y="1168" width="600" height="242" stroke="#3b82f6"/>
+  <text class="h" x="38" y="1204">Release</text>
+  <path class="wire" d="M240,1108 V1150 H175 V1232" marker-end="url(#arrow)"/>
+  <path id="w-rel" class="flow" d="M240,1108 V1150 H175 V1232" pathLength="100" stroke="#22c55e"/>
+  <rect id="pill-rel" class="pill" x="360" y="1186" width="240" height="32" rx="16"/>
+  <text class="m sm c" x="480" y="1207">▶ workflow_dispatch</text>
+  <rect id="merge" class="chip" x="40" y="1234" width="270" height="70"/>
+  <text class="t" x="56" y="1265">easy-merge</text>
+  <text class="muted" x="56" y="1287">develop → main</text>
+  <text id="merge-ok" class="ok" x="294" y="1276" fill="#3b82f6">✓</text>
+  <path class="wire" d="M310,1269 H328" marker-end="url(#arrow)"/>
+  <path id="w-merge" class="flow" d="M310,1269 H328" pathLength="100" stroke="#3b82f6"/>
+  <rect id="release" class="chip" x="330" y="1234" width="270" height="70"/>
+  <text class="t" x="346" y="1265">easy-release</text>
+  <text class="muted" x="346" y="1287">semver tag + GitHub release</text>
+  <text id="release-ok" class="ok" x="584" y="1276" fill="#3b82f6">✓</text>
+  <path class="wire" d="M465,1304 V1322" marker-end="url(#arrow)"/>
+  <path id="w-release" class="flow" d="M465,1304 V1322" pathLength="100" stroke="#3b82f6"/>
+  <rect id="tag" class="chip" x="330" y="1324" width="270" height="46"/>
+  <text class="m" x="346" y="1353">vX.Y.Z on main</text>
+  <text id="tag-ok" class="ok" x="584" y="1354" fill="#3b82f6">✓</text>
+  <rect class="lane" x="20" y="1450" width="600" height="526" stroke="#a855f7"/>
+  <text class="h" x="38" y="1486">Deploy</text>
+  <path class="wire" d="M465,1370 V1514" marker-end="url(#arrow)"/>
+  <path id="w-dep" class="flow" d="M465,1370 V1514" pathLength="100" stroke="#3b82f6"/>
+  <rect id="pill-dep" class="pill" x="140" y="1468" width="240" height="32" rx="16"/>
+  <text class="m sm c" x="260" y="1489">▶ workflow_dispatch</text>
+  <rect class="sub" x="40" y="1516" width="560" height="356" stroke="#a855f7"/>
+  <text class="h2 m" x="58" y="1548">server-build-and-deploy</text>
+  <rect id="dp0" class="chip" x="58" y="1566" width="524" height="40"/>
+  <text class="t" x="74" y="1592">Build image (buildx)</text>
+  <text id="dp0-ok" class="ok" x="566" y="1593" fill="#a855f7">✓</text>
+  <rect id="dp1" class="chip" x="58" y="1616" width="524" height="40"/>
+  <text class="t" x="74" y="1642">Push to Docker Hub</text>
+  <text id="dp1-ok" class="ok" x="566" y="1643" fill="#a855f7">✓</text>
+  <rect id="dp2" class="chip" x="58" y="1666" width="524" height="40"/>
+  <text class="t" x="74" y="1692">scp compose + nginx configs</text>
+  <text id="dp2-ok" class="ok" x="566" y="1693" fill="#a855f7">✓</text>
+  <rect id="dp3" class="chip" x="58" y="1716" width="524" height="40"/>
+  <text class="t" x="74" y="1742">Write .env on host</text>
+  <text id="dp3-ok" class="ok" x="566" y="1743" fill="#a855f7">✓</text>
+  <rect id="dp4" class="chip" x="58" y="1766" width="524" height="40"/>
+  <text class="t" x="74" y="1792">Pull image + restart</text>
+  <text id="dp4-ok" class="ok" x="566" y="1793" fill="#a855f7">✓</text>
+  <rect id="dp5" class="chip" x="58" y="1816" width="524" height="40"/>
+  <text class="t" x="74" y="1842">Prune old images</text>
+  <text id="dp5-ok" class="ok" x="566" y="1843" fill="#a855f7">✓</text>
+  <path class="wire" d="M175,1872 V1890" marker-end="url(#arrow)"/>
+  <path id="w-vps" class="flow" d="M175,1872 V1890" pathLength="100" stroke="#a855f7"/>
+  <rect id="vps-glow" x="36" y="1888" width="278" height="72" rx="14" fill="#22c55e" filter="url(#glow)" opacity="0"/>
+  <rect id="vps" class="chip" x="40" y="1892" width="270" height="64"/>
+  <text class="t" x="56" y="1920">Hetzner VPS</text>
+  <text class="muted" x="56" y="1942">Docker Compose · nginx</text>
+  <text id="vps-ok" class="ok" x="294" y="1931" fill="#22c55e">✓</text>
+  <path class="wire" d="M600,1347 H610 V1924 H602" marker-end="url(#arrow)"/>
+  <path id="w-vercel" class="flow" d="M600,1347 H610 V1924 H602" pathLength="100" stroke="#3b82f6"/>
+  <text class="muted" x="454" y="1394" text-anchor="end">push to main → Vercel</text>
+  <rect id="vercel-glow" x="326" y="1888" width="278" height="72" rx="14" fill="#22c55e" filter="url(#glow)" opacity="0"/>
+  <rect id="vercel" class="chip" x="330" y="1892" width="270" height="64"/>
+  <text class="t" x="346" y="1920">Vercel · frontend</text>
+  <text class="muted" x="346" y="1942">OpenAPI client → next build</text>
+  <text id="vercel-ok" class="ok" x="584" y="1931" fill="#22c55e">✓</text>
+  <text class="muted c" x="320" y="2016"><tspan class="m sm" fill="#d4d4d4">cleanup-caches</tspan> · clears branch caches when its PR closes</text>
+</svg>
