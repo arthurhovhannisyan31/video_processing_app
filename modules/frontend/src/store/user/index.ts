@@ -1,6 +1,4 @@
-import type { PrimitiveAtom } from "jotai/vanilla/atom";
-
-import { atom } from "jotai";
+import { atom, type PrimitiveAtom } from "jotai";
 
 export interface UserStore {
   resetToken: PrimitiveAtom<string>;
