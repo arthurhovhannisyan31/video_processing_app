@@ -71,12 +71,12 @@ It's a monorepo with a Rust API server and a Next.js web client:
 
 ## Tech stack
 
-|          |                                                                                                       |
-|----------|-------------------------------------------------------------------------------------------------------|
+|          |                                                                                                        |
+|----------|--------------------------------------------------------------------------------------------------------|
 | Backend  | Rust, Axum, Tokio, SQLx/PostgreSQL, JWT + argon2, `ffmpeg`/`ffprobe`, utoipa (OpenAPI), mini-moka      |
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Jotai, better-auth, hey-api |
-| Infra    | Hetzner VPS, Docker Compose, nginx, certbot, Vercel (frontend), Docker Hub, GitHub Actions, Sentry    |
-| Testing  | cargo-nextest, axum-test, proptest, per-test Postgres databases, sample media fixtures                |
+| Infra    | Hetzner VPS, Docker Compose, nginx, certbot, Vercel (frontend), Docker Hub, GitHub Actions, Sentry     |
+| Testing  | cargo-nextest, axum-test, proptest, per-test Postgres databases, sample media fixtures                 |
 
 ## Repository layout
 
@@ -95,7 +95,9 @@ It's a monorepo with a Rust API server and a Next.js web client:
 
 ## Prerequisites
 
-- Rust (stable, edition 2024), [`cargo-nextest`](https://nexte.st/), [`sqlx-cli`](https://github.com/launchbadge/sqlx/tree/main/sqlx-cli). See [`modules/backend/README.md`](modules/backend/README.md)
+- Rust (stable, edition 2024), [`cargo-nextest`](https://nexte.st/), [
+  `sqlx-cli`](https://github.com/launchbadge/sqlx/tree/main/sqlx-cli). See [
+  `modules/backend/README.md`](modules/backend/README.md)
 - Node.js `^24` and Yarn 4 (Berry). See [`modules/frontend/README.md`](modules/frontend/README.md)
 - PostgreSQL
 - `ffmpeg` / `ffprobe` on `PATH`
@@ -166,6 +168,8 @@ Run from the repo root; each target delegates into the relevant module.
   `make audit`
 
 ## CI/CD
+
+![CI/CD flow](./static/images/ci-cd-flow.svg)
 
 GitHub Actions workflows in [`.github/workflows`](.github/workflows):
 

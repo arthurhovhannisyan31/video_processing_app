@@ -48,16 +48,16 @@ src/
 
 Copy [`.env.template`](.env.template) to `.env` and fill in the values:
 
-| Variable | Purpose |
-|---|---|
-| `NEXT_PUBLIC_API_DOMAIN` | backend host + path **without protocol** (e.g. `localhost:8080/api`); `http`/`ws` or `https`/`wss` is picked from `NEXT_PUBLIC_IS_PROD` |
-| `NEXT_PUBLIC_MAX_BODY_SIZE` | max upload size, mirrors the backend's `BACKEND_VIDEO_MAX_BODY_SIZE` for client-side validation |
-| `NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED` | `true` enables the sign-in redirect in `src/proxy.ts` |
-| `NEXT_PUBLIC_IS_PROD` | production flag for client code (protocols, secure cookie name) |
-| `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL` | better-auth server config |
-| `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN |
-| `NEXT_PUBLIC_LOCAL_ENV` | `true` disables Sentry for local production builds |
-| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG_NAME`, `SENTRY_PROJECT_NAME` | Sentry source map upload at build time |
+| Variable                                                      | Purpose                                                                                                                                 |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_DOMAIN`                                      | backend host + path **without protocol** (e.g. `localhost:8080/api`); `http`/`ws` or `https`/`wss` is picked from `NEXT_PUBLIC_IS_PROD` |
+| `NEXT_PUBLIC_MAX_BODY_SIZE`                                   | max upload size, mirrors the backend's `BACKEND_VIDEO_MAX_BODY_SIZE` for client-side validation                                         |
+| `NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED`                        | `true` enables the sign-in redirect in `src/proxy.ts`                                                                                   |
+| `NEXT_PUBLIC_IS_PROD`                                         | production flag for client code (protocols, secure cookie name)                                                                         |
+| `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL`                      | better-auth server config                                                                                                               |
+| `NEXT_PUBLIC_SENTRY_DSN`                                      | Sentry DSN                                                                                                                              |
+| `NEXT_PUBLIC_LOCAL_ENV`                                       | `true` disables Sentry for local production builds                                                                                      |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG_NAME`, `SENTRY_PROJECT_NAME` | Sentry source map upload at build time                                                                                                  |
 
 ## Getting started
 
