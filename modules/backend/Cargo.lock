@@ -490,15 +490,46 @@ dependencies = [
 ]
 
 [[package]]
-name = "axum_session_sqlx"
-version = "0.11.0"
+name = "axum_session"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1fd24bba6aa5c7119ceed69142e121a62db038af1bd946795f358a8229f7516"
+checksum = "63a2163c4a2d3e40c9108dadc0c76e13bc3eea2f66cdda964c7731acced5220e"
+dependencies = [
+ "aes-gcm 0.11.1",
+ "async-trait",
+ "axum",
+ "base64 0.23.1",
+ "bytes",
+ "cookie",
+ "dashmap 6.2.1",
+ "forwarded-header-value",
+ "futures",
+ "hmac 0.13.0",
+ "http 1.5.0",
+ "http-body",
+ "rand 0.10.3",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "thiserror 2.0.21",
+ "time",
+ "tokio",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "axum_session_sqlx"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c0f76db496495c800d345955c66bfddfcd32def10d3f83ae27b483980838061"
 dependencies = [
  "async-trait",
- "axum_session",
- "chrono",
+ "axum_session 0.22.1",
  "sqlx",
+ "time",
 ]
 
 [[package]]
@@ -1147,6 +1178,9 @@ name = "deranged"
 version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
+dependencies = [
+ "serde_core",
+]
 
 [[package]]
 name = "derive_more"
@@ -4111,6 +4145,7 @@ dependencies = [
  "sha2 0.10.9",
  "smallvec",
  "thiserror 2.0.21",
+ "time",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -4182,6 +4217,7 @@ dependencies = [
  "sha2 0.11.1",
  "sqlx-core",
  "thiserror 2.0.21",
+ "time",
  "tracing",
  "uuid",
 ]
@@ -4218,6 +4254,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror 2.0.21",
+ "time",
  "tracing",
  "uuid",
  "whoami",
@@ -4244,6 +4281,7 @@ dependencies = [
  "serde",
  "sqlx-core",
  "thiserror 2.0.21",
+ "time",
  "tracing",
  "url",
  "uuid",
@@ -5086,7 +5124,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "axum-test",
- "axum_session",
+ "axum_session 0.21.0",
  "axum_session_sqlx",
  "base64 0.23.1",
  "chrono",
