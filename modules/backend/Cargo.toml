@@ -18,7 +18,7 @@ argon2 = { version = "0.5", features = ["std"] }
 async-trait = "0.1"
 axum = { version = "0.8", features = ["macros", "multipart", "ws", "http2"] }
 axum_session = { version = "0.21.0", features = ["key-store"] }
-axum_session_sqlx = { version = "0.11.0", features = ["postgres", "tls-rustls"] }
+axum_session_sqlx = { version = "0.12.0", features = ["postgres", "tls-rustls"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
 futures-util = "0.3.34"
