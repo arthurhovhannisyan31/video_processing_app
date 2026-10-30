@@ -1,3 +1,5 @@
+use sentry::integrations::tracing::LogLayer;
+use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{EnvFilter, fmt, registry};
 
@@ -15,7 +17,7 @@ pub fn init_logging() -> Result<(), ServerError> {
   registry()
     .with(filter)
     .with(fmt_layer)
-    .with(sentry::integrations::tracing::layer())
+    .with(LogLayer::new().with_filter(LevelFilter::INFO))
     .init();
 
   Ok(())
