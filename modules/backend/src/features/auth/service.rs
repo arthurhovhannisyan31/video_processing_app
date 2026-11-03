@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use argon2::password_hash::rand_core::{OsRng, RngCore};
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::Utc;
+use getrandom::fill;
 use sha2::{Digest, Sha256};
 use tracing::info;
 
@@ -129,7 +129,7 @@ where
     }
 
     let mut token_bytes = [0u8; PASSWORD_RESET_TOKEN_BYTES];
-    OsRng.fill_bytes(&mut token_bytes);
+    fill(&mut token_bytes).map_err(|err| ApplicationError::Internal(err.to_string()))?;
     let token = URL_SAFE_NO_PAD.encode(token_bytes);
 
     let ttl = chrono::Duration::from_std(self.password_reset_config.token_ttl)
