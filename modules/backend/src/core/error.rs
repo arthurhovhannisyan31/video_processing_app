@@ -63,7 +63,7 @@ pub enum StartupError {
   #[error("Failed loading .env file: {0}")]
   Dotenv(#[from] dotenvy::Error),
   #[error("Database migration error: {0}")]
-  MigrateError(#[from] MigrateError),
+  MigrationError(#[from] MigrateError),
   #[error("Axum session error")]
   SessionError(#[from] SessionError),
 }

@@ -8,7 +8,6 @@ use tower_governor::governor::{
   DEFAULT_BURST_SIZE, DEFAULT_PERIOD, GovernorConfig, GovernorConfigBuilder,
 };
 use tower_governor::key_extractor::KeyExtractor;
-use tracing::info;
 
 use crate::core::error::ServerError;
 use crate::features::system::state::RateLimiters;
