@@ -15,8 +15,7 @@ else
     echo "Using REMOTE schema: ${SCHEMA_SRC}"
 fi
 
-# Run the openapi-ts generator
-yarn openapi-ts \
+npx -p @hey-api/openapi-ts -p typescript@^6.0.3 openapi-ts \
   -c @hey-api/client-axios \
   -i "$SCHEMA_SRC" \
   -o "$OUTPUT_DIR"

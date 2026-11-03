@@ -4,9 +4,11 @@ description: "Install NodeJS and enable yarn"
 runs:
   using: "composite"
   steps:
-    - name: Enable yarn
+    - name: Setup yarn
       shell: bash
-      run: corepack enable
+      run: |
+        corepack enable
+        yarn set version berry
     - name: Install NodeJS
       uses: actions/setup-node@v7
       with:
