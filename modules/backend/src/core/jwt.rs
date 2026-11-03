@@ -1,6 +1,5 @@
-use argon2::Argon2;
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
+use argon2::password_hash::{PasswordHasher, PasswordVerifier};
+use argon2::{Argon2, PasswordHash};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 
@@ -56,11 +55,8 @@ impl JwtService {
 }
 
 pub fn hash_password(password: &str) -> Result<String, ServerError> {
-  let salt = SaltString::generate(&mut OsRng);
   let argon2 = Argon2::default();
-  let hash = argon2
-    .hash_password(password.as_bytes(), &salt)?
-    .to_string();
+  let hash = argon2.hash_password(password.as_bytes())?.to_string();
   Ok(hash)
 }
 
