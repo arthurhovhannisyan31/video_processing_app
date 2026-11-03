@@ -1,4 +1,5 @@
 use std::env;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -18,8 +19,7 @@ use crate::features::video::constants::{
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
-  pub host: String,
-  pub http_port: u16,
+  pub socket_addr: SocketAddr,
   pub database_url: String,
   pub jwt_secret: String,
   pub cors_origins: Vec<String>,
@@ -49,11 +49,14 @@ impl AppConfig {
     let video = VideoConfig::from_env()?;
     let smtp = SmtpConfig::from_env(is_production)?;
 
-    let host = env::var("BACKEND_HOST").unwrap_or("localhost".into());
+    let host = env::var("BACKEND_HOST")
+      .unwrap_or("127.0.0.1".into())
+      .parse::<Ipv4Addr>()?;
     let http_port = env::var("BACKEND_HTTP_PORT")
       .unwrap_or("8080".to_string())
       .parse()
       .map_err(|e| StartupError::VarError(format!("Invalid BACKEND_HTTP_PORT variable: {e}")))?;
+    let socket_addr = SocketAddr::from((host, http_port));
     let database_url = env::var("DATABASE_URL")
       .map_err(|e| StartupError::VarError(format!("Missing DATABASE_URL: {e}")))?;
     let jwt_secret = env::var("BACKEND_JWT_SECRET")
@@ -84,8 +87,7 @@ impl AppConfig {
       .parse::<u64>()?;
 
     Ok(Self {
-      host,
-      http_port,
+      socket_addr,
       database_url,
       jwt_secret,
       cors_origins,
