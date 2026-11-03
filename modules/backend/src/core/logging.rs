@@ -11,6 +11,8 @@ pub fn init_logging() -> Result<(), ServerError> {
 
   let fmt_layer = fmt::layer()
     .with_target(false)
+    .with_file(true)
+    .with_line_number(true)
     .with_level(true)
     .with_timer(fmt::time::UtcTime::rfc_3339());
 
