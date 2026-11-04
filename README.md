@@ -36,7 +36,7 @@ It's a monorepo with a Rust API server and a Next.js web client:
 ### Request flow
 
 1. The browser sends requests to `api.videoprocessing.app`. nginx terminates TLS (Let's Encrypt certificates renewed by
-   certbot) and proxies `/api/*` to the Rust server.
+   certbot), serves HTTP/2 and proxies `/api/*` to the Rust server.
 2. `POST /api/video/inspect` writes the upload to a per-request temp dir, runs `ffprobe` and caches the metadata in
    memory (`mini-moka`), keyed by file name and session.
 3. The browser opens a WebSocket at `/api/video/ws`. The session cookie links this socket to the user's jobs.
@@ -60,7 +60,7 @@ It's a monorepo with a Rust API server and a Next.js web client:
 
 ### Security and limits
 
-- Per-IP rate limiting on auth and video routes with `tower_governor` (production only). A background thread clears
+- Per-IP rate limiting on auth and video routes with `tower_governor` (production only). A background Tokio task clears
   stale limiter entries.
 - nginx caps the upload size and the number of WebSocket connections per IP.
 - Passwords are hashed with argon2. Login checks a dummy hash when the user doesn't exist, so response time doesn't
@@ -138,6 +138,8 @@ You can run the backend services with Docker Compose:
 docker compose -f docker-compose.dev.yml --env-file .env.container up --build
 ```
 
+`make dev` runs the same command without `--build`.
+
 This starts Postgres, the backend, [Mailpit](https://mailpit.axllent.org/) (catches password reset emails, web UI at
 http://localhost:8025) and an nginx reverse proxy on port `8080` (dev config in [`configs/nginx`](configs/nginx)).
 The frontend is not part of the compose setup; run it with `make frontend`.
@@ -151,6 +153,7 @@ Run from the repo root; each target delegates into the relevant module.
 | Command                             | Description                                                                     |
 |-------------------------------------|---------------------------------------------------------------------------------|
 | `make prepare`                      | install git hooks, prepare SQLx offline cache, generate the frontend API client |
+| `make dev`                          | start the dev Docker Compose stack (`docker-compose.dev.yml`, `.env.container`) |
 | `make backend` / `make frontend`    | run the backend / frontend dev servers                                          |
 | `make check`                        | lint both modules (`cargo clippy`, `yarn check`)                                |
 | `make format` / `make format-check` | format both modules / verify formatting in CI                                   |

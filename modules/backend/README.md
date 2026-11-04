@@ -7,7 +7,7 @@ and PostgreSQL. It exposes endpoints for user auth (incl. email-based password r
 ## Tech stack
 
 - **Runtime / framework:** Rust (edition 2024), [Tokio](https://tokio.rs/), [Axum](https://github.com/tokio-rs/axum)
-  (multipart, ws)
+  (multipart, ws, http2)
 - **Database:** PostgreSQL via [SQLx](https://github.com/launchbadge/sqlx) (compile-time checked queries, offline mode)
 - **Auth:** JWT ([jsonwebtoken](https://crates.io/crates/jsonwebtoken)), password hashing
   with [argon2](https://crates.io/crates/argon2), cookie sessions stored in Postgres
@@ -65,7 +65,7 @@ All routes are nested under `/api`.
 | POST   | `/auth/password/forgot` | Email a password reset link if the user exists (always `202`)               |
 | POST   | `/auth/password/reset`  | Set a new password with a reset token (`204`)                               |
 | POST   | `/video/inspect`        | Upload a video (`video` field), inspect it with `ffprobe`, cache metadata   |
-| POST   | `/video/jobs`           | Upload a video (`video` + `operation` fields), run `ffmpeg`, return the file |
+| POST   | `/video/jobs`           | Upload a video with processing options, run `ffmpeg`, return the file       |
 | GET/WS | `/video/ws`             | WebSocket for live job progress (`VideoStateProgress` messages)             |
 
 Notes:
@@ -75,7 +75,12 @@ Notes:
   in `features/auth/middleware.rs` exists but is not applied to any route yet.
 - `/video/jobs` reuses cached inspection metadata (keyed by file name + session id) to compute progress, and runs
   `ffprobe` itself on a cache miss.
-- Supported input: `.mp4` files. Supported operation: `compress` (libx264 CRF 23 + AAC 128k).
+- Supported input: `.mp4` files. `/video/jobs` takes the multipart fields `video`, `operation` (`compress`), `codec`,
+  `preset`, `quality` and `format`; `preset` and `quality` depend on the codec, so they must come after `codec`.
+  - **H.264** (`libx264` + AAC 128k): quality high/standard/low = CRF 18/23/28, preset fast/medium/slow =
+    `superfast`/`medium`/`slow`.
+  - **VP9** (`libvpx-vp9` + Opus 128k): quality high/standard/low = CRF 24/31/38.
+  - Output formats: `mp4`, `mkv`, `mov`, `webm`. The output file name uses the requested format's extension.
 - Password reset tokens are stored hashed, expire after `BACKEND_PASSWORD_RESET_TTL_MIN` minutes (default 30), and can
   be requested at most once per minute per user. A successful reset invalidates JWTs issued before it.
 - Video routes enforce a max upload body size. In production, auth and video routes are rate limited per IP via
@@ -98,7 +103,7 @@ Key variables:
 
 | Variable                                                                | Purpose                                                                 |
 |-------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| `BACKEND_HOST`, `BACKEND_HTTP_PORT`                                     | bind address/port (default `localhost:8080`)                            |
+| `BACKEND_HOST`, `BACKEND_HTTP_PORT`                                     | bind IPv4 address/port (default `127.0.0.1:8080`)                       |
 | `DATABASE_URL`                                                          | Postgres connection string                                              |
 | `BACKEND_DB_MAX_CONNECTIONS`                                            | DB pool size (default 10)                                               |
 | `BACKEND_JWT_SECRET`                                                    | JWT signing secret                                                      |
@@ -144,15 +149,16 @@ file starts it; its web UI is at http://localhost:8025. When running the server 
 Run from the repo root via `make`, or `cd modules/backend` and use `cargo` directly:
 
 ```sh
+make dev               # docker compose dev stack (Postgres, backend, Mailpit, nginx)
 make backend           # cargo run
-make check              # cargo clippy --all-features --all-targets
-make format              # cargo fmt
-make format-check        # CI-style fmt check (configs/scripts/cargo-fmt.sh)
-make test                 # cargo nextest run
-make audit                 # cargo audit
-make cargo-update           # cargo update
-make generate-openapi        # cargo run --bin openapi-generator -> openapi.json
-make prepare-backend          # cargo sqlx prepare (regenerate .sqlx offline query cache)
+make check             # cargo clippy --all-features --all-targets
+make format            # cargo fmt
+make format-check      # CI-style fmt check (configs/scripts/cargo-fmt.sh)
+make test              # cargo nextest run
+make audit             # cargo audit
+make cargo-update      # cargo update
+make generate-openapi  # cargo run --bin openapi-generator -> openapi.json
+make prepare-backend   # cargo sqlx prepare (regenerate .sqlx offline query cache)
 ```
 
 `cargo sqlx prepare` must be re-run (and the `.sqlx/` output committed) whenever a query changes, since the server

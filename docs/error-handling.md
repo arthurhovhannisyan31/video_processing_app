@@ -42,14 +42,14 @@ the system routes, and used as the result type in some integration tests.
 
 | Variant                     | Status | Body                                                     |
 |-----------------------------|--------|----------------------------------------------------------|
-| `BadRequest(msg)`           | 400    | `ErrorBody { msg }`                                      |
-| `Validation(ValidationErrors)` | 400 | `ErrorBody` with the `validator` message |
-| `Unauthorized`              | 401    | empty                                                    |
-| `Forbidden`                 | 403    | empty                                                    |
-| `NotFound(msg)`             | 404    | `ErrorBody { msg }`                                      |
-| `Conflict(msg)`             | 409    | `ErrorBody { msg }`                                      |
-| `Internal(msg)`             | 500    | `ErrorBody { "Internal server error" }`; `msg` is logged |
-| `ServiceUnavailable(msg)`   | 503    | empty; `msg` is logged                                   |
+| `BadRequest(msg)`              | 400    | `ErrorBody { msg }`                                      |
+| `Validation(ValidationErrors)` | 400    | `ErrorBody` with the `validator` message                 |
+| `Unauthorized`                 | 401    | empty                                                    |
+| `Forbidden`                    | 403    | empty                                                    |
+| `NotFound(msg)`                | 404    | `ErrorBody { msg }`                                      |
+| `Conflict(msg)`                | 409    | `ErrorBody { msg }`                                      |
+| `Internal(msg)`                | 500    | `ErrorBody { "Internal server error" }`; `msg` is logged |
+| `ServiceUnavailable(msg)`      | 503    | empty; `msg` is logged                                   |
 
 Notes:
 
@@ -83,7 +83,8 @@ Infrastructure and internal errors for code that is not an HTTP handler: video s
 router and rate limiter (`core/governor.rs`) setup, `main.rs` / `http.rs`.
 
 It wraps third-party errors via `#[from]` (`io`, `sqlx`, `lettre`, `jsonwebtoken`, `argon2`,
-`serde_json`, int/float parsing, tokio `JoinError`, axum WebSocket errors, tracing filter, `anyhow`)
+`serde_json`, int/float parsing, socket address parsing (`AddrParseError`), `http::Error`, tokio
+`JoinError`, axum WebSocket errors, tracing filter, `anyhow`)
 and nests `InputError` and `StartupError`. Own variants:
 
 - `Processing(String)` — `ffmpeg` / `ffprobe` failed to spawn, timed out or exited with an error.

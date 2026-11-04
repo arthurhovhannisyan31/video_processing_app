@@ -5,13 +5,11 @@ Next.js web client for the [Video processing app](../../README.md). Lets a user 
 ## Tech stack
 
 - **Framework:** [Next.js](https://nextjs.org) 16 (App Router), React 19, TypeScript
-- **Styling:** Tailwind CSS 4, [shadcn](https://ui.shadcn.com/)-based UI components (`src/components/ui`)
+- **Styling:** Tailwind CSS 4, [shadcn](https://ui.shadcn.com/)-based UI components on [Base UI](https://base-ui.com/) (`src/components/ui`)
 - **State:** [Jotai](https://jotai.org/) for client state, [TanStack Query](https://tanstack.com/query) for server state, [TanStack Table](https://tanstack.com/table) for tabular data
 - **Forms/validation:** react-hook-form + zod
 - **Auth:** [better-auth](https://www.better-auth.com/)
-- **API client:** generated from the backend's OpenAPI spec via [`@hey-api/openapi-ts`](https://heyapi.dev/) (`@hey-api/client-axios`), output in `src/generated/client`
-- **Drag & drop / sorting:** `@dnd-kit/*`
-- **Charts:** [Recharts](https://recharts.org/)
+- **API client:** generated from the backend's OpenAPI spec via [`@hey-api/openapi-ts`](https://heyapi.dev/) (`@hey-api/client-axios`, run through `npx`), output in `src/generated/client`
 - **WebSocket:** [`@github/stable-socket`](https://github.com/github/stable-socket) with reconnect policy
 - **Error tracking:** [Sentry](https://sentry.io) (`@sentry/nextjs`)
 - **Lint/format:** [Biome](https://biomejs.dev/)
@@ -27,14 +25,15 @@ src/
 │   └── api/auth/[...all]/    # better-auth route handler
 ├── components/
 │   ├── modules/auth/         # sign-in / sign-up / forgot-password / reset-password forms
-│   ├── modules/video/        # drop zone, file list/card, controls bar, inspect result, hooks (useWebSocket)
+│   ├── modules/video/        # drop zone, file list/card, controls bar, inspect result, processing options/summary
+│   │                         # (codec, quality, output format), hooks (useWebSocket, useObjectUrl, useVideoThumbnail)
 │   ├── ui/                    # shadcn-based primitives
 │   └── theme-provider, theme-mode-toggle
 ├── configs/                    # env-derived constants (API URLs, flags), route path constants
 ├── proxy.ts                    # Next middleware: redirects unauthenticated users to /signin
 ├── generated/client/           # generated OpenAPI client — do not hand-edit
 ├── helpers/api/                 # thin wrappers around generated client calls (inspect/process video, download)
-├── hooks/, lib/, store/           # shared hooks (incl. useBufferedWebSocket), auth/axios/query-client setup, jotai atoms
+├── hooks/, lib/, store/           # shared hooks (use-buffered-websocket, use-hover-event, use-mobile), auth/axios/query-client setup, jotai atoms
 └── typings/                       # shared TS types
 ```
 
@@ -69,6 +68,13 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) — the root path redirects to `/video`.
 
+From the repo root, the equivalent is:
+
+```sh
+make prepare-frontend-local   # generate API client from the local backend's openapi.json
+make frontend                 # yarn dev
+```
+
 ## Auth flow
 
 1. The sign-in/sign-up forms call the backend (`/auth/login`, `/auth/register`) through the generated client.
@@ -80,13 +86,6 @@ Open [http://localhost:3000](http://localhost:3000) — the root path redirects 
 
 Forgot/reset password forms call `/auth/password/forgot` and `/auth/password/reset`; the reset link in the email
 points to `/reset-password` with the token.
-
-From the repo root, the equivalent is:
-
-```sh
-make prepare-frontend-local   # generate API client from the local backend's openapi.json
-make frontend                 # yarn dev
-```
 
 ## Generating the API client
 
