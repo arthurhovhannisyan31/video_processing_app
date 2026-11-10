@@ -7,7 +7,7 @@ use crate::core::error::ServerError;
 
 pub fn init_logging() -> Result<(), ServerError> {
   let filter = EnvFilter::try_from_default_env()
-    .or_else(|_| EnvFilter::try_new("info,video_processing_server=info,tower_http=trace"))?;
+    .or_else(|_| EnvFilter::try_new("info,video_processing_server=info,tower_http=info"))?;
 
   let fmt_layer = fmt::layer()
     .with_target(false)

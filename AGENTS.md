@@ -94,4 +94,5 @@ check, format-check, test and audit. CI (`.github/workflows/code-validation.yml`
 
 Use following files to get case specific context:
 
-- Error handling: `docs/error-handling.md` 
+- Error handling: `docs/error-handling.md`
+- Modules: `docs/modules.md`

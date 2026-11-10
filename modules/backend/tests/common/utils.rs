@@ -62,10 +62,10 @@ pub async fn setup_router_with_email(
       auth_service,
       jwt_service,
     }),
-    app_config: Arc::new(app_config),
     video_state: Arc::from(VideoState {
-      video_service: VideoService::default(),
+      video_service: VideoService::new(app_config.video.max_concurrent_jobs),
     }),
+    app_config: Arc::new(app_config),
     system_state: Arc::new(SystemState {
       db_pool: pool,
       rate_limiters: Arc::new(Mutex::new(vec![])),
