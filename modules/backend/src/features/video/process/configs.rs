@@ -1,10 +1,29 @@
 pub const OUTPUT_PATH_SUFFIX: &str = "_output";
+pub const RESPONSE_READ_BUFFER_SIZE: usize = 256 * 1024;
 
 pub mod operation {
   pub const COMPRESS: &str = "compress";
 }
 
 pub mod codec {
+  pub mod common {
+    pub fn build_args(threads: usize) -> Vec<String> {
+      vec![
+        "-y".to_string(),
+        "-nostdin".to_string(),
+        "-loglevel".to_string(),
+        "quiet".to_string(),
+        "-b:a".to_string(),
+        "128k".to_string(),
+        "-progress".to_string(),
+        "pipe:2".to_string(),
+        // Explicit count so encoders follow the container CPU quota, not the host core count
+        "-threads".to_string(),
+        threads.to_string(),
+      ]
+    }
+  }
+
   pub mod x264 {
     use crate::features::video::process::types::{Preset, VideoFormat};
 
@@ -24,10 +43,6 @@ pub mod codec {
 
     pub fn build_args(preset: &Preset, quality: String, format: &VideoFormat) -> Vec<String> {
       vec![
-        "-y".to_string(),
-        "-nostdin".to_string(),
-        "-loglevel".to_string(),
-        "quiet".to_string(),
         "-vcodec".to_string(),
         "libx264".to_string(),
         "-crf".to_string(),
@@ -36,10 +51,6 @@ pub mod codec {
         preset.0.to_string(),
         "-acodec".to_string(),
         "aac".to_string(),
-        "-b:a".to_string(),
-        "128k".to_string(),
-        "-progress".to_string(),
-        "pipe:2".to_string(),
         "-f".to_string(),
         format.muxer.to_string(),
       ]
@@ -58,29 +69,21 @@ pub mod codec {
 
     pub fn build_args(quality: String, format: &VideoFormat) -> Vec<String> {
       vec![
-        "-y".to_string(),
-        "-nostdin".to_string(),
-        "-loglevel".to_string(),
-        "quiet".to_string(),
         "-vcodec".to_string(),
         "libvpx-vp9".to_string(),
         "-crf".to_string(),
         quality,
-        // Should match container limits
         "-cpu-used".to_string(),
         "4".to_string(),
-        "-threads".to_string(),
-        "3".to_string(),
+        // Row based multithreading, lets libvpx use all `-threads` instead of ~1-2
+        "-row-mt".to_string(),
+        "1".to_string(),
         "-tile-columns".to_string(),
         "1".to_string(),
         "-acodec".to_string(),
         "libopus".to_string(),
         "-b:v".to_string(),
         "0".to_string(),
-        "-b:a".to_string(),
-        "128k".to_string(),
-        "-progress".to_string(),
-        "pipe:2".to_string(),
         "-f".to_string(),
         format.muxer.to_string(),
       ]
