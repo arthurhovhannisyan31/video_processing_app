@@ -13,8 +13,8 @@ use crate::features::auth::constants::{
   PASSWORD_RESET_TTL_MIN, SMTP_DEV_FROM, SMTP_DEV_HOST, SMTP_DEV_PORT,
 };
 use crate::features::video::constants::{
-  VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_PROCESS_TIMEOUT, VIDEO_RATE_LIMIT_PERIOD,
-  VIDEO_RATE_LIMIT_SIZE,
+  VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_MAX_CONCURRENT_JOBS, VIDEO_PROCESS_TIMEOUT,
+  VIDEO_RATE_LIMIT_PERIOD, VIDEO_RATE_LIMIT_SIZE,
 };
 
 #[derive(Clone, Debug, Deserialize)]
@@ -170,6 +170,8 @@ pub struct VideoConfig {
   pub rate_limit_size: u32,
   pub inspect_timeout: Duration,
   pub process_timeout: Duration,
+  pub ffmpeg_threads: usize,
+  pub max_concurrent_jobs: usize,
 }
 
 impl VideoConfig {
@@ -189,6 +191,20 @@ impl VideoConfig {
     let process_timeout = env::var("BACKEND_VIDEO_PROCESS_TIMEOUT")
       .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
       .parse::<u64>()?;
+    // Respects the cgroup CPU quota on Linux, so a container limited to 3 CPUs gets 3
+    let ffmpeg_threads = match env::var("BACKEND_VIDEO_FFMPEG_THREADS") {
+      Ok(threads) => threads.parse::<usize>()?,
+      Err(_) => std::thread::available_parallelism().map_or(1, |n| n.get()),
+    };
+    let max_concurrent_jobs = env::var("BACKEND_VIDEO_MAX_CONCURRENT_JOBS")
+      .unwrap_or(VIDEO_MAX_CONCURRENT_JOBS.to_string())
+      .parse::<usize>()?;
+    if ffmpeg_threads == 0 || max_concurrent_jobs == 0 {
+      Err(StartupError::VarError(
+        "BACKEND_VIDEO_FFMPEG_THREADS and BACKEND_VIDEO_MAX_CONCURRENT_JOBS must be > 0"
+          .to_string(),
+      ))?;
+    }
 
     Ok(Self {
       max_body_size,
@@ -196,6 +212,8 @@ impl VideoConfig {
       rate_limit_size,
       inspect_timeout: Duration::from_secs(inspect_timeout),
       process_timeout: Duration::from_secs(process_timeout),
+      ffmpeg_threads,
+      max_concurrent_jobs,
     })
   }
 }

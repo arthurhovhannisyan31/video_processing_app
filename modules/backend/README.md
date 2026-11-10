@@ -111,6 +111,8 @@ Key variables:
 | `BACKEND_VIDEO_MAX_BODY_SIZE`                                           | max multipart upload size in bytes (default 100 MB)                     |
 | `BACKEND_VIDEO_RATE_LIMIT_PERIOD_SEC` / `BACKEND_VIDEO_RATE_LIMIT_SIZE` | video rate limiter period/burst, production only (default 60 / 100)     |
 | `BACKEND_VIDEO_INSPECT_TIMEOUT` / `BACKEND_VIDEO_PROCESS_TIMEOUT`       | `ffprobe`/`ffmpeg` timeouts in seconds (default 20 / 300)               |
+| `BACKEND_VIDEO_FFMPEG_THREADS`                                          | encoder threads per ffmpeg job (default: available CPUs / cgroup quota) |
+| `BACKEND_VIDEO_MAX_CONCURRENT_JOBS`                                     | ffmpeg jobs running at once, extra jobs wait for a slot (default 2)     |
 | `BACKEND_VIDEO_MOCK_PASSWORD_HASH`                                      | dummy hash used to defend login against user-enumeration timing attacks |
 | `BACKEND_FRONTEND_URL`                                                  | frontend base URL used in reset links (default `http://localhost:3000`) |
 | `BACKEND_PASSWORD_RESET_TTL_MIN`                                        | reset token lifetime in minutes (default 30)                            |

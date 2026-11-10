@@ -211,12 +211,7 @@ pub async fn process_video(
   Ok(
     video_state
       .video_service
-      .process(
-        media_data,
-        session_id,
-        app_config.video.inspect_timeout,
-        app_config.video.process_timeout,
-      )
+      .process(media_data, session_id, &app_config.video)
       .await?,
   )
 }
