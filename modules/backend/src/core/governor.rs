@@ -36,15 +36,16 @@ pub fn rate_limiters_cleanup(rate_limiters: Arc<Mutex<RateLimiters>>) {
   let mut counter = 0;
   let interval = Duration::from_secs(GOVERNOR_CLEANUP_INTERVAL);
 
-  std::thread::spawn(move || {
+  tokio::spawn(async move {
     loop {
-      std::thread::sleep(interval);
+      tokio::time::sleep(interval).await;
+
       counter += 1;
       {
         let rate_limiters = rate_limiters.lock();
         for rate_limiter in (*rate_limiters).iter() {
           rate_limiter.retain_recent();
-          // Reallocate rate limiter hash map every 12 cycles
+          // Reallocate rate limiter hash map every 10 cycles
           if counter >= 10 {
             rate_limiter.shrink_to_fit();
             counter = 0;

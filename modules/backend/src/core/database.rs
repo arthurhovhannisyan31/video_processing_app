@@ -30,7 +30,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), ServerError> {
     .inspect_err(|err| {
       error!("Failed running migration: {err}");
     })
-    .map_err(StartupError::MigrateError)?;
+    .map_err(StartupError::MigrationError)?;
 
   info!("migrations completed");
   Ok(())

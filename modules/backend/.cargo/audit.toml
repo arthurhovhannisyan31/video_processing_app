@@ -1,5 +1,6 @@
 [advisories]
 ignore = [
-  "RUSTSEC-2023-0071",
-  "RUSTSEC-2026-0387",
+  "RUSTSEC-2026-0387", # jsonwebtoken
+  "RUSTSEC-2023-0071", # jsonwebtoken
+  "RUSTSEC-2026-0459", # sqlite, not relevant
 ]

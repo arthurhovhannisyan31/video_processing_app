@@ -10,7 +10,9 @@ pub const TOKEN_EXPIRATION_HOURS: i64 = 24;
 
 #[derive(Clone)]
 pub struct JwtService {
-  secret: String,
+  encoding_key: EncodingKey,
+  decoding_key: DecodingKey,
+  validation: Validation,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,7 +25,11 @@ pub struct Claims {
 
 impl JwtService {
   pub fn new(secret: String) -> Self {
-    Self { secret }
+    Self {
+      encoding_key: EncodingKey::from_secret(secret.as_bytes()),
+      decoding_key: DecodingKey::from_secret(secret.as_bytes()),
+      validation: Validation::default(),
+    }
   }
 
   pub fn generate_token(&self, user_id: UserId, username: String) -> Result<String, ServerError> {
@@ -37,19 +43,11 @@ impl JwtService {
         .expect("token expiration duration does not overflow")
         .timestamp() as usize,
     };
-    Ok(encode(
-      &Header::default(),
-      &claims,
-      &EncodingKey::from_secret(self.secret.as_bytes()),
-    )?)
+    Ok(encode(&Header::default(), &claims, &self.encoding_key)?)
   }
 
   pub fn verify_token(&self, token: &str) -> Result<Claims, ServerError> {
-    let data = decode::<Claims>(
-      token,
-      &DecodingKey::from_secret(self.secret.as_bytes()),
-      &Validation::default(),
-    )?;
+    let data = decode::<Claims>(token, &self.decoding_key, &self.validation)?;
     Ok(data.claims)
   }
 }
@@ -58,6 +56,21 @@ pub fn hash_password(password: &str) -> Result<String, ServerError> {
   let argon2 = Argon2::default();
   let hash = argon2.hash_password(password.as_bytes())?.to_string();
   Ok(hash)
+}
+
+/// Runs `hash_password` on the blocking pool, Argon2 takes tens of ms of CPU
+pub async fn hash_password_blocking(password: String) -> Result<String, ServerError> {
+  tokio::task::spawn_blocking(move || hash_password(&password))
+    .await
+    .map_err(|err| ServerError::Processing(format!("Password hashing task failed: {err}")))?
+}
+
+/// Runs `verify_password` on the blocking pool, Argon2 takes tens of ms of CPU
+pub async fn verify_password_blocking(password: String, hash: String) -> Result<bool, ServerError> {
+  tokio::task::spawn_blocking(move || verify_password(&password, &hash))
+    .await
+    .map_err(|err| ServerError::Processing(format!("Password verify task failed: {err}")))?
+    .map_err(ServerError::from)
 }
 
 pub fn verify_password(password: &str, hash: &str) -> Result<bool, argon2::password_hash::Error> {

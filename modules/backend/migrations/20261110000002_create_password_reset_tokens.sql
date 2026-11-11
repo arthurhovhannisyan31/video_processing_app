@@ -1,6 +1,3 @@
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS password_changed_at timestamptz NULL;
-
 CREATE TABLE IF NOT EXISTS password_reset_tokens
 (
     id         UUID PRIMARY KEY     DEFAULT gen_random_uuid(),

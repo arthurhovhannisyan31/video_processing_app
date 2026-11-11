@@ -1,4 +1,5 @@
 use std::env;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -12,14 +13,13 @@ use crate::features::auth::constants::{
   PASSWORD_RESET_TTL_MIN, SMTP_DEV_FROM, SMTP_DEV_HOST, SMTP_DEV_PORT,
 };
 use crate::features::video::constants::{
-  VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_PROCESS_TIMEOUT, VIDEO_RATE_LIMIT_PERIOD,
-  VIDEO_RATE_LIMIT_SIZE,
+  VIDEO_INSPECT_TIMEOUT, VIDEO_MAX_BODY_SIZE, VIDEO_MAX_CONCURRENT_JOBS, VIDEO_PROCESS_TIMEOUT,
+  VIDEO_RATE_LIMIT_PERIOD, VIDEO_RATE_LIMIT_SIZE,
 };
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct AppConfig {
-  pub host: String,
-  pub http_port: u16,
+  pub socket_addr: SocketAddr,
   pub database_url: String,
   pub jwt_secret: String,
   pub cors_origins: Vec<String>,
@@ -49,11 +49,14 @@ impl AppConfig {
     let video = VideoConfig::from_env()?;
     let smtp = SmtpConfig::from_env(is_production)?;
 
-    let host = env::var("BACKEND_HOST").unwrap_or("localhost".into());
+    let host = env::var("BACKEND_HOST")
+      .unwrap_or("127.0.0.1".into())
+      .parse::<Ipv4Addr>()?;
     let http_port = env::var("BACKEND_HTTP_PORT")
       .unwrap_or("8080".to_string())
       .parse()
       .map_err(|e| StartupError::VarError(format!("Invalid BACKEND_HTTP_PORT variable: {e}")))?;
+    let socket_addr = SocketAddr::from((host, http_port));
     let database_url = env::var("DATABASE_URL")
       .map_err(|e| StartupError::VarError(format!("Missing DATABASE_URL: {e}")))?;
     let jwt_secret = env::var("BACKEND_JWT_SECRET")
@@ -84,8 +87,7 @@ impl AppConfig {
       .parse::<u64>()?;
 
     Ok(Self {
-      host,
-      http_port,
+      socket_addr,
       database_url,
       jwt_secret,
       cors_origins,
@@ -168,6 +170,8 @@ pub struct VideoConfig {
   pub rate_limit_size: u32,
   pub inspect_timeout: Duration,
   pub process_timeout: Duration,
+  pub ffmpeg_threads: usize,
+  pub max_concurrent_jobs: usize,
 }
 
 impl VideoConfig {
@@ -187,6 +191,20 @@ impl VideoConfig {
     let process_timeout = env::var("BACKEND_VIDEO_PROCESS_TIMEOUT")
       .unwrap_or(VIDEO_PROCESS_TIMEOUT.to_string())
       .parse::<u64>()?;
+    // Respects the cgroup CPU quota on Linux, so a container limited to 3 CPUs gets 3
+    let ffmpeg_threads = match env::var("BACKEND_VIDEO_FFMPEG_THREADS") {
+      Ok(threads) => threads.parse::<usize>()?,
+      Err(_) => std::thread::available_parallelism().map_or(1, |n| n.get()),
+    };
+    let max_concurrent_jobs = env::var("BACKEND_VIDEO_MAX_CONCURRENT_JOBS")
+      .unwrap_or(VIDEO_MAX_CONCURRENT_JOBS.to_string())
+      .parse::<usize>()?;
+    if ffmpeg_threads == 0 || max_concurrent_jobs == 0 {
+      Err(StartupError::VarError(
+        "BACKEND_VIDEO_FFMPEG_THREADS and BACKEND_VIDEO_MAX_CONCURRENT_JOBS must be > 0"
+          .to_string(),
+      ))?;
+    }
 
     Ok(Self {
       max_body_size,
@@ -194,6 +212,8 @@ impl VideoConfig {
       rate_limit_size,
       inspect_timeout: Duration::from_secs(inspect_timeout),
       process_timeout: Duration::from_secs(process_timeout),
+      ffmpeg_threads,
+      max_concurrent_jobs,
     })
   }
 }

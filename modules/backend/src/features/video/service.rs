@@ -10,15 +10,16 @@ use axum::http::Response;
 use futures_util::stream::SplitSink;
 use futures_util::{SinkExt, StreamExt};
 use parking_lot::RwLock;
-use serde_json::json;
 use tempfile::TempDir;
 use tokio::io;
-use tokio::sync::mpsc;
+use tokio::sync::{Semaphore, mpsc};
 use tracing::{error, warn};
 
+use crate::core::app_config::VideoConfig;
 use crate::core::error::ServerError;
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::{MediaDataCache, build_media_data_cache};
+use crate::features::video::constants::VIDEO_MAX_CONCURRENT_JOBS;
 use crate::features::video::helpers::{build_output_meta, get_file_duration};
 use crate::features::video::model::{MediaMetadata, VideoStateProgress};
 use crate::features::video::process::configs::OUTPUT_PATH_SUFFIX;
@@ -30,18 +31,25 @@ pub type VideoWsConnectionsMap = RwLock<HashMap<String, mpsc::Sender<VideoStateP
 pub struct VideoService {
   pub connections_map: VideoWsConnectionsMap,
   pub media_data_cache: MediaDataCache,
+  // Limits parallel ffmpeg jobs so they don't compete for the same CPUs
+  jobs_semaphore: Semaphore,
 }
 
 impl Default for VideoService {
   fn default() -> Self {
-    Self {
-      connections_map: RwLock::new(HashMap::new()),
-      media_data_cache: build_media_data_cache(),
-    }
+    Self::new(VIDEO_MAX_CONCURRENT_JOBS)
   }
 }
 
 impl VideoService {
+  pub fn new(max_concurrent_jobs: usize) -> Self {
+    Self {
+      connections_map: RwLock::new(HashMap::new()),
+      media_data_cache: build_media_data_cache(),
+      jobs_semaphore: Semaphore::new(max_concurrent_jobs),
+    }
+  }
+
   pub async fn inspect(
     &self,
     media_data: Multipart,
@@ -72,8 +80,7 @@ impl VideoService {
     &self,
     media_data: Multipart,
     session_id: String,
-    video_inspect_timeout: Duration,
-    video_process_timeout: Duration,
+    video_config: &VideoConfig,
   ) -> Result<Response<Body>, ServerError> {
     let temp_dir = TempDir::new().map_err(|err| {
       ServerError::IO(io::Error::new(
@@ -87,25 +94,35 @@ impl VideoService {
       OUTPUT_PATH_SUFFIX,
       &process_meta.format.extension,
     )?;
-    let ffmpeg_args = get_args(&process_meta, &output_meta.path)?;
+    let ffmpeg_args = get_args(
+      &process_meta,
+      &output_meta.path,
+      video_config.ffmpeg_threads,
+    )?;
     let duration = get_file_duration(
       &process_meta.file_name,
       &session_id,
       &process_meta.local_path,
       &self.media_data_cache,
-      video_inspect_timeout,
+      video_config.inspect_timeout,
     )
     .await?;
 
+    let job_permit = self
+      .jobs_semaphore
+      .acquire()
+      .await
+      .map_err(|err| ServerError::Processing(format!("Jobs semaphore closed: {err}")))?;
     process::ffmpeg_runner::process_file(
       ffmpeg_args,
       &process_meta.file_name,
       &self.connections_map,
       &session_id,
       duration,
-      video_process_timeout,
+      video_config.process_timeout,
     )
     .await?;
+    drop(job_permit);
 
     process::build_response::build_response(&output_meta, &process_meta.format.mime_type).await
   }
@@ -146,7 +163,13 @@ impl VideoService {
       tokio::select! {
         progress_msg = rx.recv() => {
           if let Some(msg) = progress_msg {
-            let message = Message::from(json!(msg).to_string());
+            let message = match serde_json::to_string(&msg) {
+              Ok(text) => Message::from(text),
+              Err(err) => {
+                error!(user_id = %session_id, error = %err, "Failed to serialize progress message");
+                continue;
+              }
+            };
 
             if let Err(err) = sink.send(message).await {
               error!(user_id = %session_id, error = %err, "Failed to send message to user");

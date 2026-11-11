@@ -53,15 +53,17 @@ check, format-check, test and audit. CI (`.github/workflows/code-validation.yml`
   field of `AppState` (`src/core/app_state.rs`) and is extracted in handlers via `FromRef` (e.g.
   `State<Arc<VideoState>>`). When adding a feature, wire its state into `AppState::new` **and** into
   `tests/common/utils.rs::setup_router_with_email`, which builds `AppState` by hand (with `MockEmailSender`).
-- Errors: `DomainError` / `ServerError` convert into `ApplicationError`, which is the only `IntoResponse` mapping to HTTP
+- Errors: `DomainError` / `ServerError` convert into `ApplicationError`, which is the only `IntoResponse` mapping to
+  HTTP
   status + `ErrorBody { message }` (`src/core/error.rs`). Handlers return `Result<_, ApplicationError>`.
 - Auth: login returns a JWT; `features/auth/middleware.rs` validates `Authorization: Bearer` tokens and rejects tokens
   issued before `password_changed_at`. Password reset emails go via SMTP (`core/email.rs`; falls back to Mailpit at
   `mailpit:1025` when `BACKEND_SMTP_HOST` is empty — set `localhost` when running outside Docker).
 - Video flow (`features/video/service.rs`): uploads are written to a `TempDir`, `ffprobe`/`ffmpeg` run as child
   processes with timeouts. `/video/inspect` caches metadata in an in-memory `mini_moka` cache keyed by
-  hash(file name + session id); `/video/jobs` reuses that cache for the duration used in progress reporting (runs
-  `ffprobe` itself on a miss), streams the processed file back, and pushes progress to the session's WebSocket (`/video/ws`) via an
+  hash (file name + session id); `/video/jobs` reuses that cache for the duration used in progress reporting (runs
+  `ffprobe` itself on a miss), streams the processed file back, and pushes progress to the session's WebSocket
+  (`/video/ws`) via an
   `mpsc` channel stored in `connections_map`. The session id is what links inspect, job and WebSocket.
 - The Bearer-token middleware is not applied to any route yet; video routes are scoped by session cookie only.
 - Rate limiting (`tower_governor`, auth + video routes) is only applied when `IS_PRODUCTION=true`.
@@ -87,3 +89,10 @@ check, format-check, test and audit. CI (`.github/workflows/code-validation.yml`
 - Work on `develop`; releases go `develop` → `main` via the release workflow.
 - `notes`, `temp_docs/` and `.env*` are gitignored local files (personal notes, past code reviews/PRD, secrets) — don't
   commit them or copy their contents into tracked files.
+
+## Project documentation
+
+Use following files to get case specific context:
+
+- Error handling: `docs/error-handling.md`
+- Modules: `docs/modules.md`

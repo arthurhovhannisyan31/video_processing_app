@@ -8,12 +8,12 @@ use axum::extract::multipart::Field;
 use serde::{Deserialize, Deserializer};
 use tokio::fs::File;
 use tokio::io;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt, BufWriter};
 
 use crate::core::error::{InputError, ServerError};
 use crate::core::hash::calculate_hash;
 use crate::features::video::cache::MediaDataCache;
-use crate::features::video::constants::FILE_EXTENSIONS_WHITE_LIST;
+use crate::features::video::constants::{FILE_EXTENSIONS_WHITE_LIST, UPLOAD_WRITE_BUFFER_SIZE};
 use crate::features::video::inspect;
 use crate::features::video::process::types::{Extension, OutputVideoMeta};
 use crate::features::video::types::ReadFormDataMeta;
@@ -123,7 +123,9 @@ pub async fn read_form_data_to_file(
   let path = temp_dir.join(form_data_meta.safe_file_name.clone());
 
   // create local file only when needed
-  let mut created_file = File::create(&path).await?;
+  // Buffer small multipart chunks, each tokio file write is a blocking-pool round trip
+  let mut created_file =
+    BufWriter::with_capacity(UPLOAD_WRITE_BUFFER_SIZE, File::create(&path).await?);
 
   let mut written_bytes: usize = 0;
   // Stream chunks directly from the request network buffer into the file

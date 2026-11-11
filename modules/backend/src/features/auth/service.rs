@@ -10,7 +10,7 @@ use tracing::info;
 
 use crate::core::email::EmailSender;
 use crate::core::error::ApplicationError;
-use crate::core::jwt::{JwtService, hash_password, verify_password};
+use crate::core::jwt::{JwtService, hash_password_blocking, verify_password_blocking};
 use crate::features::auth::constants::{
   INVALID_RESET_TOKEN, PASSWORD_RESET_COOLDOWN_SEC, PASSWORD_RESET_EMAIL_SUBJECT,
   PASSWORD_RESET_TOKEN_BYTES,
@@ -72,7 +72,7 @@ where
     password: String,
     username: String,
   ) -> Result<User, ApplicationError> {
-    let hash = hash_password(&password)?;
+    let hash = hash_password_blocking(password).await?;
     let user = User::new(email.to_lowercase(), hash, username);
 
     self.repo.create(user).await.map_err(ApplicationError::from)
@@ -92,10 +92,11 @@ where
       .unwrap_or(mock_password_hash);
 
     // constant performance time for any user lookup result
-    let password_ok = match verify_password(password, password_hash) {
-      Ok(password_ok) => password_ok,
-      Err(err) => return Err(ApplicationError::Internal(err.to_string())),
-    };
+    let password_ok =
+      match verify_password_blocking(password.to_string(), password_hash.to_string()).await {
+        Ok(password_ok) => password_ok,
+        Err(err) => return Err(ApplicationError::Internal(err.to_string())),
+      };
 
     let user = match (user_res, password_ok) {
       (Some(user), true) => user,
@@ -159,7 +160,7 @@ where
   }
 
   pub async fn reset_password(&self, token: &str, password: &str) -> Result<(), ApplicationError> {
-    let password_hash = hash_password(password)?;
+    let password_hash = hash_password_blocking(password.to_string()).await?;
 
     let consumed = self
       .repo
