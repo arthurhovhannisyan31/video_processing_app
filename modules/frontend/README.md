@@ -1,6 +1,7 @@
 # Frontend
 
-Next.js web client for the [Video processing app](../../README.md). Lets a user sign up/sign in (with forgot/reset password), drag-and-drop a video file, inspect its metadata, run an `ffmpeg` operation on it via the [backend](../backend/README.md), and watch job progress live over a WebSocket.
+Next.js web client for the [Video processing app](../../README.md). Lets a user sign up/sign in (with forgot/reset password), drag-and-drop a video file, inspect its metadata, run an `ffmpeg` operation on it via
+the [backend](../backend/README.md), and watch job progress live over a WebSocket.
 
 ## Tech stack
 
@@ -9,7 +10,8 @@ Next.js web client for the [Video processing app](../../README.md). Lets a user 
 - **State:** [Jotai](https://jotai.org/) for client state, [TanStack Query](https://tanstack.com/query) for server state, [TanStack Table](https://tanstack.com/table) for tabular data
 - **Forms/validation:** react-hook-form + zod
 - **Auth:** [better-auth](https://www.better-auth.com/)
-- **API client:** generated from the backend's OpenAPI spec via [`@hey-api/openapi-ts`](https://heyapi.dev/) (`@hey-api/client-axios`, run through `npx`), output in `src/generated/client`
+- **API client:** generated from the backend's OpenAPI spec via [`@hey-api/openapi-ts`](https://heyapi.dev/)
+  (`@hey-api/client-axios`, run through `npx`), output in `src/generated/client`
 - **WebSocket:** [`@github/stable-socket`](https://github.com/github/stable-socket) with reconnect policy
 - **Error tracking:** [Sentry](https://sentry.io) (`@sentry/nextjs`)
 - **Lint/format:** [Biome](https://biomejs.dev/)
@@ -20,9 +22,10 @@ Next.js web client for the [Video processing app](../../README.md). Lets a user 
 ```
 src/
 ├── app/
-│   ├── (app)/video/          # main authenticated video page
+│   ├── (app)/video/          # main authenticated video page (noindex)
 │   ├── (auth)/               # signin, signup, forgot-password, reset-password pages
-│   └── api/auth/[...all]/    # better-auth route handler
+│   ├── api/auth/[...all]/    # better-auth route handler
+│   └── robots.ts, sitemap.ts, manifest.ts, icon/apple-icon/opengraph-image.tsx  # generated SEO/metadata files
 ├── components/
 │   ├── modules/auth/         # sign-in / sign-up / forgot-password / reset-password forms
 │   ├── modules/video/        # drop zone, file list/card, controls bar, inspect result, processing options/summary
@@ -66,7 +69,7 @@ yarn generate-openapi-local   # or: yarn generate-openapi (fetches the remote sc
 yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — the root path redirects to `/video`.
+Open [http://localhost:3000](http://localhost:3000) — `/` is the public landing page.
 
 From the repo root, the equivalent is:
 
@@ -110,6 +113,7 @@ yarn check    # types + lint
 
 ## Notes
 
-- `next.config.ts` enables the React Compiler and redirects `/` to `/video`.
+- `next.config.ts` enables the React Compiler.
+- SEO: `/`, `/signin` and `/signup` are indexable; `/forgot-password` and `/reset-password` are `noindex` and disallowed in `robots.ts`. Metadata defaults (title template, OG/Twitter, `metadataBase`) live in `src/app/layout.tsx`. Metadata routes are excluded from the `src/proxy.ts` matcher so crawlers aren't redirected to sign-in.
 - Video processing progress is streamed over a WebSocket (`useWebSocket` hook, `/api/video/ws` on the backend) and reflected in the `videoStore` jotai atom. The backend ties the socket to the session cookie, so only one tab per session can receive progress.
 - `yarn build` regenerates the API client from the **remote** schema before building.

@@ -4,7 +4,9 @@ import type { PropsWithChildren } from "react";
 import { ModeToggle } from "components/theme-mode-toggle";
 
 export const metadata: Metadata = {
-  title: "Login",
+  title: "Sign in",
+  description: "Sign in to compress and convert your videos online.",
+  alternates: { canonical: "/signin" },
 };
 
 export default async function LoginLayout({ children }: PropsWithChildren) {

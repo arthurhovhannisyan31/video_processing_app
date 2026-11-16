@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/video",
+        source: "/video",
+        destination: "/",
         permanent: false,
       },
     ];

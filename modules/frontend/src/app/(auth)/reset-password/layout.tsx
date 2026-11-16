@@ -5,6 +5,7 @@ import { ModeToggle } from "components/theme-mode-toggle";
 
 export const metadata: Metadata = {
   title: "Reset password",
+  robots: { index: false, follow: false },
   // Prevent leaking the reset token from the URL via Referer header
   referrer: "no-referrer",
 };
