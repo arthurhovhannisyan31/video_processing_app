@@ -16,7 +16,7 @@
     "setup-git": "../../configs/git/setup.sh",
     "generate-openapi": "../../configs/scripts/generate-openapi-client.sh",
     "generate-openapi-local": "../../configs/scripts/generate-openapi-client.sh --local",
-    "types": "NODE_OPTIONS=--max-old-space-size=8196 tsc -p tsconfig.json --noEmit",
+    "types": "tsc -p tsconfig.json --noEmit",
     "check": "yarn types && yarn lint"
   },
   "dependencies": {
