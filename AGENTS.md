@@ -73,7 +73,8 @@ check, format-check, test and audit. CI (`.github/workflows/code-validation.yml`
 ## Frontend architecture (`modules/frontend`)
 
 - App Router with route groups `(app)` (authenticated, `/video`) and `(auth)` (signin/signup/forgot/reset password);
-  `/` redirects to `/video` (`next.config.ts`, React Compiler enabled).
+  `/` is a public landing page (SEO entry point); `robots.ts`/`sitemap.ts`/OG image are App Router metadata files
+  and must stay excluded from the `src/proxy.ts` matcher.
 - Auth: better-auth (`src/lib/auth.ts`) with a custom `/custom-auth` endpoint that stores the backend JWT in a
   better-auth session cookie; `src/proxy.ts` (Next middleware) redirects to sign-in when that cookie is missing/expired
   (toggle `NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED`). The axios client (`src/lib/api-client.ts`) uses

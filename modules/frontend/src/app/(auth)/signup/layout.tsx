@@ -5,6 +5,8 @@ import { ModeToggle } from "components/theme-mode-toggle";
 
 export const metadata: Metadata = {
   title: "Sign up",
+  description: "Create a free account to compress and convert videos online.",
+  alternates: { canonical: "/signup" },
 };
 
 export default async function SignupLayout({ children }: PropsWithChildren) {

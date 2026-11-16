@@ -15,3 +15,9 @@ export const MAX_BODY_SIZE = process.env.NEXT_PUBLIC_MAX_BODY_SIZE;
 export const PROXY_AUTH_CHECK_ENABLED =
   process.env.NEXT_PUBLIC_PROXY_AUTH_CHECK_ENABLED === "true";
 export const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://videoprocessing.app";
+export const SITE_NAME = "Video Processing";
+export const SITE_DESCRIPTION =
+  "Free online video compressor and converter. Shrink MP4 files and convert them to MP4, MKV, WebM or MOV with H.264 or VP9, right from your browser.";

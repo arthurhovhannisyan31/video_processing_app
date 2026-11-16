@@ -5,6 +5,7 @@ import { ModeToggle } from "components/theme-mode-toggle";
 
 export const metadata: Metadata = {
   title: "Forgot password",
+  robots: { index: false, follow: false },
 };
 
 export default async function ForgotPasswordLayout({

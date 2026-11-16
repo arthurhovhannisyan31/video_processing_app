@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 
 import { InteractiveDotGrid } from "components/aicanvas/dot-grid";
 import { SiteHeader } from "components/site-header";
 import { SidebarInset, SidebarProvider } from "components/ui/sidebar";
+
+export const metadata: Metadata = {
+  title: "Video",
+  robots: { index: false, follow: false },
+};
 
 export default function AppLayout({ children }: PropsWithChildren) {
   return (
