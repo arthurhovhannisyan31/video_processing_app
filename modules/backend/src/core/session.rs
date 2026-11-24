@@ -10,6 +10,7 @@ pub async fn build_session_store(
   is_production: bool,
 ) -> Result<SessionStore<SessionPgPool>, ServerError> {
   let session_config = SessionConfig::default()
+    .with_database_initiation(true)
     .with_cookie_path(SESSION_COOKIE_PATH)
     .with_secure(is_production)
     .with_table_name("sessions_table");
