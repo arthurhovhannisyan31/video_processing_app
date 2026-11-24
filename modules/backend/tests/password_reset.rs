@@ -272,7 +272,7 @@ mod test_password_reset {
     let server = TestServer::new(router);
 
     let app_config = AppConfig::from_env()?;
-    let jwt_service = JwtService::new(app_config.jwt_secret.clone());
+    let jwt_service = JwtService::new(app_config.jwt_secret.clone())?;
     let auth_service = AuthService::new(
       PostgresUserRepository::new(pool),
       jwt_service.clone(),

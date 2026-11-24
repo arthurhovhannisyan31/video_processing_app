@@ -46,7 +46,7 @@ pub async fn setup_router_with_email(
   let session_store = build_session_store(pool.clone(), app_config.is_production).await?;
 
   let email_sender = MockEmailSender::default();
-  let jwt_service = JwtService::new(app_config.jwt_secret.clone());
+  let jwt_service = JwtService::new(app_config.jwt_secret.clone())?;
   let users_repo = PostgresUserRepository::new(pool.clone());
   let auth_service = AuthService::new(
     users_repo,

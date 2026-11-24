@@ -24,12 +24,12 @@ pub struct Claims {
 }
 
 impl JwtService {
-  pub fn new(secret: String) -> Self {
-    Self {
-      encoding_key: EncodingKey::from_secret(secret.as_bytes()),
-      decoding_key: DecodingKey::from_secret(secret.as_bytes()),
+  pub fn new(secret: String) -> Result<Self, ServerError> {
+    Ok(Self {
+      encoding_key: EncodingKey::from_secret(secret.as_bytes())?,
+      decoding_key: DecodingKey::from_secret(secret.as_bytes())?,
       validation: Validation::default(),
-    }
+    })
   }
 
   pub fn generate_token(&self, user_id: UserId, username: String) -> Result<String, ServerError> {
