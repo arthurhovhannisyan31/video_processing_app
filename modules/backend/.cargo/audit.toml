@@ -2,5 +2,4 @@
 ignore = [
   "RUSTSEC-2026-0387", # jsonwebtoken
   "RUSTSEC-2023-0071", # jsonwebtoken
-  "RUSTSEC-2026-0459", # sqlite, not relevant
 ]

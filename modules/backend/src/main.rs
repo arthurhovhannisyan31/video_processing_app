@@ -9,10 +9,9 @@ use core::database::{create_db_pool, run_migrations};
 use core::error::ServerError;
 use core::governor::rate_limiters_cleanup;
 use core::logging::init_logging;
+use core::session::build_session_store;
 
 use http::init_http_server;
-
-use crate::core::session::build_session_store;
 
 fn main() -> Result<(), ServerError> {
   init_logging()?;

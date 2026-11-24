@@ -24,7 +24,7 @@ pub struct AppState {
 
 impl AppState {
   pub fn new(app_config: AppConfig, pool: PgPool) -> Result<Self, ServerError> {
-    let jwt_service = JwtService::new(app_config.jwt_secret.clone());
+    let jwt_service = JwtService::new(app_config.jwt_secret.clone())?;
     let users_repo = PostgresUserRepository::new(pool.clone());
     let email_sender = Arc::new(SmtpEmailSender::new(&app_config.smtp)?);
     let auth_service = AuthService::new(

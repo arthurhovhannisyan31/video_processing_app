@@ -39,11 +39,12 @@ pub fn build_router(
   let merged_router = Router::new()
     .merge(get_system_router())
     .merge(get_auth_router(app_state.clone())?)
-    .merge(get_video_router(app_state.clone())?.layer(SessionLayer::new(session_store)))
+    .merge(get_video_router(app_state.clone())?)
     .with_state(app_state.clone());
 
   let router = Router::new()
     .nest("/api", merged_router)
+    .layer(SessionLayer::new(session_store))
     .layer(TraceLayer::new_for_http())
     .layer(
       CompressionLayer::new()
